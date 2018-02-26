@@ -6,9 +6,9 @@
 
 package catalog;
 
-public class attrNode
- {
+public class attrNode {
+
   public String attrName;
   public String attrValue;
- }; 
+};
 
