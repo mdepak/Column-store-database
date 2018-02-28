@@ -7,9 +7,9 @@
 
 package btree;
 
-import diskmgr.*;
-import global.*;
-import heap.*;
+import diskmgr.Page;
+import global.PageId;
+import global.RID;
 
 /**
  * A BTLeafPage is a leaf page on a B+ tree.  It holds abstract <key, RID> pairs; it doesn't know

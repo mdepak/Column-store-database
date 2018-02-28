@@ -1,8 +1,9 @@
 package tests;
 
-import global.*;
-import heap.*;
-import iterator.*;
+import global.AttrType;
+import heap.Tuple;
+import iterator.TupleUtils;
+import java.util.Vector;
 
 //Set set the structures needed
 //enum Order{UNSORT,SORT};
@@ -98,6 +99,28 @@ public class QueryCheck {
 
   public static final int Max_group_num = 5;
   public static final int Max_answer = 15;
+
+  private AttrType[] types;
+  private short[] sizes;// sizes of attributes in answer tuple
+  private short columnum;     // number of attributes in answer tuple
+  private int curGroup;     // current group number
+  private int tuplenum;     // total number of answer tuples
+  private int groupnum;     // number of groups in answer tuples
+  private Order grouporder;   // order of groups
+
+  private Group[] mygroup;
+
+  // group mark, 1: checked already, 0: not checked
+  private int gmark[];
+
+  private int total;        // total number of correct answers
+  private int G_O_flag;     // error flag for group order wrong
+  // error flag for tuple order wrong
+  private int[] T_O_flag;
+
+  private TupleList missing;
+  private TupleList extra;
+
   //set up answers for each query
   Vector Q1result = new Vector();
   Vector Q2result = new Vector();
@@ -106,22 +129,6 @@ public class QueryCheck {
   Vector Q5result = new Vector();
   Vector Q6result = new Vector();
   Vector Q7result = new Vector();
-  private AttrType[] types;
-  private short[] sizes;// sizes of attributes in answer tuple
-  private short columnum;     // number of attributes in answer tuple
-  private int curGroup;     // current group number
-  private int tuplenum;     // total number of answer tuples
-  private int groupnum;     // number of groups in answer tuples
-  private Order grouporder;   // order of groups
-  private Group[] mygroup;
-  // group mark, 1: checked already, 0: not checked
-  private int gmark[];
-  private int total;        // total number of correct answers
-  private int G_O_flag;     // error flag for group order wrong
-  // error flag for tuple order wrong
-  private int[] T_O_flag;
-  private TupleList missing;
-  private TupleList extra;
 
 
   /**

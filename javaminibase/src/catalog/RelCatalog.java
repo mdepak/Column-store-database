@@ -6,26 +6,23 @@
 
 package catalog;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
-import index.*;
+import bufmgr.BufMgrException;
+import diskmgr.DiskMgrException;
+import global.AttrType;
+import global.Catalogglobal;
+import global.ExtendedSystemDefs;
+import global.GlobalConst;
+import global.IndexType;
+import global.RID;
+import heap.Heapfile;
+import heap.Scan;
+import heap.Tuple;
+import java.io.IOException;
 
 public class RelCatalog extends Heapfile
     implements GlobalConst, Catalogglobal {
   // Helps runStats
   //Status genStats(RelDesc &relRec, AttrDesc *&attrRecs);
-
-  Tuple tuple;
-
-  ;
-  short[] str_sizes;
-
-  ;
-  AttrType[] attrs;
-
-  ;
 
   // CONSTRUCTOR
   RelCatalog(String filename)
@@ -56,6 +53,7 @@ public class RelCatalog extends Heapfile
   }
 
   ;
+
 
   // GET RELATION DESCRIPTION FOR A RELATION
   public void getInfo(String relation, RelDesc record)
@@ -286,6 +284,7 @@ public class RelCatalog extends Heapfile
 
   ;
 
+
   // ADD INFORMATION ON A RELATION TO  CATALOG
   public void addInfo(RelDesc record)
       throws RelCatalogException,
@@ -308,8 +307,6 @@ public class RelCatalog extends Heapfile
   }
 
   ;
-
-  // Methods have not been implemented.
 
   // REMOVE INFORMATION ON A RELATION FROM CATALOG
   public void removeInfo(String relation)
@@ -397,8 +394,29 @@ public class RelCatalog extends Heapfile
 
   ;
 
+  // Methods have not been implemented.
+
   // DESTROY A RELATION
   void destroyRel(String relation) {
+  }
+
+  ;
+
+  // DROP AN INDEX FROM A RELATION
+  void dropIndex(String relation, String attrname,
+      IndexType accessType) {
+  }
+
+  ;
+
+  // DUMPS A CATALOG TO A DISK FILE (FOR OPTIMIZER)
+  void dumpCatalog(String filename) {
+  }
+
+  ;
+
+  // Collects stats from all the tables of the database.
+  void runStats(String filename) {
   }
 
   ;
@@ -418,18 +436,10 @@ public class RelCatalog extends Heapfile
   // void dumpRelIndex(fstream outFile,IndexDesc [] indexRecs,
   //                    int indexCnt, int attrsize){};
 
-  // DROP AN INDEX FROM A RELATION
-  void dropIndex(String relation, String attrname,
-      IndexType accessType) {
-  }
 
-  // DUMPS A CATALOG TO A DISK FILE (FOR OPTIMIZER)
-  void dumpCatalog(String filename) {
-  }
-
-  // Collects stats from all the tables of the database.
-  void runStats(String filename) {
-  }
+  Tuple tuple;
+  short[] str_sizes;
+  AttrType[] attrs;
 
 };
 

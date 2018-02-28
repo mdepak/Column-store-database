@@ -1,6 +1,6 @@
 package btree;
 
-import global.*;
+import global.RID;
 
 /**
  * Base class for a index file

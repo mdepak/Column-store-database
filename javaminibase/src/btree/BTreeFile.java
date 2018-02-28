@@ -7,10 +7,20 @@
 
 package btree;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import bufmgr.HashEntryNotFoundException;
+import bufmgr.InvalidFrameNumberException;
+import bufmgr.PageUnpinnedException;
+import bufmgr.ReplacerException;
+import diskmgr.Page;
+import global.AttrType;
+import global.GlobalConst;
+import global.PageId;
+import global.RID;
+import global.SystemDefs;
+import heap.HFPage;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * btfile.java This is the main definition of class BTreeFile, which derives from abstract base
@@ -25,72 +35,7 @@ public class BTreeFile extends IndexFile
 
   private static FileOutputStream fos;
   private static DataOutputStream trace;
-  private BTreeHeaderPage headerPage;
-  private PageId headerPageId;
-  private String dbname;
-  /**
-   * BTreeFile class an index file with given filename should already exist; this opens it.
-   *
-   * @param filename the B+ tree file name. Input parameter.
-   * @throws GetFileEntryException can not ger the file from DB
-   * @throws PinPageException failed when pin a page
-   * @throws ConstructPageException BT page constructor failed
-   */
-  public BTreeFile(String filename)
-      throws GetFileEntryException,
-      PinPageException,
-      ConstructPageException {
 
-    headerPageId = get_file_entry(filename);
-
-    headerPage = new BTreeHeaderPage(headerPageId);
-    dbname = new String(filename);
-      /*
-       *
-       * - headerPageId is the PageId of this BTreeFile's header page;
-       * - headerPage, headerPageId valid and pinned
-       * - dbname contains a copy of the name of the database
-       */
-  }
-  /**
-   * if index file exists, open it; else create it.
-   *
-   * @param filename file name. Input parameter.
-   * @param keytype the type of key. Input parameter.
-   * @param keysize the maximum size of a key. Input parameter.
-   * @param delete_fashion full delete or naive delete. Input parameter. It is either
-   * DeleteFashion.NAIVE_DELETE or DeleteFashion.FULL_DELETE.
-   * @throws GetFileEntryException can not get file
-   * @throws ConstructPageException page constructor failed
-   * @throws IOException error from lower layer
-   * @throws AddFileEntryException can not add file into DB
-   */
-  public BTreeFile(String filename, int keytype,
-      int keysize, int delete_fashion)
-      throws GetFileEntryException,
-      ConstructPageException,
-      IOException,
-      AddFileEntryException {
-
-    headerPageId = get_file_entry(filename);
-    if (headerPageId == null) //file not exist
-    {
-      headerPage = new BTreeHeaderPage();
-      headerPageId = headerPage.getPageId();
-      add_file_entry(filename, headerPageId);
-      headerPage.set_magic0(MAGIC0);
-      headerPage.set_rootId(new PageId(INVALID_PAGE));
-      headerPage.set_keyType((short) keytype);
-      headerPage.set_maxKeySize(keysize);
-      headerPage.set_deleteFashion(delete_fashion);
-      headerPage.setType(NodeType.BTHEAD);
-    } else {
-      headerPage = new BTreeHeaderPage(headerPageId);
-    }
-
-    dbname = new String(filename);
-
-  }
 
   /**
    * It causes a structured trace to be written to a file.  This output is used to drive a
@@ -123,6 +68,11 @@ public class BTreeFile extends IndexFile
     trace = null;
   }
 
+
+  private BTreeHeaderPage headerPage;
+  private PageId headerPageId;
+  private String dbname;
+
   /**
    * Access method to data member.
    *
@@ -141,6 +91,7 @@ public class BTreeFile extends IndexFile
       throw new GetFileEntryException(e, "");
     }
   }
+
 
   private Page pinPage(PageId pageno)
       throws PinPageException {
@@ -203,6 +154,73 @@ public class BTreeFile extends IndexFile
       e.printStackTrace();
       throw new UnpinPageException(e, "");
     }
+  }
+
+
+  /**
+   * BTreeFile class an index file with given filename should already exist; this opens it.
+   *
+   * @param filename the B+ tree file name. Input parameter.
+   * @throws GetFileEntryException can not ger the file from DB
+   * @throws PinPageException failed when pin a page
+   * @throws ConstructPageException BT page constructor failed
+   */
+  public BTreeFile(String filename)
+      throws GetFileEntryException,
+      PinPageException,
+      ConstructPageException {
+
+    headerPageId = get_file_entry(filename);
+
+    headerPage = new BTreeHeaderPage(headerPageId);
+    dbname = new String(filename);
+      /*
+       *
+       * - headerPageId is the PageId of this BTreeFile's header page;
+       * - headerPage, headerPageId valid and pinned
+       * - dbname contains a copy of the name of the database
+       */
+  }
+
+
+  /**
+   * if index file exists, open it; else create it.
+   *
+   * @param filename file name. Input parameter.
+   * @param keytype the type of key. Input parameter.
+   * @param keysize the maximum size of a key. Input parameter.
+   * @param delete_fashion full delete or naive delete. Input parameter. It is either
+   * DeleteFashion.NAIVE_DELETE or DeleteFashion.FULL_DELETE.
+   * @throws GetFileEntryException can not get file
+   * @throws ConstructPageException page constructor failed
+   * @throws IOException error from lower layer
+   * @throws AddFileEntryException can not add file into DB
+   */
+  public BTreeFile(String filename, int keytype,
+      int keysize, int delete_fashion)
+      throws GetFileEntryException,
+      ConstructPageException,
+      IOException,
+      AddFileEntryException {
+
+    headerPageId = get_file_entry(filename);
+    if (headerPageId == null) //file not exist
+    {
+      headerPage = new BTreeHeaderPage();
+      headerPageId = headerPage.getPageId();
+      add_file_entry(filename, headerPageId);
+      headerPage.set_magic0(MAGIC0);
+      headerPage.set_rootId(new PageId(INVALID_PAGE));
+      headerPage.set_keyType((short) keytype);
+      headerPage.set_maxKeySize(keysize);
+      headerPage.set_deleteFashion(delete_fashion);
+      headerPage.setType(NodeType.BTHEAD);
+    } else {
+      headerPage = new BTreeHeaderPage(headerPageId);
+    }
+
+    dbname = new String(filename);
+
   }
 
   /**
@@ -1406,7 +1424,7 @@ public class BTreeFile extends IndexFile
       } //while loop
 
 	/*
-	 * We reached a page with first key > `key', so return an error.
+   * We reached a page with first key > `key', so return an error.
 	 * We should have got true back from delUserRid above.  Apparently
 	 * the specified <key,rid> data entry does not exist.
 	 */

@@ -1,6 +1,6 @@
 package catalog;
 
-import chainexception.*;
+import chainexception.ChainException;
 
 public class Catalognomem extends ChainException {
 

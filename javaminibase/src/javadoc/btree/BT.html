@@ -98,26 +98,26 @@ java.lang.Object
   Essentially we provide a way for those classes to package and
   unpackage
   <key
-  ,data> pairs in a space-efficient manner. That is, the
-  packaged result contains the key followed immediately by the data value;
-  No padding bytes are used (not even for alignment).
+      ,data> pairs in a space-efficient manner. That is, the
+    packaged result contains the key followed immediately by the data value;
+    No padding bytes are used (not even for alignment).
 
-  Furthermore, the BT<*>Page classes need
-  not know anything about the possible AttrType values, since all
-  their processing of
-  <key
-  ,data> pairs is done by the functions
-  declared here.
+    Furthermore, the BT<*>Page classes need
+    not know anything about the possible AttrType values, since all
+    their processing of
+    <key
+        ,data> pairs is done by the functions
+      declared here.
 
-  In addition to packaging/unpacking of
-  <key
-  ,value> pairs, we
-  provide a keyCompare function for the (obvious) purpose of
-  comparing keys of arbitrary type (as long as they are defined
-  here).
+      In addition to packaging/unpacking of
+      <key
+          ,value> pairs, we
+        provide a keyCompare function for the (obvious) purpose of
+        comparing keys of arbitrary type (as long as they are defined
+        here).
 
-  For debug utilities, we provide some methods to print any page
-  or the whole B+ tree structure or all leaf pages.
+        For debug utilities, we provide some methods to print any page
+        or the whole B+ tree structure or all leaf pages.
 <P>
 <HR>
 

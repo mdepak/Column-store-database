@@ -8,9 +8,9 @@
 
 package btree;
 
-import diskmgr.*;
-import global.*;
-import heap.*;
+import diskmgr.Page;
+import global.PageId;
+import global.RID;
 
 /**
  * A BTIndexPage is an index page on a B+ tree.  It holds abstract {key, PageId} pairs; it doesn't

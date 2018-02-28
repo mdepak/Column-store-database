@@ -10,22 +10,14 @@
 
 package global;
 
-import bufmgr.*;
-import catalog.*;
-import diskmgr.*;
+import catalog.AttrCatalog;
+import catalog.Catalog;
+import catalog.IndexCatalog;
+import catalog.RelCatalog;
 
 public class ExtendedSystemDefs extends SystemDefs {
   /* This class actually allocates the global catalog pointer.  Use this class
      rather than SystemDefs when you need to use the catalog system. */
-
-  public static Catalog
-      MINIBASE_CATALOGPTR;
-  public static AttrCatalog
-      MINIBASE_ATTRCAT;
-  public static RelCatalog
-      MINIBASE_RELCAT;
-  public static IndexCatalog
-      MINIBASE_INDCAT;
 
   public ExtendedSystemDefs(String dbname, int dbpages,
       int bufpoolsize,
@@ -51,5 +43,18 @@ public class ExtendedSystemDefs extends SystemDefs {
     MINIBASE_RELCAT = MINIBASE_CATALOGPTR.getRelCat();
     MINIBASE_INDCAT = MINIBASE_CATALOGPTR.getIndCat();
   }
+
+
+  public static Catalog
+      MINIBASE_CATALOGPTR;
+
+  public static AttrCatalog
+      MINIBASE_ATTRCAT;
+
+  public static RelCatalog
+      MINIBASE_RELCAT;
+
+  public static IndexCatalog
+      MINIBASE_INDCAT;
 
 }

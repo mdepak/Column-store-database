@@ -7,6 +7,10 @@ public class StringKey extends KeyClass {
 
   private String key;
 
+  public String toString() {
+    return key;
+  }
+
   /**
    * Class constructor
    *
@@ -14,10 +18,6 @@ public class StringKey extends KeyClass {
    */
   public StringKey(String s) {
     key = new String(s);
-  }
-
-  public String toString() {
-    return key;
   }
 
   /**

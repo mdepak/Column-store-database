@@ -99,9 +99,9 @@ java.lang.Object
 <P>
   A BTLeafPage is a leaf page on a B+ tree. It holds abstract
   <key
-  , RID> pairs; it doesn't know anything about the keys
-  (their lengths or their types), instead relying on the abstract
-  interface consisting of BT.java.
+      , RID> pairs; it doesn't know anything about the keys
+    (their lengths or their types), instead relying on the abstract
+    interface consisting of BT.java.
 <P>
 <HR>
 
@@ -449,7 +449,7 @@ public <A HREF="../global/RID.html">RID</A> <B>insertRecord</B>(<A HREF="../btre
       <DD>- the rid of the inserted leaf record data entry,
         i.e., the
         <key
-        , dataRid> pair.
+            , dataRid> pair.
       <DT><B>Throws:</B>
       <DD><CODE><A HREF="../btree/LeafInsertRecException.html">LeafInsertRecException</A></CODE> -
         error when insert

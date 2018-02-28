@@ -1,8 +1,11 @@
 package heap;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
+import diskmgr.Page;
+import global.GlobalConst;
+import global.PageId;
+import global.RID;
+import global.SystemDefs;
+import java.io.IOException;
 
 /**
  * This heapfile implementation is directory-based. We maintain a directory of info about the data
@@ -22,7 +25,8 @@ import global.*;
  */
 
 
-/** DataPageInfo class : the type of records stored on a directory page.
+/**
+ * DataPageInfo class : the type of records stored on a directory page.
  *
  * April 9, 1998
  */
@@ -38,97 +42,12 @@ interface Filetype {
 public class Heapfile implements Filetype, GlobalConst {
 
 
-  private static int tempfilecount = 0;
   PageId _firstDirPageId;   // page number of header page
   int _ftype;
   private boolean _file_deleted;
   private String _fileName;
+  private static int tempfilecount = 0;
 
-
-  /** Initialize.  A null name produces a temporary heapfile which will be
-   * deleted by the destructor.  If the name already denotes a file, the
-   * file is opened; otherwise, a new empty file is created.
-   *
-   * @exception HFException heapfile exception
-   * @exception HFBufMgrException exception thrown from bufmgr layer
-   * @exception HFDiskMgrException exception thrown from diskmgr layer
-   * @exception IOException I/O errors
-   */
-  public Heapfile(String name)
-      throws HFException,
-      HFBufMgrException,
-      HFDiskMgrException,
-      IOException
-
-  {
-    // Give us a prayer of destructing cleanly if construction fails.
-    _file_deleted = true;
-    _fileName = null;
-
-    if (name == null) {
-      // If the name is NULL, allocate a temporary name
-      // and no logging is required.
-      _fileName = "tempHeapFile";
-      String useId = new String("user.name");
-      String userAccName;
-      userAccName = System.getProperty(useId);
-      _fileName = _fileName + userAccName;
-
-      String filenum = Integer.toString(tempfilecount);
-      _fileName = _fileName + filenum;
-      _ftype = TEMP;
-      tempfilecount++;
-
-    } else {
-      _fileName = name;
-      _ftype = ORDINARY;
-    }
-
-    // The constructor gets run in two different cases.
-    // In the first case, the file is new and the header page
-    // must be initialized.  This case is detected via a failure
-    // in the db->get_file_entry() call.  In the second case, the
-    // file already exists and all that must be done is to fetch
-    // the header page into the buffer pool
-
-    // try to open the file
-
-    Page apage = new Page();
-    _firstDirPageId = null;
-    if (_ftype == ORDINARY) {
-      _firstDirPageId = get_file_entry(_fileName);
-    }
-
-    if (_firstDirPageId == null) {
-      // file doesn't exist. First create it.
-      _firstDirPageId = newPage(apage, 1);
-      // check error
-      if (_firstDirPageId == null) {
-        throw new HFException(null, "can't new page");
-      }
-
-      add_file_entry(_fileName, _firstDirPageId);
-      // check error(new exception: Could not add file entry
-
-      HFPage firstDirPage = new HFPage();
-      firstDirPage.init(_firstDirPageId, apage);
-      PageId pageId = new PageId(INVALID_PAGE);
-
-      firstDirPage.setNextPage(pageId);
-      firstDirPage.setPrevPage(pageId);
-      unpinPage(_firstDirPageId, true /*dirty*/);
-
-
-    }
-    _file_deleted = false;
-    // ASSERTIONS:
-    // - ALL private data members of class Heapfile are valid:
-    //
-    //  - _firstDirPageId valid
-    //  - _fileName valid
-    //  - no datapage pinned yet
-
-  } // end of constructor
 
   /* get a new datapage from the buffer manager and initialize dpinfo
      @param dpinfop the information in the new HFPage
@@ -160,7 +79,7 @@ public class Heapfile implements Filetype, GlobalConst {
   } // end of _newDatapage
 
   /* Internal HeapFile function (used in getRecord and updateRecord):
-     returns pinned directory page and pinned data page of the specified
+     returns pinned directory page and pinned data page of the specified 
      user record(rid) and true if record is found.
      If the user record cannot be found, return false.
   */
@@ -270,13 +189,100 @@ public class Heapfile implements Filetype, GlobalConst {
 
   } // end of _findDatapage
 
-  /** Return number of records in file.
+  /**
+   * Initialize.  A null name produces a temporary heapfile which will be deleted by the destructor.
+   *  If the name already denotes a file, the file is opened; otherwise, a new empty file is
+   * created.
    *
-   * @exception InvalidSlotNumberException invalid slot number
-   * @exception InvalidTupleSizeException invalid tuple size
-   * @exception HFBufMgrException exception thrown from bufmgr layer
-   * @exception HFDiskMgrException exception thrown from diskmgr layer
-   * @exception IOException I/O errors
+   * @throws HFException heapfile exception
+   * @throws HFBufMgrException exception thrown from bufmgr layer
+   * @throws HFDiskMgrException exception thrown from diskmgr layer
+   * @throws IOException I/O errors
+   */
+  public Heapfile(String name)
+      throws HFException,
+      HFBufMgrException,
+      HFDiskMgrException,
+      IOException
+
+  {
+    // Give us a prayer of destructing cleanly if construction fails.
+    _file_deleted = true;
+    _fileName = null;
+
+    if (name == null) {
+      // If the name is NULL, allocate a temporary name
+      // and no logging is required.
+      _fileName = "tempHeapFile";
+      String useId = new String("user.name");
+      String userAccName;
+      userAccName = System.getProperty(useId);
+      _fileName = _fileName + userAccName;
+
+      String filenum = Integer.toString(tempfilecount);
+      _fileName = _fileName + filenum;
+      _ftype = TEMP;
+      tempfilecount++;
+
+    } else {
+      _fileName = name;
+      _ftype = ORDINARY;
+    }
+
+    // The constructor gets run in two different cases.
+    // In the first case, the file is new and the header page
+    // must be initialized.  This case is detected via a failure
+    // in the db->get_file_entry() call.  In the second case, the
+    // file already exists and all that must be done is to fetch
+    // the header page into the buffer pool
+
+    // try to open the file
+
+    Page apage = new Page();
+    _firstDirPageId = null;
+    if (_ftype == ORDINARY) {
+      _firstDirPageId = get_file_entry(_fileName);
+    }
+
+    if (_firstDirPageId == null) {
+      // file doesn't exist. First create it.
+      _firstDirPageId = newPage(apage, 1);
+      // check error
+      if (_firstDirPageId == null) {
+        throw new HFException(null, "can't new page");
+      }
+
+      add_file_entry(_fileName, _firstDirPageId);
+      // check error(new exception: Could not add file entry
+
+      HFPage firstDirPage = new HFPage();
+      firstDirPage.init(_firstDirPageId, apage);
+      PageId pageId = new PageId(INVALID_PAGE);
+
+      firstDirPage.setNextPage(pageId);
+      firstDirPage.setPrevPage(pageId);
+      unpinPage(_firstDirPageId, true /*dirty*/);
+
+
+    }
+    _file_deleted = false;
+    // ASSERTIONS:
+    // - ALL private data members of class Heapfile are valid:
+    //
+    //  - _firstDirPageId valid
+    //  - _fileName valid
+    //  - no datapage pinned yet
+
+  } // end of constructor
+
+  /**
+   * Return number of records in file.
+   *
+   * @throws InvalidSlotNumberException invalid slot number
+   * @throws InvalidTupleSizeException invalid tuple size
+   * @throws HFBufMgrException exception thrown from bufmgr layer
+   * @throws HFDiskMgrException exception thrown from diskmgr layer
+   * @throws IOException I/O errors
    */
   public int getRecCnt()
       throws InvalidSlotNumberException,
@@ -325,20 +331,19 @@ public class Heapfile implements Filetype, GlobalConst {
     return answer;
   } // end of getRecCnt
 
-  /** Insert record into file, return its Rid.
+  /**
+   * Insert record into file, return its Rid.
    *
    * @param recPtr pointer of the record
    * @param recLen the length of the record
-   *
-   * @exception InvalidSlotNumberException invalid slot number
-   * @exception InvalidTupleSizeException invalid tuple size
-   * @exception SpaceNotAvailableException no space left
-   * @exception HFException heapfile exception
-   * @exception HFBufMgrException exception thrown from bufmgr layer
-   * @exception HFDiskMgrException exception thrown from diskmgr layer
-   * @exception IOException I/O errors
-   *
    * @return the rid of the record
+   * @throws InvalidSlotNumberException invalid slot number
+   * @throws InvalidTupleSizeException invalid tuple size
+   * @throws SpaceNotAvailableException no space left
+   * @throws HFException heapfile exception
+   * @throws HFBufMgrException exception thrown from bufmgr layer
+   * @throws HFDiskMgrException exception thrown from diskmgr layer
+   * @throws IOException I/O errors
    */
   public RID insertRecord(byte[] recPtr)
       throws InvalidSlotNumberException,
@@ -560,16 +565,16 @@ public class Heapfile implements Filetype, GlobalConst {
 
   }
 
-  /** Delete record from file with given rid.
-   *
-   * @exception InvalidSlotNumberException invalid slot number
-   * @exception InvalidTupleSizeException invalid tuple size
-   * @exception HFException heapfile exception
-   * @exception HFBufMgrException exception thrown from bufmgr layer
-   * @exception HFDiskMgrException exception thrown from diskmgr layer
-   * @exception Exception other exception
+  /**
+   * Delete record from file with given rid.
    *
    * @return true record deleted  false:record not found
+   * @throws InvalidSlotNumberException invalid slot number
+   * @throws InvalidTupleSizeException invalid tuple size
+   * @throws HFException heapfile exception
+   * @throws HFBufMgrException exception thrown from bufmgr layer
+   * @throws HFDiskMgrException exception thrown from diskmgr layer
+   * @throws Exception other exception
    */
   public boolean deleteRecord(RID rid)
       throws InvalidSlotNumberException,
@@ -699,18 +704,19 @@ public class Heapfile implements Filetype, GlobalConst {
   }
 
 
-  /** Updates the specified record in the heapfile.
+  /**
+   * Updates the specified record in the heapfile.
+   *
    * @param rid: the record which needs update
    * @param newtuple: the new content of the record
-   *
-   * @exception InvalidSlotNumberException invalid slot number
-   * @exception InvalidUpdateException invalid update on record
-   * @exception InvalidTupleSizeException invalid tuple size
-   * @exception HFException heapfile exception
-   * @exception HFBufMgrException exception thrown from bufmgr layer
-   * @exception HFDiskMgrException exception thrown from diskmgr layer
-   * @exception Exception other exception
    * @return ture:update success   false: can't find the record
+   * @throws InvalidSlotNumberException invalid slot number
+   * @throws InvalidUpdateException invalid update on record
+   * @throws InvalidTupleSizeException invalid tuple size
+   * @throws HFException heapfile exception
+   * @throws HFBufMgrException exception thrown from bufmgr layer
+   * @throws HFDiskMgrException exception thrown from diskmgr layer
+   * @throws Exception other exception
    */
   public boolean updateRecord(RID rid, Tuple newtuple)
       throws InvalidSlotNumberException,
@@ -759,18 +765,18 @@ public class Heapfile implements Filetype, GlobalConst {
   }
 
 
-  /** Read record from file, returning pointer and length.
+  /**
+   * Read record from file, returning pointer and length.
+   *
    * @param rid Record ID
-   *
-   * @exception InvalidSlotNumberException invalid slot number
-   * @exception InvalidTupleSizeException invalid tuple size
-   * @exception SpaceNotAvailableException no space left
-   * @exception HFException heapfile exception
-   * @exception HFBufMgrException exception thrown from bufmgr layer
-   * @exception HFDiskMgrException exception thrown from diskmgr layer
-   * @exception Exception other exception
-   *
    * @return a Tuple. if Tuple==null, no more tuple
+   * @throws InvalidSlotNumberException invalid slot number
+   * @throws InvalidTupleSizeException invalid tuple size
+   * @throws SpaceNotAvailableException no space left
+   * @throws HFException heapfile exception
+   * @throws HFBufMgrException exception thrown from bufmgr layer
+   * @throws HFDiskMgrException exception thrown from diskmgr layer
+   * @throws Exception other exception
    */
   public Tuple getRecord(RID rid)
       throws InvalidSlotNumberException,
@@ -813,10 +819,11 @@ public class Heapfile implements Filetype, GlobalConst {
   }
 
 
-  /** Initiate a sequential scan.
-   * @exception InvalidTupleSizeException Invalid tuple size
-   * @exception IOException I/O errors
+  /**
+   * Initiate a sequential scan.
    *
+   * @throws InvalidTupleSizeException Invalid tuple size
+   * @throws IOException I/O errors
    */
   public Scan openScan()
       throws InvalidTupleSizeException,
@@ -826,14 +833,15 @@ public class Heapfile implements Filetype, GlobalConst {
   }
 
 
-  /** Delete the file from the database.
+  /**
+   * Delete the file from the database.
    *
-   * @exception InvalidSlotNumberException invalid slot number
-   * @exception InvalidTupleSizeException invalid tuple size
-   * @exception FileAlreadyDeletedException file is deleted already
-   * @exception HFBufMgrException exception thrown from bufmgr layer
-   * @exception HFDiskMgrException exception thrown from diskmgr layer
-   * @exception IOException I/O errors
+   * @throws InvalidSlotNumberException invalid slot number
+   * @throws InvalidTupleSizeException invalid tuple size
+   * @throws FileAlreadyDeletedException file is deleted already
+   * @throws HFBufMgrException exception thrown from bufmgr layer
+   * @throws HFDiskMgrException exception thrown from diskmgr layer
+   * @throws IOException I/O errors
    */
   public void deleteFile()
       throws InvalidSlotNumberException,
@@ -892,6 +900,7 @@ public class Heapfile implements Filetype, GlobalConst {
 
   /**
    * short cut to access the pinPage function in bufmgr package.
+   *
    * @see bufmgr.pinPage
    */
   private void pinPage(PageId pageno, Page page, boolean emptyPage)
@@ -907,6 +916,7 @@ public class Heapfile implements Filetype, GlobalConst {
 
   /**
    * short cut to access the unpinPage function in bufmgr package.
+   *
    * @see bufmgr.unpinPage
    */
   private void unpinPage(PageId pageno, boolean dirty)

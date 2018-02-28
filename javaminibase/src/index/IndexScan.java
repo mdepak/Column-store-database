@@ -1,11 +1,30 @@
 package index;
 
-import btree.*;
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
-import iterator.*;
+import btree.BTFileScan;
+import btree.BTreeFile;
+import btree.IndexFile;
+import btree.IndexFileScan;
+import btree.IntegerKey;
+import btree.KeyDataEntry;
+import btree.LeafData;
+import btree.StringKey;
+import global.AttrType;
+import global.IndexType;
+import global.RID;
+import heap.Heapfile;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
+import heap.Tuple;
+import iterator.CondExpr;
+import iterator.FldSpec;
+import iterator.InvalidRelation;
+import iterator.Iterator;
+import iterator.PredEval;
+import iterator.Projection;
+import iterator.TupleUtils;
+import iterator.TupleUtilsException;
+import iterator.UnknownKeyTypeException;
+import java.io.IOException;
 
 
 /**
@@ -15,20 +34,6 @@ import iterator.*;
  */
 public class IndexScan extends Iterator {
 
-  public FldSpec[] perm_mat;
-  private IndexFile indFile;
-  private IndexFileScan indScan;
-  private AttrType[] _types;
-  private short[] _s_sizes;
-  private CondExpr[] _selects;
-  private int _noInFlds;
-  private int _noOutFlds;
-  private Heapfile f;
-  private Tuple tuple1;
-  private Tuple Jtuple;
-  private int t1_size;
-  private int _fldNum;
-  private boolean index_only;
   /**
    * class constructor. set up the index scan.
    *
@@ -270,6 +275,21 @@ public class IndexScan extends Iterator {
       closeFlag = true;
     }
   }
+
+  public FldSpec[] perm_mat;
+  private IndexFile indFile;
+  private IndexFileScan indScan;
+  private AttrType[] _types;
+  private short[] _s_sizes;
+  private CondExpr[] _selects;
+  private int _noInFlds;
+  private int _noOutFlds;
+  private Heapfile f;
+  private Tuple tuple1;
+  private Tuple Jtuple;
+  private int t1_size;
+  private int _fldNum;
+  private boolean index_only;
 
 }
 

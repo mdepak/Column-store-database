@@ -1,6 +1,6 @@
 package index;
 
-import chainexception.*;
+import chainexception.ChainException;
 
 public class IndexException extends ChainException {
 

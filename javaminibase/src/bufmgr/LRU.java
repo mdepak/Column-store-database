@@ -2,9 +2,6 @@
 
 package bufmgr;
 
-import diskmgr.*;
-import global.*;
-
 /**
  * class LRU is a subclass of class Replacer using LRU algorithm for page replacement
  */
@@ -20,14 +17,6 @@ class LRU extends Replacer {
    * private field number of frames used
    */
   private int nframes;
-
-  /**
-   * Class constructor Initializing frames[] pinter = null.
-   */
-  public LRU(BufMgr mgrArg) {
-    super(mgrArg);
-    frames = null;
-  }
 
   /**
    * This pushes the given frame to the end of the list.
@@ -48,15 +37,13 @@ class LRU extends Replacer {
     frames[nframes - 1] = frameNo;
   }
 
-/* public methods */
-
   /**
    * Calling super class the same method Initializing the frames[] with number of buffer allocated
    * by buffer manager set number of frame used to zero
    *
-   * @param  mgr  a BufMgr object
-   * @see  BufMgr
-   * @see  Replacer
+   * @param mgr a BufMgr object
+   * @see BufMgr
+   * @see Replacer
    */
   public void setBufferManager(BufMgr mgr) {
     super.setBufferManager(mgr);
@@ -64,11 +51,21 @@ class LRU extends Replacer {
     nframes = 0;
   }
 
+/* public methods */
+
+  /**
+   * Class constructor Initializing frames[] pinter = null.
+   */
+  public LRU(BufMgr mgrArg) {
+    super(mgrArg);
+    frames = null;
+  }
+
   /**
    * calll super class the same method pin the page in the given frame number move the page to the
    * end of list
    *
-   * @param   frameNo   the frame number to pin
+   * @param frameNo the frame number to pin
    */
   public void pin(int frameNo) throws InvalidFrameNumberException {
     super.pin(frameNo);

@@ -1,9 +1,12 @@
 package tests;
 
-import bufmgr.*;
-import chainexception.*;
-import diskmgr.*;
-import global.*;
+import chainexception.ChainException;
+import diskmgr.Page;
+import global.Convert;
+import global.GlobalConst;
+import global.PageId;
+import global.SystemDefs;
+import java.io.IOException;
 
 //Note that in JAVA, methods can't be overridden to be more private.
 //Therefore, the declaration of all private functions are now declared

@@ -1,10 +1,15 @@
 package iterator;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
-import index.*;
+import bufmgr.PageNotReadException;
+import diskmgr.Page;
+import global.Flags;
+import global.PageId;
+import global.SystemDefs;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
+import heap.Tuple;
+import index.IndexException;
+import java.io.IOException;
 
 /**
  * All the relational operators and access methods are iterators.

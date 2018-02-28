@@ -1,9 +1,10 @@
 package iterator;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import global.GlobalConst;
+import global.RID;
+import heap.Heapfile;
+import heap.Tuple;
+import java.io.IOException;
 
 /**
  * O_buf::Put takes tuples and stores them on the buffer pages that were passed to O_buf::init.
@@ -11,24 +12,12 @@ import heap.*;
  */
 public class OBuf implements GlobalConst {
 
-  private boolean dirty;                                // Does this buffer contain dirty pages?
-  private int t_per_pg,                        // # of tuples that fit in 1 page
-      t_in_buf;                        // # of tuples that fit in the buffer
-  private int t_wr_to_pg,                        // # of tuples written to current page
-      t_wr_to_buf;                        // # of tuples written to buffer.
-  private int curr_page;                        // Current page being written to.
-  private byte[][] _bufs;                        // Array of pointers to buffer pages.
-  private int _n_pages;                        // number of pages in array
-  private int t_size;                                // Size of a tuple
-  private long t_written;                        // # of tuples written so far.
-  private int TEST_temp_fd;                        // fd of a temporary file
-  private Heapfile _temp_fd;
-  private boolean buffer_only;
   /**
    * fault constructor no args -- use init to initialize
    */
   public OBuf() {
   }
+
 
   /**
    * O_buf is an output buffer. It takes as input:
@@ -140,6 +129,20 @@ public class OBuf implements GlobalConst {
 
     return t_written;
   }
+
+  private boolean dirty;                                // Does this buffer contain dirty pages?
+  private int t_per_pg,                        // # of tuples that fit in 1 page
+      t_in_buf;                        // # of tuples that fit in the buffer
+  private int t_wr_to_pg,                        // # of tuples written to current page
+      t_wr_to_buf;                        // # of tuples written to buffer.
+  private int curr_page;                        // Current page being written to.
+  private byte[][] _bufs;                        // Array of pointers to buffer pages.
+  private int _n_pages;                        // number of pages in array
+  private int t_size;                                // Size of a tuple
+  private long t_written;                        // # of tuples written so far.
+  private int TEST_temp_fd;                        // fd of a temporary file
+  private Heapfile _temp_fd;
+  private boolean buffer_only;
 }
 
 

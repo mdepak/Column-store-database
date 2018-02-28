@@ -2,8 +2,12 @@
 
 package heap;
 
-import diskmgr.*;
-import global.*;
+import diskmgr.Page;
+import global.Convert;
+import global.GlobalConst;
+import global.PageId;
+import global.RID;
+import java.io.IOException;
 
 
 /**
@@ -41,34 +45,41 @@ public class HFPage extends Page
      the current implementation to work properly.
      Be careful when modifying this class.
   */
-  /**
-   * page number of this page
-   */
-  protected PageId curPage = new PageId();
+
   /**
    * number of slots in use
    */
   private short slotCnt;
+
   /**
    * offset of first used byte by data records in data[]
    */
   private short usedPtr;
+
   /**
    * number of bytes free in data[]
    */
   private short freeSpace;
+
   /**
    * an arbitrary value used by subclasses as needed
    */
   private short type;
+
   /**
    * backward pointer to data page
    */
   private PageId prevPage = new PageId();
+
   /**
    * forward pointer to data page
    */
   private PageId nextPage = new PageId();
+
+  /**
+   * page number of this page
+   */
+  protected PageId curPage = new PageId();
 
   /**
    * Default constructor
@@ -100,10 +111,10 @@ public class HFPage extends Page
   /**
    * Constructor of class HFPage initialize a new page
    *
+   * @param pageNo the page number of a new page to be initialized
+   * @param apage the Page to be initialized
    * @throws IOException I/O errors
-   * @param  pageNo  the page number of a new page to be initialized
-   * @param  apage  the Page to be initialized
-   * @see    Page
+   * @see Page
    */
 
 
@@ -170,8 +181,8 @@ public class HFPage extends Page
   }
 
   /**
-   * @throws IOException I/O errors
    * @return PageId of previous page
+   * @throws IOException I/O errors
    */
   public PageId getPrevPage()
       throws IOException {
@@ -204,8 +215,8 @@ public class HFPage extends Page
   /**
    * sets value of nextPage to pageNo
    *
+   * @param pageNo page number for next page
    * @throws IOException I/O errors
-   * @param  pageNo  page number for next page
    */
   public void setNextPage(PageId pageNo)
       throws IOException {
@@ -226,8 +237,8 @@ public class HFPage extends Page
   /**
    * sets value of curPage to pageNo
    *
+   * @param pageNo page number for current page
    * @throws IOException I/O errors
-   * @param  pageNo  page number for current page
    */
   public void setCurPage(PageId pageNo)
       throws IOException {
@@ -248,8 +259,8 @@ public class HFPage extends Page
   /**
    * sets value of type
    *
+   * @param valtype an arbitrary value
    * @throws IOException I/O errors
-   * @param  valtype an arbitrary value
    */
   public void setType(short valtype)
       throws IOException {
@@ -272,8 +283,8 @@ public class HFPage extends Page
    *
    * @param slotno the slot number
    * @param length length of record the slot contains
+   * @param offset offset of record
    * @throws IOException I/O errors
-   * @param  offset offset of record
    */
   public void setSlot(int slotno, int length, int offset)
       throws IOException {
@@ -283,9 +294,9 @@ public class HFPage extends Page
   }
 
   /**
-   * @throws IOException I/O errors
-   * @param  slotno  slot number
+   * @param slotno slot number
    * @return the length of record the given slot contains
+   * @throws IOException I/O errors
    */
   public short getSlotLength(int slotno)
       throws IOException {
@@ -310,9 +321,9 @@ public class HFPage extends Page
   /**
    * inserts a new record onto the page, returns RID of this record
    *
-   * @throws IOException I/O errors in C++ Status insertRecord(char *recPtr, int recLen, RID& rid)
-   * @param  record a record to be inserted
+   * @param record a record to be inserted
    * @return RID of record, null if sufficient space does not exist
+   * @throws IOException I/O errors in C++ Status insertRecord(char *recPtr, int recLen, RID& rid)
    */
   public RID insertRecord(byte[] record)
       throws IOException {
@@ -376,9 +387,9 @@ public class HFPage extends Page
   /**
    * delete the record with the specified rid
    *
+   * @param rid the record ID
    * @throws IOException I/O errors in C++ Status deleteRecord(const RID& rid)
-   * @param  rid the record ID
-   * @exception InvalidSlotNumberException Invalid slot number
+   * @throws InvalidSlotNumberException Invalid slot number
    */
   public void deleteRecord(RID rid)
       throws IOException,
@@ -502,10 +513,10 @@ public class HFPage extends Page
    * copies out record with RID rid into record pointer. <br> Status getRecord(RID rid, char
    * *recPtr, int& recLen)
    *
+   * @param rid the record ID
    * @return a tuple contains the record
    * @throws InvalidSlotNumberException Invalid slot number
    * @throws IOException I/O errors
-   * @param  rid the record ID
    * @see Tuple
    */
   public Tuple getRecord(RID rid)

@@ -2,8 +2,14 @@
 
 package bufmgr;
 
-import diskmgr.*;
-import global.*;
+import diskmgr.DiskMgrException;
+import diskmgr.FileIOException;
+import diskmgr.InvalidPageNumberException;
+import diskmgr.Page;
+import global.GlobalConst;
+import global.PageId;
+import global.SystemDefs;
+import java.io.IOException;
 
 
 /**
@@ -119,15 +125,6 @@ class BufHashTbl implements GlobalConst {
 
 
   /**
-   * Creates a buffer hash table object.
-   */
-  public BufHashTbl() {
-    for (int i = 0; i < HTSIZE; i++) {
-      ht[i] = null;
-    }
-  }
-
-  /**
    * Returns the number of hash bucket used, value between 0 and HTSIZE-1
    *
    * @param pageNo the page number for the page in file.
@@ -136,6 +133,17 @@ class BufHashTbl implements GlobalConst {
   private int hash(PageId pageNo) {
     return (pageNo.pid % HTSIZE);
   }
+
+
+  /**
+   * Creates a buffer hash table object.
+   */
+  public BufHashTbl() {
+    for (int i = 0; i < HTSIZE; i++) {
+      ht[i] = null;
+    }
+  }
+
 
   /**
    * Insert association between page pageNo and frame frameNo into the hash table.
@@ -362,51 +370,6 @@ public class BufMgr implements GlobalConst {
 
 
   /**
-   * Create a buffer manager object.
-   *
-   * @param numbufs number of buffers in the buffer pool.
-   * @param replacerArg name of the buffer replacement policy.
-   */
-  public BufMgr(int numbufs, String replacerArg)
-
-  {
-
-    numBuffers = numbufs;
-    frmeTable = new FrameDesc[numBuffers];
-    bufPool = new byte[numBuffers][MAX_SPACE];
-    frmeTable = new FrameDesc[numBuffers];
-
-    for (int i = 0; i < numBuffers; i++)  // initialize frameTable
-    {
-      frmeTable[i] = new FrameDesc();
-    }
-
-    if (replacerArg == null) {
-
-      replacer = new Clock(this);
-
-    } else {
-
-      if (replacerArg.compareTo("Clock") == 0) {
-        replacer = new Clock(this);
-        System.out.println("Replacer: Clock\n");
-      } else if (replacerArg.compareTo("LRU") == 0) {
-        replacer = new LRU(this);
-        System.out.println("Replacer: LRU\n");
-      } else if (replacerArg.compareTo("MRU") == 0) {
-        replacer = new LRU(this);
-        System.out.println("Replacer: MRU\n");
-      } else {
-        replacer = new Clock(this);
-        System.out.println("Replacer:Unknown, Use Clock\n");
-      }
-    }
-
-    replacer.setBufferManager(this);
-
-  }
-
-  /**
    * Factor out the common code for the two versions of Flush
    *
    * @param pageid the page number of the page which needs to be flushed.
@@ -476,7 +439,54 @@ public class BufMgr implements GlobalConst {
     }
   }
 
-  // Debug use only
+
+  /**
+   * Create a buffer manager object.
+   *
+   * @param numbufs number of buffers in the buffer pool.
+   * @param replacerArg name of the buffer replacement policy.
+   */
+  public BufMgr(int numbufs, String replacerArg)
+
+  {
+
+    numBuffers = numbufs;
+    frmeTable = new FrameDesc[numBuffers];
+    bufPool = new byte[numBuffers][MAX_SPACE];
+    frmeTable = new FrameDesc[numBuffers];
+
+    for (int i = 0; i < numBuffers; i++)  // initialize frameTable
+    {
+      frmeTable[i] = new FrameDesc();
+    }
+
+    if (replacerArg == null) {
+
+      replacer = new Clock(this);
+
+    } else {
+
+      if (replacerArg.compareTo("Clock") == 0) {
+        replacer = new Clock(this);
+        System.out.println("Replacer: Clock\n");
+      } else if (replacerArg.compareTo("LRU") == 0) {
+        replacer = new LRU(this);
+        System.out.println("Replacer: LRU\n");
+      } else if (replacerArg.compareTo("MRU") == 0) {
+        replacer = new LRU(this);
+        System.out.println("Replacer: MRU\n");
+      } else {
+        replacer = new Clock(this);
+        System.out.println("Replacer:Unknown, Use Clock\n");
+      }
+    }
+
+    replacer.setBufferManager(this);
+
+  }
+
+
+  // Debug use only   
   private void bmhashdisplay() {
     hashTable.display();
   }

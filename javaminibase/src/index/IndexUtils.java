@@ -1,8 +1,21 @@
 package index;
 
-import btree.*;
-import global.*;
-import iterator.*;
+import btree.BTreeFile;
+import btree.ConstructPageException;
+import btree.IndexFile;
+import btree.IndexFileScan;
+import btree.IntegerKey;
+import btree.IteratorException;
+import btree.KeyClass;
+import btree.KeyNotMatchException;
+import btree.PinPageException;
+import btree.StringKey;
+import btree.UnpinPageException;
+import global.AttrOperator;
+import global.AttrType;
+import iterator.CondExpr;
+import iterator.UnknownKeyTypeException;
+import java.io.IOException;
 
 
 /**
@@ -138,7 +151,7 @@ public class IndexUtils {
 
         case AttrType.attrReal:
     /*
-	    if ((FloatKey)key1.getKey().floatValue() < (FloatKey)key2.getKey().floatValue()) {
+      if ((FloatKey)key1.getKey().floatValue() < (FloatKey)key2.getKey().floatValue()) {
 	    indScan = ((BTreeFile)indFile).new_scan(key1, key2);
 	    }
 	    else {

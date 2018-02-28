@@ -2,31 +2,19 @@
 
 package diskmgr;
 
-import bufmgr.*;
-import global.*;
-
-/**
- * interface of PageUsedBytes
- */
-interface PageUsedBytes {
-
-  int DIR_PAGE_USED_BYTES = 8 + 8;
-  int FIRST_PAGE_USED_BYTES = DIR_PAGE_USED_BYTES + 4;
-}
+import global.Convert;
+import global.GlobalConst;
+import global.PageId;
+import global.SystemDefs;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 public class DB implements GlobalConst {
 
 
   private static final int bits_per_page = MAX_SPACE * 8;
-  private RandomAccessFile fp;
-  private int num_pages;
-  private String name;
 
-  /**
-   * default constructor.
-   */
-  public DB() {
-  }
 
   /**
    * Open the database with the given name.
@@ -62,6 +50,13 @@ public class DB implements GlobalConst {
 
     unpinPage(pageId, false /* undirty*/);
   }
+
+  /**
+   * default constructor.
+   */
+  public DB() {
+  }
+
 
   /**
    * DB Constructors. Create a database with the specified number of pages where the page size is
@@ -123,6 +118,7 @@ public class DB implements GlobalConst {
   public void closeDB() throws IOException {
     fp.close();
   }
+
 
   /**
    * Destroy the database, removing the file that stores it.
@@ -394,7 +390,7 @@ public class DB implements GlobalConst {
       throw new InvalidPageNumberException(null, " DB bad page number");
     }
 
-    // Does the file already exist?
+    // Does the file already exist?  
 
     if (get_file_entry(fname) != null) {
       throw new DuplicateEntryException(null, "DB fileentry already exists");
@@ -729,6 +725,11 @@ public class DB implements GlobalConst {
 
   }
 
+  private RandomAccessFile fp;
+  private int num_pages;
+  private String name;
+
+
   /**
    * Set runsize bits starting from start to value specified
    */
@@ -844,6 +845,15 @@ public class DB implements GlobalConst {
 }//end of DB class
 
 /**
+ * interface of PageUsedBytes
+ */
+interface PageUsedBytes {
+
+  int DIR_PAGE_USED_BYTES = 8 + 8;
+  int FIRST_PAGE_USED_BYTES = DIR_PAGE_USED_BYTES + 4;
+}
+
+/**
  * Super class of the directory page and first page
  */
 class DBHeaderPage implements PageUsedBytes, GlobalConst {
@@ -885,6 +895,17 @@ class DBHeaderPage implements PageUsedBytes, GlobalConst {
   }
 
   /**
+   * set the next page number
+   *
+   * @param pageno next page ID
+   * @throws IOException I/O errors
+   */
+  public void setNextPage(PageId pageno)
+      throws IOException {
+    Convert.setIntValue(pageno.pid, NEXT_PAGE, data);
+  }
+
+  /**
    * return the next page number
    *
    * @return next page ID
@@ -898,14 +919,15 @@ class DBHeaderPage implements PageUsedBytes, GlobalConst {
   }
 
   /**
-   * set the next page number
+   * set number of entries on this page
    *
-   * @param pageno next page ID
+   * @param numEntries the number of entries
    * @throws IOException I/O errors
    */
-  public void setNextPage(PageId pageno)
+
+  protected void setNumOfEntries(int numEntries)
       throws IOException {
-    Convert.setIntValue(pageno.pid, NEXT_PAGE, data);
+    Convert.setIntValue(numEntries, NUM_OF_ENTRIES, data);
   }
 
   /**
@@ -917,18 +939,6 @@ class DBHeaderPage implements PageUsedBytes, GlobalConst {
   public int getNumOfEntries()
       throws IOException {
     return Convert.getIntValue(NUM_OF_ENTRIES, data);
-  }
-
-  /**
-   * set number of entries on this page
-   *
-   * @param numEntries the number of entries
-   * @throws IOException I/O errors
-   */
-
-  protected void setNumOfEntries(int numEntries)
-      throws IOException {
-    Convert.setIntValue(numEntries, NUM_OF_ENTRIES, data);
   }
 
   /**
@@ -1012,17 +1022,6 @@ class DBFirstPage extends DBHeaderPage {
     data = page.getpage();
   }
 
-  /**
-   * return the number of pages in the DB
-   *
-   * @return number of pages in DB
-   * @throws IOException I/O errors
-   */
-  public int getNumDBPages()
-      throws IOException {
-
-    return (Convert.getIntValue(NUM_DB_PAGE, data));
-  }
 
   /**
    * set number of pages in the DB
@@ -1033,6 +1032,18 @@ class DBFirstPage extends DBHeaderPage {
   public void setNumDBPages(int num)
       throws IOException {
     Convert.setIntValue(num, NUM_DB_PAGE, data);
+  }
+
+  /**
+   * return the number of pages in the DB
+   *
+   * @return number of pages in DB
+   * @throws IOException I/O errors
+   */
+  public int getNumDBPages()
+      throws IOException {
+
+    return (Convert.getIntValue(NUM_DB_PAGE, data));
   }
 
 }

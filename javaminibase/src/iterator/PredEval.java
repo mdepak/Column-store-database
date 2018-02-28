@@ -1,7 +1,12 @@
 package iterator;
 
-import global.*;
-import heap.*;
+import global.AttrOperator;
+import global.AttrType;
+import heap.FieldNumberOutOfBoundException;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
+import heap.Tuple;
+import java.io.IOException;
 
 public class PredEval {
 

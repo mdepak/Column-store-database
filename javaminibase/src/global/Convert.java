@@ -2,6 +2,13 @@
 
 package global;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class Convert {
 
   /**
@@ -149,9 +156,9 @@ public class Convert {
    * update an integer value in the given byte array at the specified position
    *
    * @param data a byte array
+   * @param value the value to be copied into the data[]
+   * @param position the position of tht value in data[]
    * @throws java.io.IOException I/O errors
-   * @param  value the value to be copied into the data[]
-   * @param  position the position of tht value in data[]
    */
   public static void setIntValue(int value, int position, byte[] data)
       throws java.io.IOException {
@@ -179,9 +186,9 @@ public class Convert {
    * update a float value in the given byte array at the specified position
    *
    * @param data a byte array
+   * @param value the value to be copied into the data[]
+   * @param position the position of tht value in data[]
    * @throws java.io.IOException I/O errors
-   * @param  value the value to be copied into the data[]
-   * @param  position the position of tht value in data[]
    */
   public static void setFloValue(float value, int position, byte[] data)
       throws java.io.IOException {
@@ -209,9 +216,9 @@ public class Convert {
    * update a short integer in the given byte array at the specified position
    *
    * @param data a byte array
+   * @param value the value to be copied into data[]
+   * @param position the position of tht value in data[]
    * @throws java.io.IOException I/O errors
-   * @param  value the value to be copied into data[]
-   * @param  position the position of tht value in data[]
    */
   public static void setShortValue(short value, int position, byte[] data)
       throws java.io.IOException {

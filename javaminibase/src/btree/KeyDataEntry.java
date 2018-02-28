@@ -5,7 +5,8 @@
  */
 package btree;
 
-import global.*;
+import global.PageId;
+import global.RID;
 
 /**
  * KeyDataEntry: define (key, data) pair.

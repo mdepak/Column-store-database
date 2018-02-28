@@ -1,14 +1,29 @@
 package tests;
 //originally from : joins.C
 
-import btree.*;
-import bufmgr.*;
-import catalog.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
-import index.*;
-import iterator.*;
+import btree.BTreeFile;
+import btree.IntegerKey;
+import global.AttrOperator;
+import global.AttrType;
+import global.GlobalConst;
+import global.IndexType;
+import global.RID;
+import global.SystemDefs;
+import global.TupleOrder;
+import heap.Heapfile;
+import heap.Scan;
+import heap.Tuple;
+import index.IndexScan;
+import iterator.CondExpr;
+import iterator.DuplElim;
+import iterator.FileScan;
+import iterator.FldSpec;
+import iterator.NestedLoopsJoins;
+import iterator.RelSpec;
+import iterator.Sort;
+import iterator.SortMerge;
+import java.io.IOException;
+import java.util.Vector;
 
 /**
  * Here is the implementation for the tests. There are N tests performed. We start off by showing

@@ -1,6 +1,6 @@
 package btree;
 
-import chainexception.*;
+import chainexception.ChainException;
 
 public class RedistributeException extends ChainException {
 

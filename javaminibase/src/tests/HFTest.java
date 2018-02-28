@@ -1,10 +1,14 @@
 package tests;
 
-import bufmgr.*;
-import chainexception.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import chainexception.ChainException;
+import global.Convert;
+import global.GlobalConst;
+import global.RID;
+import global.SystemDefs;
+import heap.Heapfile;
+import heap.Scan;
+import heap.Tuple;
+import java.io.IOException;
 
 /**
  * Note that in JAVA, methods can't be overridden to be more private. Therefore, the declaration of
@@ -15,8 +19,9 @@ class HFDriver extends TestDriver implements GlobalConst {
 
   private final static boolean OK = true;
   private final static boolean FAIL = false;
-  private final static int reclen = 32;
+
   private int choice;
+  private final static int reclen = 32;
 
   public HFDriver() {
     super("hptest");

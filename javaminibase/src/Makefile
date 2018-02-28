@@ -6,8 +6,9 @@
 JARFILES=bufmgr/*.class diskmgr/*.class global/*.class iterator/*.class\
          heap/*.class chainexception/*.class  btree/*.class index/*.class tests/*.class
 
-JDKPATH = /Library/Java/JavaVirtualMachines/jdk1.8.0_152.jdk/Contents/Home
-LIBPATH = .:..
+JDKPATH = /Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk/Contents/Home
+LIBPATH = /Users/student/Desktop/DBMSI/minjava/javaminibase/src/lib
+
 CLASSPATH = $(LIBPATH)
 BINPATH = $(JDKPATH)/bin
 JAVAC = $(JDKPATH)/bin/javac -classpath $(CLASSPATH)
@@ -17,7 +18,7 @@ DOCFILES=bufmgr diskmgr global chainexception heap btree iterator index
 
 ##############  update the above for each assignment in making
 
-ASSIGN=/Users/vinoth/Projects/DBMSI/minjava/javaminibase/src
+ASSIGN=/Users/student/Desktop/DBMSI/minjava/javaminibase/src
 LIBDIR=$(ASSIGN)/lib
 KEY=$(ASSIGN)/key
 SRC=$(ASSIGN)/src
@@ -37,7 +38,8 @@ db:
 	make -C heap
 	make -C index
 	make -C iterator
-	
+	make -C columnar
+
 doc:
 	$(JAVADOC) $(DOCFILES)
 

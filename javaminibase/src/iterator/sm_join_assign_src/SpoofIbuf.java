@@ -1,24 +1,14 @@
 package iterator;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import global.GlobalConst;
+import global.RID;
+import heap.Heapfile;
+import heap.InvalidTupleSizeException;
+import heap.Scan;
+import heap.Tuple;
+import java.io.IOException;
 
 public class SpoofIbuf implements GlobalConst {
-
-  private byte[][] _bufs;
-  private int TEST_fd;
-  private Heapfile _fd;
-  private Scan hf_scan;
-  private int _n_pages;
-  private int t_size;
-  private int t_proc, t_in_buf;
-  private int tot_t_proc;
-  private int t_rd_from_pg, curr_page;
-  private int t_per_pg;
-  private boolean done;
-  private int n_tuples;
 
   /**
    * constructor, use the init to initialize
@@ -27,6 +17,7 @@ public class SpoofIbuf implements GlobalConst {
 
     hf_scan = null;
   }
+
 
   /**
    * Initialize some necessary inormation, call Iobuf to create the object, and call init to finish
@@ -122,6 +113,7 @@ public class SpoofIbuf implements GlobalConst {
     return buf;
   }
 
+
   /**
    * @return if the buffer is empty,return true. otherwise false
    */
@@ -163,6 +155,23 @@ public class SpoofIbuf implements GlobalConst {
     }
     return tot_read;
   }
+
+
+  private byte[][] _bufs;
+
+  private int TEST_fd;
+
+  private Heapfile _fd;
+  private Scan hf_scan;
+  private int _n_pages;
+  private int t_size;
+
+  private int t_proc, t_in_buf;
+  private int tot_t_proc;
+  private int t_rd_from_pg, curr_page;
+  private int t_per_pg;
+  private boolean done;
+  private int n_tuples;
 }
 
 

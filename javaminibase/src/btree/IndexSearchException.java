@@ -1,6 +1,6 @@
 package btree;
 
-import chainexception.*;
+import chainexception.ChainException;
 
 public class IndexSearchException extends ChainException {
 

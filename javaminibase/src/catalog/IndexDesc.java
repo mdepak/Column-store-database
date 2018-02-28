@@ -6,9 +6,8 @@
 
 package catalog;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
+import global.IndexType;
+import global.TupleOrder;
 
 // IndexDesc class: schema for index catalog
 public class IndexDesc {

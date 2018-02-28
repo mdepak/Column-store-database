@@ -7,6 +7,10 @@ public class IntegerKey extends KeyClass {
 
   private Integer key;
 
+  public String toString() {
+    return key.toString();
+  }
+
   /**
    * Class constructor
    *
@@ -25,9 +29,6 @@ public class IntegerKey extends KeyClass {
     key = new Integer(value);
   }
 
-  public String toString() {
-    return key.toString();
-  }
 
   /**
    * get a copy of the integer key

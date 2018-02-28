@@ -1,6 +1,7 @@
 package btree;
 
-import global.*;
+import global.RID;
+import java.io.IOException;
 
 
 /**

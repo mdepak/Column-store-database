@@ -1,6 +1,6 @@
 package bufmgr;
 
-import chainexception.*;
+import chainexception.ChainException;
 
 
 public class PagePinnedException extends ChainException {

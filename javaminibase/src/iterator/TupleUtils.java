@@ -1,8 +1,10 @@
 package iterator;
 
 
-import global.*;
-import heap.*;
+import global.AttrType;
+import heap.FieldNumberOutOfBoundException;
+import heap.Tuple;
+import java.io.IOException;
 
 /**
  * some useful method when processing Tuple

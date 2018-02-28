@@ -2,7 +2,7 @@
 
 package diskmgr;
 
-import global.*;
+import global.GlobalConst;
 
 /**
  * class Page
@@ -10,11 +10,6 @@ import global.*;
 
 public class Page implements GlobalConst {
 
-
-  /**
-   * protected field: An array of bytes (for the page).
-   */
-  protected byte[] data;
 
   /**
    * default constructor
@@ -50,5 +45,10 @@ public class Page implements GlobalConst {
   public void setpage(byte[] array) {
     data = array;
   }
+
+  /**
+   * protected field: An array of bytes (for the page).
+   */
+  protected byte[] data;
 
 }

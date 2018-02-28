@@ -6,28 +6,23 @@
 
 package catalog;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import global.AttrType;
+import global.Catalogglobal;
+import global.ExtendedSystemDefs;
+import global.GlobalConst;
+import global.IndexType;
+import global.RID;
+import heap.HFBufMgrException;
+import heap.HFDiskMgrException;
+import heap.HFException;
+import heap.Heapfile;
+import heap.Scan;
+import heap.Tuple;
+import java.io.IOException;
 
 
 public class AttrCatalog extends Heapfile
     implements GlobalConst, Catalogglobal {
-
-  Tuple tuple;
-
-  ;
-  short[] str_sizes;
-
-  ;
-  AttrType[] attrs;
-
-  ;
-  short max;
-
-  ;
-
 
   //OPEN ATTRIBUTE CATALOG
   AttrCatalog(String filename)
@@ -220,10 +215,6 @@ public class AttrCatalog extends Heapfile
 
   ;
 
-  //--------------------------------------------------
-  // READ_TUPLE
-  //--------------------------------------------------
-
   // RETURNS ATTRTYPE AND STRINGSIZE ARRAYS FOR CONSTRUCTING TUPLES
   public int getTupleStructure(String relation, int attrCnt,
       AttrType[] typeArray, short[] sizeArray)
@@ -302,6 +293,9 @@ public class AttrCatalog extends Heapfile
     return attrCnt;
   }
 
+  ;
+
+
   // ADD ATTRIBUTE ENTRY TO CATALOG
   public void addInfo(AttrDesc record)
       throws AttrCatalogException,
@@ -322,6 +316,7 @@ public class AttrCatalog extends Heapfile
   }
 
   ;
+
 
   // REMOVE AN ATTRIBUTE ENTRY FROM CATALOG
   // return true if success, false if not found.
@@ -375,12 +370,13 @@ public class AttrCatalog extends Heapfile
 
   ;
 
+
   //--------------------------------------------------
   // MAKE_TUPLE
   //--------------------------------------------------
-  // Tuple must have been initialized properly in the
+  // Tuple must have been initialized properly in the 
   // constructor
-  // Converts AttrDesc to tuple.
+  // Converts AttrDesc to tuple. 
   public void make_tuple(Tuple tuple, AttrDesc record)
       throws IOException,
       AttrCatalogException {
@@ -410,6 +406,12 @@ public class AttrCatalog extends Heapfile
       throw new AttrCatalogException(e1, "make_tuple failed");
     }
   }
+
+  ;
+
+  //--------------------------------------------------
+  // READ_TUPLE
+  //--------------------------------------------------
 
   public void read_tuple(Tuple tuple, AttrDesc record)
       throws IOException,
@@ -450,8 +452,18 @@ public class AttrCatalog extends Heapfile
   public void dropRelation(String relation) {
   }
 
+  ;
+
   // ADD AN INDEX TO A RELATION
   public void addIndex(String relation, String attrname,
       IndexType accessType) {
   }
+
+  ;
+
+
+  Tuple tuple;
+  short[] str_sizes;
+  AttrType[] attrs;
+  short max;
 };

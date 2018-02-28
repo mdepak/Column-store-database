@@ -6,24 +6,26 @@
 
 package catalog;
 
-import btree.*;
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import btree.BTreeFile;
+import btree.IntegerKey;
+import btree.KeyClass;
+import btree.StringKey;
+import bufmgr.BufMgrException;
+import diskmgr.DiskMgrException;
+import global.AttrType;
+import global.Catalogglobal;
+import global.ExtendedSystemDefs;
+import global.GlobalConst;
+import global.IndexType;
+import global.RID;
+import global.TupleOrder;
+import heap.Heapfile;
+import heap.Scan;
+import heap.Tuple;
+import java.io.IOException;
 
 public class IndexCatalog extends Heapfile
     implements GlobalConst, Catalogglobal {
-
-  Tuple tuple;
-
-  ;
-  short[] str_sizes;
-
-  ;
-  AttrType[] attrs;
-
-  ;
 
   // OPEN INDEX CATALOG
   IndexCatalog(String filename)
@@ -297,7 +299,7 @@ public class IndexCatalog extends Heapfile
 
   ;
 
-  // CREATES A FILE NAME FOR AN INDEX
+  // CREATES A FILE NAME FOR AN INDEX 
   public String buildIndexName(String relation, String attrName,
       IndexType accessType) {
     String accessName = null;
@@ -612,6 +614,9 @@ public class IndexCatalog extends Heapfile
   void dropRelation(String relation) {
   }
 
+  ;
+
+
   void make_tuple(Tuple tuple, IndexDesc record)
       throws IOException,
       IndexCatalogException {
@@ -648,6 +653,8 @@ public class IndexCatalog extends Heapfile
 
     return;
   }
+
+  ;
 
   void read_tuple(Tuple tuple, IndexDesc record)
       throws IOException,
@@ -689,6 +696,13 @@ public class IndexCatalog extends Heapfile
     return;
 
   }
+
+  ;
+
+
+  Tuple tuple;
+  short[] str_sizes;
+  AttrType[] attrs;
 
 };
 

@@ -1,9 +1,5 @@
 package global;
 
-import bufmgr.*;
-import catalog.*;
-import diskmgr.*;
-
 public interface Catalogglobal {
 
   final static int MINIBASE_MAXARRSIZE = 50;

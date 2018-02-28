@@ -1,6 +1,6 @@
 package btree;
 
-import global.*;
+import global.RID;
 
 /**
  * IndexData: It extends the DataClass. It defines the data "rid" for leaf node in B++ tree.
@@ -9,6 +9,13 @@ public class LeafData extends DataClass {
 
   private RID myRid;
 
+  public String toString() {
+    String s;
+    s = "[ " + (new Integer(myRid.pageNo.pid)).toString() + " "
+        + (new Integer(myRid.slotNo)).toString() + " ]";
+    return s;
+  }
+
   /**
    * Class constructor
    *
@@ -16,13 +23,6 @@ public class LeafData extends DataClass {
    */
   LeafData(RID rid) {
     myRid = new RID(rid.pageNo, rid.slotNo);
-  }
-
-  public String toString() {
-    String s;
-    s = "[ " + (new Integer(myRid.pageNo.pid)).toString() + " "
-        + (new Integer(myRid.slotNo)).toString() + " ]";
-    return s;
   }
 
   ;

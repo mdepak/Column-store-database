@@ -1,9 +1,6 @@
 package iterator;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import heap.Tuple;
 
 /**
  * A structure describing a tuple. include a run number and the tuple

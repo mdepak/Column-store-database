@@ -19,7 +19,7 @@ public class PageId {
   /**
    * constructor of class
    *
-   * @param  pageno  the page ID
+   * @param pageno the page ID
    */
   public PageId(int pageno) {
     pid = pageno;

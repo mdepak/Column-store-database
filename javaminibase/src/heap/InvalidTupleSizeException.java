@@ -1,6 +1,6 @@
 package heap;
 
-import chainexception.*;
+import chainexception.ChainException;
 
 public class InvalidTupleSizeException extends ChainException {
 

@@ -6,8 +6,10 @@
  */
 package btree;
 
-import global.*;
-import heap.*;
+import global.GlobalConst;
+import global.PageId;
+import global.RID;
+import global.SystemDefs;
 
 /**
  * BTFileScan implements a search/iterate interface to B+ tree index files (class BTreeFile).  It

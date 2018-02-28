@@ -1,6 +1,7 @@
 package iterator;
 
-import global.*;
+import global.AttrOperator;
+import global.AttrType;
 
 /**
  * This clas will hold single select condition It is an element of linked list which is logically

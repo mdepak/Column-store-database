@@ -1,11 +1,13 @@
 package iterator;
 
-import bufmgr.*;
-import chainexception.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
-import index.*;
+import global.AttrType;
+import global.GlobalConst;
+import global.PageId;
+import global.TupleOrder;
+import heap.FieldNumberOutOfBoundException;
+import heap.Heapfile;
+import heap.Tuple;
+import java.io.IOException;
 
 /**
  * The Sort class sorts a file. All necessary information are passed as arguments to the
@@ -42,113 +44,6 @@ public class Sort extends Iterator implements GlobalConst {
   private SpoofIbuf[] i_buf;
   private PageId[] bufs_pids;
   private boolean useBM = true; // flag for whether to use buffer manager
-
-  /**
-   * Class constructor, take information about the tuples, and set up the sorting
-   *
-   * @param in array containing attribute types of the relation
-   * @param len_in number of columns in the relation
-   * @param str_sizes array of sizes of string attributes
-   * @param am an iterator for accessing the tuples
-   * @param sort_fld the field number of the field to sort on
-   * @param sort_order the sorting order (ASCENDING, DESCENDING)
-   * @param sort_field_len the length of the sort field
-   * @param n_pages amount of memory (in pages) available for sorting
-   * @throws IOException from lower layers
-   * @throws SortException something went wrong in the lower layer.
-   */
-  public Sort(AttrType[] in,
-      short len_in,
-      short[] str_sizes,
-      Iterator am,
-      int sort_fld,
-      TupleOrder sort_order,
-      int sort_fld_len,
-      int n_pages
-  ) throws IOException, SortException {
-    _in = new AttrType[len_in];
-    n_cols = len_in;
-    int n_strs = 0;
-
-    for (int i = 0; i < len_in; i++) {
-      _in[i] = new AttrType(in[i].attrType);
-      if (in[i].attrType == AttrType.attrString) {
-        n_strs++;
-      }
-    }
-
-    str_lens = new short[n_strs];
-
-    n_strs = 0;
-    for (int i = 0; i < len_in; i++) {
-      if (_in[i].attrType == AttrType.attrString) {
-        str_lens[n_strs] = str_sizes[n_strs];
-        n_strs++;
-      }
-    }
-
-    Tuple t = new Tuple(); // need Tuple.java
-    try {
-      t.setHdr(len_in, _in, str_sizes);
-    } catch (Exception e) {
-      throw new SortException(e, "Sort.java: t.setHdr() failed");
-    }
-    tuple_size = t.size();
-
-    _am = am;
-    _sort_fld = sort_fld;
-    order = sort_order;
-    _n_pages = n_pages;
-
-    // this may need change, bufs ???  need io_bufs.java
-    //    bufs = get_buffer_pages(_n_pages, bufs_pids, bufs);
-    bufs_pids = new PageId[_n_pages];
-    bufs = new byte[_n_pages][];
-
-    if (useBM) {
-      try {
-        get_buffer_pages(_n_pages, bufs_pids, bufs);
-      } catch (Exception e) {
-        throw new SortException(e, "Sort.java: BUFmgr error");
-      }
-    } else {
-      for (int k = 0; k < _n_pages; k++) {
-        bufs[k] = new byte[MAX_SPACE];
-      }
-    }
-
-    first_time = true;
-
-    // as a heuristic, we set the number of runs to an arbitrary value
-    // of ARBIT_RUNS
-    temp_files = new Heapfile[ARBIT_RUNS];
-    n_tempfiles = ARBIT_RUNS;
-    n_tuples = new int[ARBIT_RUNS];
-    n_runs = ARBIT_RUNS;
-
-    try {
-      temp_files[0] = new Heapfile(null);
-    } catch (Exception e) {
-      throw new SortException(e, "Sort.java: Heapfile error");
-    }
-
-    o_buf = new OBuf();
-
-    o_buf.init(bufs, _n_pages, tuple_size, temp_files[0], false);
-    //    output_tuple = null;
-
-    max_elems_in_heap = 200;
-    sortFldLen = sort_fld_len;
-
-    Q = new pnodeSplayPQ(sort_fld, in[sort_fld - 1], order);
-
-    op_buf = new Tuple(tuple_size);   // need Tuple.java
-    try {
-      op_buf.setHdr(n_cols, _in, str_lens);
-    } catch (Exception e) {
-      throw new SortException(e, "Sort.java: op_buf.setHdr() failed");
-    }
-  }
 
   /**
    * Set up for merging the runs. Open an input buffer for each run, and insert the first element
@@ -208,7 +103,7 @@ public class Sort extends Iterator implements GlobalConst {
 
       if (temp_tuple != null) {
   /*
-	System.out.print("Get tuple from run " + i);
+  System.out.print("Get tuple from run " + i);
 	temp_tuple.print(_in);
 	*/
         cur_node.tuple = temp_tuple; // no copy needed
@@ -298,7 +193,7 @@ public class Sort extends Iterator implements GlobalConst {
         break;
       }
       cur_node = new pnode();
-      cur_node.tuple = new Tuple(tuple); // tuple copy needed --  Bingjie 4/29/98
+      cur_node.tuple = new Tuple(tuple); // tuple copy needed --  Bingjie 4/29/98 
 
       pcurr_Q.enq(cur_node);
       p_elems_curr_Q++;
@@ -508,7 +403,7 @@ public class Sort extends Iterator implements GlobalConst {
       throws IOException,
       SortException,
       Exception {
-    pnode cur_node;                // needs pq_defs.java
+    pnode cur_node;                // needs pq_defs.java  
     Tuple new_tuple, old_tuple;
 
     cur_node = Q.deq();
@@ -520,7 +415,7 @@ public class Sort extends Iterator implements GlobalConst {
     // we just removed one tuple from one run, now we need to put another
     // tuple of the same run into the queue
     if (i_buf[cur_node.run_num].empty() != true) {
-      // run not exhausted
+      // run not exhausted 
       new_tuple = new Tuple(tuple_size); // need tuple.java??
 
       try {
@@ -638,6 +533,113 @@ public class Sort extends Iterator implements GlobalConst {
     }
 
     return;
+  }
+
+  /**
+   * Class constructor, take information about the tuples, and set up the sorting
+   *
+   * @param in array containing attribute types of the relation
+   * @param len_in number of columns in the relation
+   * @param str_sizes array of sizes of string attributes
+   * @param am an iterator for accessing the tuples
+   * @param sort_fld the field number of the field to sort on
+   * @param sort_order the sorting order (ASCENDING, DESCENDING)
+   * @param sort_field_len the length of the sort field
+   * @param n_pages amount of memory (in pages) available for sorting
+   * @throws IOException from lower layers
+   * @throws SortException something went wrong in the lower layer.
+   */
+  public Sort(AttrType[] in,
+      short len_in,
+      short[] str_sizes,
+      Iterator am,
+      int sort_fld,
+      TupleOrder sort_order,
+      int sort_fld_len,
+      int n_pages
+  ) throws IOException, SortException {
+    _in = new AttrType[len_in];
+    n_cols = len_in;
+    int n_strs = 0;
+
+    for (int i = 0; i < len_in; i++) {
+      _in[i] = new AttrType(in[i].attrType);
+      if (in[i].attrType == AttrType.attrString) {
+        n_strs++;
+      }
+    }
+
+    str_lens = new short[n_strs];
+
+    n_strs = 0;
+    for (int i = 0; i < len_in; i++) {
+      if (_in[i].attrType == AttrType.attrString) {
+        str_lens[n_strs] = str_sizes[n_strs];
+        n_strs++;
+      }
+    }
+
+    Tuple t = new Tuple(); // need Tuple.java
+    try {
+      t.setHdr(len_in, _in, str_sizes);
+    } catch (Exception e) {
+      throw new SortException(e, "Sort.java: t.setHdr() failed");
+    }
+    tuple_size = t.size();
+
+    _am = am;
+    _sort_fld = sort_fld;
+    order = sort_order;
+    _n_pages = n_pages;
+
+    // this may need change, bufs ???  need io_bufs.java
+    //    bufs = get_buffer_pages(_n_pages, bufs_pids, bufs);
+    bufs_pids = new PageId[_n_pages];
+    bufs = new byte[_n_pages][];
+
+    if (useBM) {
+      try {
+        get_buffer_pages(_n_pages, bufs_pids, bufs);
+      } catch (Exception e) {
+        throw new SortException(e, "Sort.java: BUFmgr error");
+      }
+    } else {
+      for (int k = 0; k < _n_pages; k++) {
+        bufs[k] = new byte[MAX_SPACE];
+      }
+    }
+
+    first_time = true;
+
+    // as a heuristic, we set the number of runs to an arbitrary value
+    // of ARBIT_RUNS
+    temp_files = new Heapfile[ARBIT_RUNS];
+    n_tempfiles = ARBIT_RUNS;
+    n_tuples = new int[ARBIT_RUNS];
+    n_runs = ARBIT_RUNS;
+
+    try {
+      temp_files[0] = new Heapfile(null);
+    } catch (Exception e) {
+      throw new SortException(e, "Sort.java: Heapfile error");
+    }
+
+    o_buf = new OBuf();
+
+    o_buf.init(bufs, _n_pages, tuple_size, temp_files[0], false);
+    //    output_tuple = null;
+
+    max_elems_in_heap = 200;
+    sortFldLen = sort_fld_len;
+
+    Q = new pnodeSplayPQ(sort_fld, in[sort_fld - 1], order);
+
+    op_buf = new Tuple(tuple_size);   // need Tuple.java
+    try {
+      op_buf.setHdr(n_cols, _in, str_lens);
+    } catch (Exception e) {
+      throw new SortException(e, "Sort.java: op_buf.setHdr() failed");
+    }
   }
 
   /**

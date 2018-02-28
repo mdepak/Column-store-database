@@ -1,10 +1,13 @@
 package iterator;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
-import index.*;
+import bufmgr.PageNotReadException;
+import global.AttrType;
+import global.TupleOrder;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
+import heap.Tuple;
+import index.IndexException;
+import java.io.IOException;
 
 /**
  * Eleminate the duplicate tuples from the input relation

@@ -6,10 +6,15 @@
  */
 package btree;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import global.AttrType;
+import global.Convert;
+import global.GlobalConst;
+import global.PageId;
+import global.RID;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * This file contains, among some debug utilities, the interface to our key and data abstraction.

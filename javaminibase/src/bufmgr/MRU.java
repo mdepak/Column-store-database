@@ -2,9 +2,6 @@
 
 package bufmgr;
 
-import diskmgr.*;
-import global.*;
-
 /**
  * class MRU is a subclass of class Replacer using MRU algorithm for page replacement
  */
@@ -17,16 +14,6 @@ class MRU extends Replacer {
    */
   private int frames[];
 
-
-  /**
-   * Class constructor Initializing frames[] pointer = null.
-   */
-
-  public MRU(BufMgr mgrArg) {
-    super(mgrArg);
-    frames = null;
-
-  }
 
   /**
    * Calling super class the same method Initializing the frames[] with number of buffer allocated
@@ -51,9 +38,20 @@ class MRU extends Replacer {
   }
 
   /**
+   * Class constructor Initializing frames[] pointer = null.
+   */
+
+  public MRU(BufMgr mgrArg) {
+    super(mgrArg);
+    frames = null;
+
+  }
+
+
+  /**
    * Adding the frame with given frame number to buffer pool putting it in front of the list
    *
-   * @param  frameNo   the frame number
+   * @param frameNo the frame number
    * @see BufMgr
    */
 

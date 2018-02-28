@@ -1,11 +1,16 @@
 package iterator;
 
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
-import index.*;
+import bufmgr.PageNotReadException;
+import global.AttrType;
+import global.RID;
+import heap.Heapfile;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
+import heap.Scan;
+import heap.Tuple;
+import index.IndexException;
+import java.io.IOException;
 
 /**
  * This file contains an implementation of the nested loops join algorithm as described in the

@@ -1,7 +1,9 @@
 package iterator;
 
-import global.*;
-import heap.*;
+import global.AttrType;
+import heap.FieldNumberOutOfBoundException;
+import heap.Tuple;
+import java.io.IOException;
 
 /**
  * Jtuple has the appropriate types. Jtuple already has its setHdr called to setup its vital stas.

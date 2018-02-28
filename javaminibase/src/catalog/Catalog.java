@@ -6,23 +6,18 @@
 
 package catalog;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import global.AttrType;
+import global.Catalogglobal;
+import global.ExtendedSystemDefs;
+import global.GlobalConst;
+import global.IndexType;
+import heap.Scan;
+import java.io.IOException;
 
 public class Catalog
     implements GlobalConst, Catalogglobal {
 
   // open relation catalog (invokes constructors for each)
-
-  private IndexCatalog indCat;
-  private RelCatalog relCat;
-
-  ;
-  private AttrCatalog attrCat;
-
-  ;
 
   public Catalog() {
 
@@ -40,7 +35,6 @@ public class Catalog
     }
   }
 
-  ;
 
   // get catalog entry for a relation
   void getRelationInfo(String relation, RelDesc record)
@@ -201,7 +195,7 @@ public class Catalog
 
   ;
 
-  // get catalog entries for all indexes for an attribute
+  // get catalog entries for all indexes for an attribute 
   int getAttrIndexes(String relation, String attrName,
       int indexCnt, IndexDesc[] indexes)
       throws Catalogmissparam,
@@ -422,12 +416,23 @@ public class Catalog
     return indCat;
   }
 
+  ;
+
   public RelCatalog getRelCat() {
     return relCat;
   }
 
+  ;
+
   public AttrCatalog getAttrCat() {
     return attrCat;
   }
+
+  ;
+
+
+  private IndexCatalog indCat;
+  private RelCatalog relCat;
+  private AttrCatalog attrCat;
 }
 

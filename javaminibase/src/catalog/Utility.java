@@ -6,13 +6,38 @@
 
 package catalog;
 
-import btree.*;
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import btree.BTreeFile;
+import btree.IntegerKey;
+import btree.KeyClass;
+import btree.StringKey;
+import global.AttrType;
+import global.Catalogglobal;
+import global.ExtendedSystemDefs;
+import global.IndexType;
+import global.RID;
+import heap.Heapfile;
+import heap.Tuple;
+import java.io.IOException;
 
 public class Utility implements Catalogglobal {
+
+  // WRAPS DELETE UTILITY IN TX
+  void deleteRecordUT(String relation, attrNode item) {
+  }
+
+  ;
+
+  // DELETES RECORDS
+  void deleteRecUT(String relation, attrNode item) {
+  }
+
+  ;
+
+  // DELETES INDEX ENRIES FOR RECORDS
+  void deleteRecIndexesUT(String relation, RID rid, Tuple tuple) {
+  }
+
+  ;
 
   // WRAPS INSERT UTILITY  IN TX
   public static void insertRecordUT(String relation, int attrCnt, attrNode[] attrList)
@@ -34,6 +59,19 @@ public class Utility implements Catalogglobal {
   }
 
   ;
+
+//---------------------------------------------------
+// INSERT A RECORD INTO THE DATABASE
+// - takes
+//   1. relation name
+//   2. attribute count
+//   3. array of attribute names and values
+// - does
+//   1. typechecks
+//   2. creates tuple
+//   3. inserts into datafile
+//   4. inserts into each indexfile
+//---------------------------------------------------
 
   public static void insertRecUT(String relation, int attrCnt, attrNode[] attrList)
       throws Catalogmissparam,
@@ -237,6 +275,29 @@ public class Utility implements Catalogglobal {
 
   ;
 
+  // WRAPS LOAD UTILITY IN TX
+  void loadUT(String relation, String fileName) {
+  }
+
+  ;
+
+  // LOADS RECORDS
+  void loadRecordsUT(String relation, String fileName) {
+  }
+
+  ;
+
+  // LOADS INDEXES
+  void loadIndexesUT(Tuple tuple, int attrCnt, int indexCnt,
+      AttrDesc[] attrs, IndexDesc[] indexes, void[] iFiles, RID rid) {
+  }
+
+  ;
+
+//-------------------------------
+// TYPECHECK INTS
+//--------------------------------
+
   /*Checks to see if a given string is a valid int.  ["-" | ""][0..9]+  */
   public static boolean check_int(attrNode N) {
     byte[] index;
@@ -259,7 +320,9 @@ public class Utility implements Catalogglobal {
     return true;
   }
 
-  ;
+//-----------------------------------
+//  TYPECHECK FLOAT
+//------------------------------------
 
   /* CHecks to see if a string is a valid float.
   Nothing special.
@@ -306,70 +369,14 @@ public class Utility implements Catalogglobal {
     return true;
   }
 
-  ;
-
-//---------------------------------------------------
-// INSERT A RECORD INTO THE DATABASE
-// - takes
-//   1. relation name
-//   2. attribute count
-//   3. array of attribute names and values
-// - does
-//   1. typechecks
-//   2. creates tuple
-//   3. inserts into datafile
-//   4. inserts into each indexfile
-//---------------------------------------------------
-
-  static boolean check_string(attrNode N) {
-    return true;
-  }
-
-  ;
-
-  // WRAPS DELETE UTILITY IN TX
-  void deleteRecordUT(String relation, attrNode item) {
-  }
-
-  ;
-
-  // DELETES RECORDS
-  void deleteRecUT(String relation, attrNode item) {
-  }
-
-  ;
-
-  // DELETES INDEX ENRIES FOR RECORDS
-  void deleteRecIndexesUT(String relation, RID rid, Tuple tuple) {
-  }
-
-  ;
-
-//-------------------------------
-// TYPECHECK INTS
-//--------------------------------
-
-  // WRAPS LOAD UTILITY IN TX
-  void loadUT(String relation, String fileName) {
-  }
-
-//-----------------------------------
-//  TYPECHECK FLOAT
-//------------------------------------
-
-  // LOADS RECORDS
-  void loadRecordsUT(String relation, String fileName) {
-  }
-
 //-------------------------------------------------------------------
 // CHECK STRING LENGTH
 // Checks to make sure that the length of the string is within the liMits
 // set by the attrDesc
 //--------------------------------------------------------------------
 
-  // LOADS INDEXES
-  void loadIndexesUT(Tuple tuple, int attrCnt, int indexCnt,
-      AttrDesc[] attrs, IndexDesc[] indexes, void[] iFiles, RID rid) {
+  static boolean check_string(attrNode N) {
+    return true;
   }
 
 

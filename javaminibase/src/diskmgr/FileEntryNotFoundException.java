@@ -1,6 +1,6 @@
 package diskmgr;
 
-import chainexception.*;
+import chainexception.ChainException;
 
 
 public class FileEntryNotFoundException extends ChainException {

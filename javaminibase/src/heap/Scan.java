@@ -2,15 +2,20 @@ package heap;
 
 /**
  * JAVA Scan.java-  class Scan
+ *
+ * Scan.java-  class Scan
  */
 /**
  * Scan.java-  class Scan
  *
  */
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
+import diskmgr.Page;
+import global.GlobalConst;
+import global.PageId;
+import global.RID;
+import global.SystemDefs;
+import java.io.IOException;
 
 
 /**

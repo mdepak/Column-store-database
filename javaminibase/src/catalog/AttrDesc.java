@@ -6,7 +6,7 @@
 
 package catalog;
 
-import global.*;
+import global.AttrType;
 
 // AttrDesc class: schema of attribute catalog:
 public class AttrDesc {

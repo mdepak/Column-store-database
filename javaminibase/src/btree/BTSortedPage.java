@@ -7,9 +7,13 @@
 
 package btree;
 
-import diskmgr.*;
-import global.*;
-import heap.*;
+import diskmgr.Page;
+import global.PageId;
+import global.RID;
+import global.SystemDefs;
+import heap.HFPage;
+import heap.InvalidSlotNumberException;
+import java.io.IOException;
 
 
 /**

@@ -1,10 +1,21 @@
 package tests;
 
-import btree.*;
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import btree.BT;
+import btree.BTFileScan;
+import btree.BTreeFile;
+import btree.IntegerKey;
+import btree.KeyClass;
+import btree.KeyDataEntry;
+import btree.StringKey;
+import global.AttrType;
+import global.GlobalConst;
+import global.PageId;
+import global.RID;
+import global.SystemDefs;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Random;
 
 /**
  * Note that in JAVA, methods can't be overridden to be more private. Therefore, the declaration of
@@ -19,9 +30,10 @@ class BTDriver implements GlobalConst {
   public int postfix = 0;
   public int keyType;
   public BTFileScan scan;
-  public int deleteFashion;
+
   protected String dbpath;
   protected String logpath;
+  public int deleteFashion;
 
   public void runTests() {
     Random random = new Random();

@@ -1,6 +1,7 @@
 package tests;
 
-import chainexception.*;
+import chainexception.ChainException;
+import java.io.IOException;
 
 //    Major Changes:
 //    1. Change the return type of test() functions from 'int' to 'boolean'

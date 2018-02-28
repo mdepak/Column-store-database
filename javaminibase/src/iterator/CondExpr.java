@@ -1,7 +1,7 @@
-/package iterator;
-    import java.lang.*;
-    import java.io.*;
-    import global.*;
+package iterator;
+
+import global.AttrOperator;
+import global.AttrType;
 
 /**
  * This clas will hold single select condition It is an element of linked list which is logically

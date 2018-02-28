@@ -1,31 +1,12 @@
 package iterator;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import global.GlobalConst;
+import global.RID;
+import heap.Heapfile;
+import heap.Tuple;
+import java.io.IOException;
 
 public class IoBuf implements GlobalConst {
-
-  public static final int WRITE_BUFFER = 0;
-  public static final int READ_BUFFER = 1;
-  private boolean done;
-  private boolean dirty;              // Does this buffer contain dirty pages?
-  private int t_per_pg,              // # of tuples that fit in 1 page
-      t_in_buf;                        // # of tuples that fit in the buffer
-  private int t_wr_to_pg,          // # of tuples written to current page
-      t_wr_to_buf;                      // # of tuples written to buffer.
-  private int curr_page;            // Current page being written to.
-  private byte _bufs[][];            // Array of pointers to buffer pages.
-  private int _n_pages;             // number of pages in array
-  private int t_size;               // Size of a tuple
-  private long t_written;           // # of tuples written so far
-  private int _TEST_temp_fd;       // fd of a temporary file
-  private Heapfile _temp_fd;
-  private boolean flushed;        // TRUE => buffer has been flushed.
-  private int mode;
-  private int t_rd_from_pg;      // # of tuples read from current page
-  private SpoofIbuf i_buf;        // gets input from a temporary file
 
   /**
    * Constructor - use init to initialize.
@@ -60,6 +41,7 @@ public class IoBuf implements GlobalConst {
     i_buf = new SpoofIbuf();
     done = false;
   }
+
 
   /**
    * Writes a tuple to the output buffer
@@ -148,6 +130,7 @@ public class IoBuf implements GlobalConst {
     return buf;
   }
 
+
   /**
    * returns the numbers of tuples written
    *
@@ -202,6 +185,26 @@ public class IoBuf implements GlobalConst {
       curr_page = 0;
     }
   }
+
+  public static final int WRITE_BUFFER = 0;
+  public static final int READ_BUFFER = 1;
+  private boolean done;
+  private boolean dirty;              // Does this buffer contain dirty pages?
+  private int t_per_pg,              // # of tuples that fit in 1 page
+      t_in_buf;                        // # of tuples that fit in the buffer
+  private int t_wr_to_pg,          // # of tuples written to current page
+      t_wr_to_buf;                      // # of tuples written to buffer.
+  private int curr_page;            // Current page being written to.
+  private byte _bufs[][];            // Array of pointers to buffer pages.
+  private int _n_pages;             // number of pages in array
+  private int t_size;               // Size of a tuple
+  private long t_written;           // # of tuples written so far
+  private int _TEST_temp_fd;       // fd of a temporary file
+  private Heapfile _temp_fd;
+  private boolean flushed;        // TRUE => buffer has been flushed.
+  private int mode;
+  private int t_rd_from_pg;      // # of tuples read from current page
+  private SpoofIbuf i_buf;        // gets input from a temporary file
 }
 
 

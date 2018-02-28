@@ -1,10 +1,16 @@
 package iterator;
 
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import bufmgr.PageNotReadException;
+import global.AttrType;
+import global.RID;
+import heap.FieldNumberOutOfBoundException;
+import heap.Heapfile;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
+import heap.Scan;
+import heap.Tuple;
+import java.io.IOException;
 
 /**
  * open a heapfile and according to the condition expression to get output file, call get_next to
@@ -12,7 +18,6 @@ import heap.*;
  */
 public class FileScan extends Iterator {
 
-  public FldSpec[] perm_mat;
   private AttrType[] _in1;
   private short in1_len;
   private short[] s_sizes;
@@ -23,6 +28,7 @@ public class FileScan extends Iterator {
   private int t1_size;
   private int nOutFlds;
   private CondExpr[] OutputFilter;
+  public FldSpec[] perm_mat;
 
 
   /**

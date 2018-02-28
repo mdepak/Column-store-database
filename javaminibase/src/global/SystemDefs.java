@@ -1,8 +1,8 @@
 package global;
 
-import bufmgr.*;
-import catalog.*;
-import diskmgr.*;
+import bufmgr.BufMgr;
+import catalog.Catalog;
+import diskmgr.DB;
 
 public class SystemDefs {
 

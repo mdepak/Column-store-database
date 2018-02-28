@@ -1,9 +1,8 @@
 package iterator;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
+import global.AttrType;
+import global.TupleOrder;
+import java.io.IOException;
 
 /**
  * Implements a sorted binary tree. abstract methods <code>enq</code> and <code>deq</code> are used

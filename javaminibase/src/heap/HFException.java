@@ -2,7 +2,7 @@
 
 package heap;
 
-import chainexception.*;
+import chainexception.ChainException;
 
 public class HFException extends ChainException {
 

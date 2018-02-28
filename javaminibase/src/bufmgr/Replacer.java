@@ -1,6 +1,6 @@
 package bufmgr;
 
-import global.*;
+import global.GlobalConst;
 
 /**
  * This interface assocaites with the replace algorithm, it describs if a buffer frame page is
@@ -20,35 +20,6 @@ class STATE {
  * replacement by a certain replace algorithm.
  */
 abstract class Replacer implements GlobalConst {
-
-  public static final int Available = 12;
-  public static final int Referenced = 13;
-  public static final int Pinned = 14;
-  /**
-   * A buffer manager object.
-   */
-  protected BufMgr mgr;
-  /**
-   * Clock hand.
-   */
-  protected int head;
-  /**
-   * The state of a frame.
-   */
-  protected STATE state_bit[];
-
-  /**
-   * Creates a replacer object.
-   */
-  protected Replacer(BufMgr javamgr) {
-    mgr = javamgr;
-    int numbuf = javamgr.getNumBuffers();
-    state_bit = new STATE[numbuf];
-    for (int i = 0; i < numbuf; i++) {
-      state_bit[i] = new STATE();
-    }
-    head = -1;
-  }
 
   /**
    * Pins a candidate page in the buffer pool.
@@ -100,6 +71,7 @@ abstract class Replacer implements GlobalConst {
 
   }
 
+
   /**
    * Frees and unpins a page in the buffer pool.
    *
@@ -119,7 +91,6 @@ abstract class Replacer implements GlobalConst {
 
   }
 
-  /** These variables are required for the clock algorithm. */
 
   /**
    * Must pin the returned frame.
@@ -183,6 +154,24 @@ abstract class Replacer implements GlobalConst {
   }
 
   /**
+   * Creates a replacer object.
+   */
+  protected Replacer(BufMgr javamgr) {
+    mgr = javamgr;
+    int numbuf = javamgr.getNumBuffers();
+    state_bit = new STATE[numbuf];
+    for (int i = 0; i < numbuf; i++) {
+      state_bit[i] = new STATE();
+    }
+    head = -1;
+  }
+
+  /**
+   * A buffer manager object.
+   */
+  protected BufMgr mgr;
+
+  /**
    * Sets the buffer manager to be eqaul to the buffer manager in the argument, gets the total
    * number of buffer frames, and mainstains the head of the clock.
    *
@@ -203,6 +192,22 @@ abstract class Replacer implements GlobalConst {
 
     head = -1; // maintain the head of the clock.
   }
+
+  /** These variables are required for the clock algorithm. */
+
+  /**
+   * Clock hand.
+   */
+  protected int head;
+
+  /**
+   * The state of a frame.
+   */
+  protected STATE state_bit[];
+
+  public static final int Available = 12;
+  public static final int Referenced = 13;
+  public static final int Pinned = 14;
 }
 
 

@@ -1,11 +1,17 @@
 package tests;
 
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
-import index.*;
-import iterator.*;
+import global.AttrType;
+import global.GlobalConst;
+import global.RID;
+import global.SystemDefs;
+import global.TupleOrder;
+import heap.Heapfile;
+import heap.Tuple;
+import iterator.FileScan;
+import iterator.FldSpec;
+import iterator.RelSpec;
+import iterator.Sort;
+import java.io.IOException;
 import java.util.Random;
 
 

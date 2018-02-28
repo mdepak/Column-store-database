@@ -7,21 +7,20 @@ package iterator;
 public class pnodeSplayNode {
 
   /**
-   * a static dummy node for use in some methods
-   */
-  public static pnodeSplayNode dummy = new pnodeSplayNode(null);
-  /**
    * a reference to the element in the node
    */
   public pnode item;
+
   /**
    * the left child pointer
    */
   public pnodeSplayNode lt;
+
   /**
    * the right child pointer
    */
   public pnodeSplayNode rt;
+
   /**
    * the parent pointer
    */
@@ -52,6 +51,11 @@ public class pnodeSplayNode {
     rt = r;
     par = null;
   }
+
+  /**
+   * a static dummy node for use in some methods
+   */
+  public static pnodeSplayNode dummy = new pnodeSplayNode(null);
 
 }
 

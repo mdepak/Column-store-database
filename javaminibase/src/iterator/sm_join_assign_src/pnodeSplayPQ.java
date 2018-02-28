@@ -1,6 +1,8 @@
 package iterator;
 
-import global.*;
+import global.AttrType;
+import global.TupleOrder;
+import java.io.IOException;
 
 /**
  * Implements a sorted binary tree (extends class pnodePQ). Implements the <code>enq</code> and the

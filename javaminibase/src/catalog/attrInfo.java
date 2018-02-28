@@ -6,7 +6,7 @@
 
 package catalog;
 
-import global.*;
+import global.AttrType;
 
 // attrInfo class used for creating relations
 public class attrInfo {

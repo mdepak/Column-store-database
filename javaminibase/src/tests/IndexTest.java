@@ -1,12 +1,22 @@
 package tests;
 
-import btree.*;
-import bufmgr.*;
-import diskmgr.*;
-import global.*;
-import heap.*;
-import index.*;
-import iterator.*;
+import btree.BTreeFile;
+import btree.IntegerKey;
+import btree.StringKey;
+import global.AttrOperator;
+import global.AttrType;
+import global.GlobalConst;
+import global.IndexType;
+import global.RID;
+import global.SystemDefs;
+import heap.Heapfile;
+import heap.Scan;
+import heap.Tuple;
+import index.IndexScan;
+import iterator.CondExpr;
+import iterator.FldSpec;
+import iterator.RelSpec;
+import java.io.IOException;
 import java.util.Random;
 
 

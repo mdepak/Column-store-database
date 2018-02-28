@@ -1,6 +1,6 @@
 package iterator;
 
-import chainexception.*;
+import chainexception.ChainException;
 
 public class InvalidRelation extends ChainException {
 
