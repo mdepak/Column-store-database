@@ -1,5 +1,5 @@
 # modify the paths appropriately
-JDKPATH = /usr/java/jdk1.3.1_02
+JDKPATH = /Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk/Contents/Home
 LIBPATH = .:..
 CLASSPATH = $(LIBPATH)
 BINPATH = $(JDKPATH)/bin
@@ -70,6 +70,8 @@ SMJoin:SM_JoinTest.java
 sortmerge: SMJoin
 	$(JAVA) tests.SM_JoinTest
 
+ColumnarTest:ColumnarTest.java
+	$(JAVAC) ColumnarTest.java TestDriver.java
 
-
-
+columnar: ColumnarTest
+	$(JAVA) -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000 tests.ColumnarTest

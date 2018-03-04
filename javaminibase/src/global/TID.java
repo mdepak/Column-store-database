@@ -6,21 +6,25 @@ public class TID {
   int position;
   RID[] recordIDs;
 
-  TID(int numRIDs) {
+  public TID(int numRIDs) {
     this.numRIDs = numRIDs;
   }
 
-  TID(int numRIDs, int position) {
+  public TID(int numRIDs, int position) {
     this.numRIDs = numRIDs;
     this.position = position;
   }
 
-  TID(int numRIDs, int position, RID[] recordIDs) {
+  public TID(int numRIDs, int position, RID[] recordIDs) {
     this.numRIDs = numRIDs;
     this.position = position;
     this.recordIDs = recordIDs;
   }
 
+  public RID getRID(int fieldNo)
+  {
+    return recordIDs[fieldNo];
+  }
 
   /**
    * make a copy of the given tid
@@ -48,14 +52,14 @@ public class TID {
    * set the position attribute with the given value
    */
   void setPosition(int position){
-    //TODO: Implement it
+    this.position = position;
   }
 
   /**
    * set the RID of the given column
    */
   void setRID(int column, RID recordID) {
-    //TODO: Implement it
+    recordIDs[column] = recordID;
   }
 
 }
