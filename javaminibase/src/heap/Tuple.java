@@ -101,14 +101,14 @@ public class Tuple implements GlobalConst {
   }
 
 
-  private void initHeaders() throws IOException {
+  public void initHeaders() throws IOException {
     int pos = tuple_offset;
     fldCnt = Convert.getShortValue(pos, data);
 
-    fldOffset = new short[fldCnt];
+    fldOffset = new short[fldCnt+1];
     //Adding 2 bytes for field count, 2 bytes for the data offset position
     pos+=2;
-    for(int i = 0;i<fldCnt; i++)
+    for(int i = 0;i<=fldCnt; i++)
     {
       fldOffset[i] = Convert.getShortValue(pos, data);
       pos+=2;

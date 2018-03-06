@@ -1,11 +1,5 @@
 package columnar;
 
-import static global.AttrType.attrInteger;
-import static global.AttrType.attrNull;
-import static global.AttrType.attrReal;
-import static global.AttrType.attrString;
-import static global.AttrType.attrSymbol;
-
 import global.AttrType;
 import global.RID;
 import global.TID;
@@ -21,42 +15,8 @@ import heap.Scan;
 import heap.SpaceNotAvailableException;
 import heap.Tuple;
 import java.io.IOException;
-
-
-class ColumnarTupleConvertor {
-
-  public static Tuple createColumnarTuple(Tuple rowTuple, int fieldNo, AttrType attrType)
-      throws InvalidTupleSizeException, IOException, InvalidTypeException, FieldNumberOutOfBoundException {
-    Tuple columnTuple = new Tuple();
-    short colTupFields = 1;
-    switch (attrType.attrType) {
-      case attrString:
-        String strVal = rowTuple.getStrFld(fieldNo);
-        columnTuple
-            .setHdr(colTupFields, new AttrType[]{attrType}, new short[]{(short) strVal.length()});
-        columnTuple.setStrFld(1, strVal);
-        break;
-      case attrInteger:
-        int intVal = rowTuple.getIntFld(fieldNo);
-        columnTuple.setHdr(colTupFields, new AttrType[]{attrType}, new short[]{});
-        columnTuple.setIntFld(1, intVal);
-        break;
-      case attrReal:
-        float floatVal = rowTuple.getFloFld(fieldNo);
-        columnTuple.setHdr(colTupFields, new AttrType[]{attrType}, new short[]{});
-        columnTuple.setFloFld(1, floatVal);
-        break;
-      case attrSymbol:
-        //TODO: Find out whether this is character and implement it.
-        break;
-      case attrNull:
-        //TODO: Find out the right type and implement it.
-        break;
-    }
-
-    return columnTuple;
-  }
-}
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class Columnarfile {
@@ -117,35 +77,66 @@ public class Columnarfile {
     RID[] resultRIDs = new RID[numColumns];
 
     for (int i = 0; i < numColumns; i++) {
-      Tuple columnTuple = ColumnarTupleConvertor.createColumnarTuple(rowTuple, i + 1, type[i]);
+      Tuple columnTuple = Util.createColumnarTuple(rowTuple, i + 1, type[i]);
       resultRIDs[i] = columnFiles[i].insertRecord(columnTuple.getTupleByteArray());
     }
 
     return new TID(numColumns, position, resultRIDs);
   }
 
+
   /**
    * Read the tuple with the given tid from the columnar file
    */
-  Tuple getTuple(TID tid) throws Exception {
+  public Tuple getTuple(TID tid) throws Exception {
 
-    Tuple[] rowTuples = new Tuple[numColumns];
+    Tuple[] columnarTuples = new Tuple[numColumns];
 
-    //Get the tuples from each columbar heap file
-    for (int field = 0; field < numColumns; field++) {
-      rowTuples[field] = columnFiles[field].getRecord(tid.getRID(field));
+    //Get the tuples from each columnar heap file
+    List<Integer> stringSizes = new ArrayList<>();
+
+    ValueClass[] values = new ValueClass[numColumns];
+    for (int field = 1; field <= numColumns; field++) {
+      ValueClass val = getValue(tid, field);
+
+      values[field - 1] = val;
+      if (val instanceof StringValue) {
+        stringSizes.add(((String) val.getValue()).length());
+      }
     }
 
     // Merge all the columns values and form the row tuple
+    //TODO: Init tuple with specific size rather than default 1024
+    Tuple rowTuple = new Tuple();
+    short[] strSizes = new short[stringSizes.size()];
+    for (int idx = 0; idx < stringSizes.size(); idx++) {
+      strSizes[idx] = (short) stringSizes.get(idx).intValue();
+    }
 
-    return null;
+    // Set the header of the tuple
+    rowTuple.setHdr((short) numColumns, type, strSizes);
+
+    int fieldNo = 1;
+    for (ValueClass value : values) {
+      value.setValueinRowTuple(rowTuple, fieldNo++);
+    }
+
+    return rowTuple;
   }
+
 
   /**
    * Read the value with the given column and tid from the columnar file
    */
-  ValueClass getValue(TID tid, int column) {
-    return null;
+  public ValueClass getValue(TID tid, int column) throws Exception {
+    Tuple tuple = columnFiles[column - 1].getRecord(tid.getRID(column - 1));
+
+    //Init header attributes in the tuple as the result of heap file getRecord does not set those attributes
+    tuple.initHeaders();
+
+    ValueClass value = Util.valueClassFactory(type[column - 1]);
+    value.setValueFromColumnTuple(tuple, 1);
+    return value;
   }
 
   /**

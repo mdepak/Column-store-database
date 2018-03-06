@@ -25,6 +25,41 @@ class SailorDetails {
     rating = _rating;
     age = _age;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SailorDetails that = (SailorDetails) o;
+
+    if (sid != that.sid) {
+      return false;
+    }
+    if (rating != that.rating) {
+      return false;
+    }
+    if (Double.compare(that.age, age) != 0) {
+      return false;
+    }
+    return sname != null ? sname.equals(that.sname) : that.sname == null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result;
+    long temp;
+    result = sid;
+    result = 31 * result + (sname != null ? sname.hashCode() : 0);
+    result = 31 * result + rating;
+    temp = Double.doubleToLongBits(age);
+    result = 31 * result + (int) (temp ^ (temp >>> 32));
+    return result;
+  }
 }
 
 class ColumnarDriver extends TestDriver implements GlobalConst {
@@ -181,6 +216,20 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
       try {
         tid = f.insertTuple(t.returnTupleByteArray());
+        Tuple resultantTuple = f.getTuple(tid);
+
+        int sid = resultantTuple.getIntFld(1);
+        String sname = resultantTuple.getStrFld(2);
+        int rating = resultantTuple.getIntFld(3);
+        double age = Double.parseDouble(new Float(resultantTuple.getFloFld(4)).toString());
+
+        SailorDetails retrievedRecord = new SailorDetails(sid, sname, rating, age);
+        if (!sailors.get(i).equals(retrievedRecord)) {
+          System.err.println(
+              "*** error in ColumnarFile.insertTuple() - retrieved data is not proper based on tuple ID ***");
+          status = FAIL;
+        }
+
       } catch (Exception e) {
         System.err.println("*** error in ColumnarFile.insertRecord() ***");
         status = FAIL;
@@ -195,9 +244,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     if (status) {
       System.out.println("Test 1 successfully completed.");
-    }
-    else
-    {
+    } else {
       System.out.println("There is some error in test !!!");
     }
     return status;
@@ -213,7 +260,6 @@ public class ColumnarTest {
 
   public static void main(String[] args) {
 
-
     ColumnarDriver cd = new ColumnarDriver();
     boolean dbstatus;
     try {
@@ -226,9 +272,7 @@ public class ColumnarTest {
       }
 
       Runtime.getRuntime().exit(0);
-    }
-    catch (Exception ex)
-    {
+    } catch (Exception ex) {
       ex.printStackTrace();
     }
   }
