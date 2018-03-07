@@ -230,6 +230,27 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           status = FAIL;
         }
 
+        t.setFloFld(4, (float) ((sailors.get(i).age)+1));
+
+        f.updateTuple(tid, t);
+
+
+        Tuple updatedTuple = f.getTuple(tid);
+
+        int sidUp  = updatedTuple.getIntFld(1);
+        String snameUp = updatedTuple.getStrFld(2);
+        int ratingUp = updatedTuple.getIntFld(3);
+        double ageUp = Double.parseDouble(new Float(updatedTuple.getFloFld(4)).toString());
+
+        SailorDetails updatedRecord = new SailorDetails(sidUp, snameUp, ratingUp, ageUp-1);
+        if (!sailors.get(i).equals(updatedRecord)) {
+          System.err.println(
+              "*** error in ColumnarFile.insertTuple() - retrieved data is not proper based on tuple ID ***");
+          status = FAIL;
+        }
+
+
+
       } catch (Exception e) {
         System.err.println("*** error in ColumnarFile.insertRecord() ***");
         status = FAIL;

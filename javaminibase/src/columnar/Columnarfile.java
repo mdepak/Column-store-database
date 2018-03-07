@@ -163,15 +163,24 @@ public class Columnarfile {
   /**
    * Updates the specified record in the columnar file.
    */
-  boolean updateTuple(TID tid, Tuple newtuple) {
-    return false;
+  public boolean updateTuple(TID tid, Tuple newtuple) throws Exception {
+
+    for(int field =1; field<=numColumns; field++) {
+      boolean status = updateColumnofTuple(tid, newtuple, field);
+      if(!status) {
+        return status;
+      }
+    }
+    return true;
   }
 
   /**
    * Updates the specified column of the specified record in the columnar file
    */
-  boolean updateColumnofTuple(TID tid, Tuple newtuple, int column) {
-    return false;
+  public boolean updateColumnofTuple(TID tid, Tuple newtuple, int column)
+      throws Exception {
+    Tuple columnTuple = Util.createColumnarTuple(newtuple, column, type[column-1]);
+    return columnFiles[column-1].updateRecord(tid.getRID(column-1), columnTuple);
   }
 
   /**
