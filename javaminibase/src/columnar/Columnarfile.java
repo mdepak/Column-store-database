@@ -1,14 +1,7 @@
 package columnar;
 
-import btree.AddFileEntryException;
 import btree.BTreeFile;
-import btree.ConstructPageException;
-import btree.GetFileEntryException;
 import btree.KeyClass;
-import btree.KeyNotMatchException;
-import btree.KeyTooLongException;
-import btree.LeafInsertRecException;
-import btree.StringKey;
 import global.AttrType;
 import global.RID;
 import global.TID;
@@ -284,6 +277,7 @@ public class Columnarfile {
    * if it doesn’t exist, create a bitmap index for the given column and value
    */
   boolean createBitMapIndex(int columnNo, ValueClass value) {
+   // BitMapFile file = new BitMapFile("", this,columnNo,value);
     return false;
   }
 

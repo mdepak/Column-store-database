@@ -3,11 +3,8 @@ package bitmap;
 import java.lang.*;
 import columnar.ValueClass;
 import columnar.*;
-import java.lang.*;
-import heap.*;
-import bitmap.BitMapHeaderPage;
 
-public class BitMapFile extends Heapfile, HFPage
+public class BitMapFile
 {
     public BitMapFile(String filename)
     {
