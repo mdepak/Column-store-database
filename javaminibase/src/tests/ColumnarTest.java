@@ -257,6 +257,16 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         e.printStackTrace();
       }
     }
+
+    try {
+      f.createBTreeIndex(1);
+    }
+    catch (Exception ex)
+    {
+      status = FAIL;
+      ex.printStackTrace();
+    }
+
     if (status != OK) {
       //bail out
       System.err.println("*** Error creating relation for sailors");
