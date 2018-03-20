@@ -6,6 +6,14 @@ import global.AttrType;
 import global.GlobalConst;
 import global.SystemDefs;
 import global.TID;
+import heap.FieldNumberOutOfBoundException;
+import heap.HFBufMgrException;
+import heap.HFDiskMgrException;
+import heap.HFException;
+import heap.InvalidSlotNumberException;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
+import heap.SpaceNotAvailableException;
 import heap.Tuple;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -136,6 +144,36 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     System.out.print(".\n\n");
 
     return _pass;
+  }
+
+
+
+  private static void createIndexOnColumnarFile(String columnarDatabase, String columnarFile, String columnName, String indexType)
+  {
+
+      //TODO: Change to the 1 param constructor
+      //Columnarfile file = new Columnarfile(columnarFile);
+
+    AttrType[] attrTypes = new AttrType[0];
+    int columns = 1;
+    try {
+      Columnarfile file = new Columnarfile(columnarFile, columns, attrTypes);
+      int columnNo = Integer.parseInt(columnName);
+
+      switch(indexType)
+      {
+        case "BTREE":
+          file.createBTreeIndex(columnNo);
+          break;
+        case "BITMAP":
+          file.createBitMapIndex(columnNo);
+          break;
+      }
+
+    } catch (Exception e) {
+      System.out.println("Exception in creating index for the columnar database");
+      e.printStackTrace();
+    }
   }
 
   @Override

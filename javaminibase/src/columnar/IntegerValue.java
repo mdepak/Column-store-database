@@ -11,6 +11,25 @@ public class IntegerValue extends ValueClass {
   Integer val;
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    IntegerValue that = (IntegerValue) o;
+
+    return val != null ? val.equals(that.val) : that.val == null;
+  }
+
+  @Override
+  public int hashCode() {
+    return val != null ? val.hashCode() : 0;
+  }
+
+  @Override
   Object getValue() {
     return val;
   }
