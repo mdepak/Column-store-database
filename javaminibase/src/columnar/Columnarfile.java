@@ -195,6 +195,8 @@ public class Columnarfile {
       Tuple columnTuple = Util.createColumnarTuple(rowTuple, i + 1, type[i]);
       resultRIDs[i] = columnFiles[i].insertRecord(columnTuple.getTupleByteArray());
 
+      position = columnFiles[i].getLastInsertedPosition();
+
       //Update Btree Index file if exists
       updateBtreeIndexIfExists(i + 1, columnTuple, resultRIDs[i]);
 

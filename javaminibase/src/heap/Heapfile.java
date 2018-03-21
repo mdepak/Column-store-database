@@ -47,6 +47,13 @@ public class Heapfile implements Filetype, GlobalConst {
   private boolean _file_deleted;
   private String _fileName;
   private static int tempfilecount = 0;
+  private int lastInsertedPosition = 0;
+
+
+  public int getLastInsertedPosition()
+  {
+    return lastInsertedPosition;
+  }
 
 
   /* get a new datapage from the buffer manager and initialize dpinfo
@@ -370,6 +377,9 @@ public class Heapfile implements Filetype, GlobalConst {
     found = false;
     Tuple atuple;
     DataPageInfo dpinfo = new DataPageInfo();
+
+    int insertPosition = 0;
+
     while (found == false) { //Start While01
       // look for suitable dpinfo-struct
       for (currentDataPageRid = currentDirPage.firstRecord();
@@ -379,7 +389,9 @@ public class Heapfile implements Filetype, GlobalConst {
         atuple = currentDirPage.getRecord(currentDataPageRid);
 
         dpinfo = new DataPageInfo(atuple);
+        //System.out.println("Records in page "+dpinfo.pageId.pid+" is "+dpinfo.recct);
 
+        insertPosition += dpinfo.recct;
         // need check the record length == DataPageInfo'slength
 
         if (recLen <= dpinfo.availspace) {
@@ -544,6 +556,12 @@ public class Heapfile implements Filetype, GlobalConst {
 
     RID rid;
     rid = currentDataPage.insertRecord(recPtr);
+
+    insertPosition-= dpinfo.recct;
+    insertPosition+= rid.slotNo;
+
+    // Set the last inserted position
+    lastInsertedPosition = insertPosition;
 
     dpinfo.recct++;
     dpinfo.availspace = currentDataPage.available_space();
