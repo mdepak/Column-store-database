@@ -41,10 +41,17 @@ public class Columnarfile {
   private List<ColumnarHeaderRecord> columnarHeaderRecords;
 
 
+
   public Columnarfile() {
     //TODO: Columnar file - if the file already exists then then get the information from the header file and then do the work
 
   }
+
+  public AttrType[] getType(){
+    return type;
+  }
+
+  public int getNumColumns() { return numColumns;}
 
   /**
    * Initialize: if columnar file does not exits, create one heapfile (‘‘name.columnid’’) per
@@ -74,6 +81,10 @@ public class Columnarfile {
       heapFileNames[i] = fileName + "." + (i + 1);
       columnFiles[i] = new Heapfile(heapFileNames[i]);
     }
+  }
+
+  public Heapfile[] getColumnFiles(){
+    return columnFiles;
   }
 
   private void initHeaderFile()
@@ -228,7 +239,7 @@ public class Columnarfile {
   /**
    * Initiate a sequential scan along a given column.
    */
-  Scan openColumnScan(int columnNo) {
+  public Scan openColumnScan(int columnNo) {
     return null;
   }
 

@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public abstract class ValueClass {
 
-  abstract Object getValue();
+  abstract public Object getValue();
 
   abstract void setValue(Object val);
 

@@ -30,7 +30,7 @@ public class StringValue extends ValueClass {
   }
 
   @Override
-  Object getValue() {
+  public Object getValue() {
     return val;
   }
 

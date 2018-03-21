@@ -6,19 +6,13 @@ import global.AttrType;
 import global.GlobalConst;
 import global.SystemDefs;
 import global.TID;
-import heap.FieldNumberOutOfBoundException;
-import heap.HFBufMgrException;
-import heap.HFDiskMgrException;
-import heap.HFException;
-import heap.InvalidSlotNumberException;
-import heap.InvalidTupleSizeException;
-import heap.InvalidTypeException;
-import heap.SpaceNotAvailableException;
 import heap.Tuple;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.*;
 
 
 //Define the SailorDetails schema
@@ -148,12 +142,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   }
 
 
+  private static void createIndexOnColumnarFile(String columnarDatabase, String columnarFile,
+      String columnName, String indexType) {
 
-  private static void createIndexOnColumnarFile(String columnarDatabase, String columnarFile, String columnName, String indexType)
-  {
-
-      //TODO: Change to the 1 param constructor
-      //Columnarfile file = new Columnarfile(columnarFile);
+    //TODO: Change to the 1 param constructor
+    //Columnarfile file = new Columnarfile(columnarFile);
 
     AttrType[] attrTypes = new AttrType[0];
     int columns = 1;
@@ -161,8 +154,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       Columnarfile file = new Columnarfile(columnarFile, columns, attrTypes);
       int columnNo = Integer.parseInt(columnName);
 
-      switch(indexType)
-      {
+      switch (indexType) {
         case "BTREE":
           file.createBTreeIndex(columnNo);
           break;
@@ -272,25 +264,23 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           status = FAIL;
         }
 
-        t.setFloFld(4, (float) ((sailors.get(i).age)+1));
+        t.setFloFld(4, (float) ((sailors.get(i).age) + 1));
 
         f.updateTuple(tid, t);
 
-
         Tuple updatedTuple = f.getTuple(tid);
 
-        int sidUp  = updatedTuple.getIntFld(1);
+        int sidUp = updatedTuple.getIntFld(1);
         String snameUp = updatedTuple.getStrFld(2);
         int ratingUp = updatedTuple.getIntFld(3);
         double ageUp = Double.parseDouble(new Float(updatedTuple.getFloFld(4)).toString());
 
-        SailorDetails updatedRecord = new SailorDetails(sidUp, snameUp, ratingUp, ageUp-1);
+        SailorDetails updatedRecord = new SailorDetails(sidUp, snameUp, ratingUp, ageUp - 1);
         if (!sailors.get(i).equals(updatedRecord)) {
           System.err.println(
               "*** error in ColumnarFile.insertTuple() - retrieved data is not proper based on tuple ID ***");
           status = FAIL;
         }
-
 
 
       } catch (Exception e) {
@@ -300,13 +290,12 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       }
     }
 
-    System.out.println("DiskMgr Read Count = "+ PCounter.rcounter + "\t Write Count = "+ PCounter.wcounter);
+    System.out.println(
+        "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
 
     try {
       f.createBTreeIndex(1);
-    }
-    catch (Exception ex)
-    {
+    } catch (Exception ex) {
       status = FAIL;
       ex.printStackTrace();
     }
@@ -325,46 +314,55 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     return status;
   }
 
-  protected void readFileTest(String dataFileName, String columnDBName, String columnarFileName, int numOfColumns) {
-    try {
-      File file = new File(dataFileName);
-      BufferedReader br = new BufferedReader(new FileReader(file));
-      String fileLines = br.readLine();
-      String[] headers = fileLines.split("\\t");
-    } catch (Exception e) {
-      System.err.println("*** Input file read error! ***");
-      status = FAIL;
-      e.printStackTrace();
+  protected void readFileTest(String dataFileName, String columnDBName, String columnarFileName,
+      int numOfColumns) throws Exception {
+    File file = new File(dataFileName);
+    BufferedReader br = new BufferedReader(new FileReader(file));
+    String[] headers;
+    String fileLines = br.readLine();
+    headers = fileLines.split("\\t");
+    if (headers == null) {
+      throw new Exception("*** Input file read error! ***");
     }
     int len = headers.length;
-    if(len != numOfColumns) {
-      throw new Exception("*** Input file, number of columns rrror! ***");
+    if (len != numOfColumns) {
+      throw new Exception("*** Input file, number of columns error! ***");
     }
     AttrType[] Stypes = new AttrType[numOfColumns];
-    List<short> sizes = new ArrayList<short>();
-    for(int i=0; i<numOfColumns; i++) {
+    int numOfStringValues = 0;
+    String headerLine = fileLines;
+    while (headerLine.contains("char") != false) {
+      int index = headerLine.indexOf("char");
+      if (index > 0) {
+        numOfStringValues++;
+        headerLine = headerLine.substring(index + 4);
+      }
+    }
+    short[] strSizes = new short[numOfStringValues];
+    int j = 0;
+//    List<short> sizes = new ArrayList<short>();
+    for (int i = 0; i < numOfColumns; i++) {
       String[] columnHeader = headers[i].split(":");
-      if(columnHeader[1].contains("int")) {
+      if (columnHeader[1].contains("int")) {
         Stypes[i] = new AttrType(AttrType.attrInteger);
-      } else if(columnHeader[1].contains("float")) {
+      } else if (columnHeader[1].contains("float")) {
         Stypes[i] = new AttrType(AttrType.attrReal);
-      } else if(columnHeader[1].contains("char")) {
+      } else if (columnHeader[1].contains("char")) {
         Stypes[i] = new AttrType(AttrType.attrString);
         int startIndex = columnHeader[1].indexOf("(");
         int endIndex = columnHeader[1].indexOf(")");
-        String columnLengthInStr = columnHeader[1].substring(startIndex+1, endIndex);
-        short columnLength = short.parseShort(columnLengthInStr);
-        sizes.add(columnLength);
+        String columnLengthInStr = columnHeader[1].substring(startIndex + 1, endIndex);
+        strSizes[j] = Short.parseShort(columnLengthInStr);
+        j++;
       }
     }
-    short[] strSizes = (short[])sizes.toArray(short[sizes.size()]);
+//    short[] strSizes = (short[])sizes.toArray(short[sizes.size()]);
 
     Tuple t = new Tuple();
     try {
-      t.setHdr(numOfColumns, Stypes, strSizes);
+      t.setHdr((short) numOfColumns, Stypes, strSizes);
     } catch (Exception e) {
       System.err.println("*** error in Tuple.setHdr() ***");
-      status = FAIL;
       e.printStackTrace();
     }
 
@@ -379,7 +377,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       f = new Columnarfile(columnarFileName, numOfColumns, Stypes);
     } catch (Exception e) {
       System.err.println("*** error in ColumnarFile constructor ***");
-      status = FAIL;
       e.printStackTrace();
     }
 
@@ -388,38 +385,37 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       t.setHdr((short) numOfColumns, Stypes, strSizes);
     } catch (Exception e) {
       System.err.println("*** error in Tuple.setHdr() ***");
-      status = FAIL;
       e.printStackTrace();
     }
 
-    while((fileLines = br.readLine()) != null) {
+    while ((fileLines = br.readLine()) != null) {
       try {
         String[] columnValues = fileLines.split("\\t");
-        for(int i=1; i<=numOfColumns; i++) {
-          if(Stypes[i] == AttrType.attrInteger) {
-            t.setIntFld(i, columnValues[i-1]);
-          }else if(Stypes[i] == AttrType.attrReal) {
-            t.setFloFld(i, columnValues[i-1]);
-          }else if(Stypes[i] == AttrType.attrString) {
-            t.setStrFld(i, columnValues[i-1]);
+        for (int i = 1; i <= numOfColumns; i++) {
+          if (Stypes[i].attrType == AttrType.attrInteger) {
+            t.setIntFld(i, Integer.parseInt(columnValues[i - 1]));
+          } else if (Stypes[i].attrType == AttrType.attrReal) {
+            t.setFloFld(i, Integer.parseInt(columnValues[i - 1]));
+          } else if (Stypes[i].attrType == AttrType.attrString) {
+            t.setStrFld(i, columnValues[i - 1]);
           }
         }
       } catch (Exception e) {
         System.err.println("*** ColumnarFile error in Tuple.setStrFld() ***");
-        status = FAIL;
         e.printStackTrace();
       }
       try {
         tid = f.insertTuple(t.returnTupleByteArray());
       } catch (Exception e) {
         System.err.println("*** error in ColumnarFile.insertRecord() ***");
-        status = FAIL;
         e.printStackTrace();
       }
     }
 
-    System.out.println("DiskMgr Read Count = "+ PCounter.rcounter + "\t Write Count = "+ PCounter.wcounter);
+    System.out.println(
+        "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
   }
+
 
   protected String testName() {
 

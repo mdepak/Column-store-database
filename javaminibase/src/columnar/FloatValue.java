@@ -11,7 +11,7 @@ public class FloatValue extends ValueClass {
   Float val;
 
   @Override
-  Object getValue() {
+  public Object getValue() {
     return val;
   }
 
