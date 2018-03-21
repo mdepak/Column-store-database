@@ -1,5 +1,9 @@
 package bitmap;
 
+import diskmgr.Page;
+import global.PageId;
+import heap.HFPage;
+
 public class BitMapPage extends HFPage {
 
     int keyType;
@@ -9,27 +13,28 @@ public class BitMapPage extends HFPage {
     }
 
     public BitMapPage(Page page, int keyType)
-            throws IOException, ConstructPageException {
+           // throws IOException, ConstructPageException
+    {
         super(page);
         this.keyType = keyType;
     }
 
-    int   available_space()
+    public int   available_space()
+    {
+        return 0;
+    }
+
+    public void   dumpPage()
     {
 
     }
 
-    void   dumpPage()
+    public boolean empty()
     {
-
+        return true;
     }
 
-    boolean empty()
-    {
-
-    }
-
-    void   init(PageId pageNo, Page apage)
+    public void   init(PageId pageNo, Page apage)
     {
 
     }
@@ -39,42 +44,42 @@ public class BitMapPage extends HFPage {
 
     }
 
-    PageId  getCurPage()
+    public PageId  getCurPage()
+    {
+        return new PageId(1);
+    }
+
+    public PageId  getNextPage()
+    {
+        return new PageId(1);
+    }
+
+    public PageId  getPrevPage()
+    {
+        return new PageId(1);
+    }
+
+    public void   setCurPage(PageId pageNo)
     {
 
     }
 
-    PageId  getNextPage()
+    public void   setNextPage(PageId pageNo)
     {
 
     }
 
-    PageId  getPrevPage()
+    public void   setPrevPage(PageId pageNo)
     {
 
     }
 
-    void   setCurPage(PageId pageNo)
+    public byte[]  getBMpageArray()
     {
-
+        return new byte[1];
     }
 
-    void   setNextPage(PageId pageNo)
-    {
-
-    }
-
-    void   setPrevPage(PageId pageNo)
-    {
-
-    }
-
-    byte[]  getBMpageArray()
-    {
-
-    }
-
-    void    writeBMPageArray(byte[])
+    public void  writeBMPageArray(byte[] a)
     {
 
     }

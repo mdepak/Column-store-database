@@ -139,6 +139,23 @@ public class FileScan extends Iterator {
     }
   }
 
+
+
+  /*
+  public RID get_next_rid() throws InvalidTupleSizeException, IOException {
+    RID rid = new RID();
+
+    while (true) {
+      if ((tuple1 = scan.getNext(rid)) == null) {
+        return null;
+      }
+
+    }
+    return rid;
+  }
+
+  */
+
   /**
    * implement the abstract method close() from super class Iterator to finish cleaning up
    */

@@ -1,5 +1,7 @@
 package columnar;
 
+import btree.BTreeFile;
+import btree.KeyClass;
 import global.AttrType;
 import global.RID;
 import global.TID;
@@ -24,10 +26,16 @@ public class Columnarfile {
   //Field Summary
   static int numColumns;
   AttrType[] type;
+  private short[] strSizes;
 
   private String fileName;
   private Heapfile[] columnFiles;
   private String[] heapFileNames;
+  private Heapfile headerFile;
+
+
+  private boolean[] hasBTreeIndex;
+  private List<ColumnarHeaderRecord> columnarHeaderRecords;
 
 
   /**
@@ -35,7 +43,8 @@ public class Columnarfile {
    * column; also create a ‘‘name.hdr’’ file that contains relevant metadata.
    */
   public Columnarfile(java.lang.String name, int numColumns, AttrType[] type)
-      throws IOException, HFException, HFBufMgrException, HFDiskMgrException {
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTypeException, SpaceNotAvailableException, FieldNumberOutOfBoundException, InvalidSlotNumberException, InvalidTupleSizeException {
+
     //TODO: Create heap files according - implement it
 
     if (name != null) {
@@ -46,12 +55,27 @@ public class Columnarfile {
 
     heapFileNames = new String[numColumns];
     columnFiles = new Heapfile[numColumns];
+    hasBTreeIndex = new boolean[numColumns];
+    strSizes = new short[1];
+    columnarHeaderRecords = new ArrayList<>();
+
+    initHeaderFile();
 
     for (int i = 0; i < numColumns; i++) {
       heapFileNames[i] = fileName + "." + (i + 1);
       columnFiles[i] = new Heapfile(heapFileNames[i]);
     }
+  }
 
+  private void initHeaderFile()
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidTypeException, SpaceNotAvailableException, InvalidSlotNumberException {
+      headerFile = new Heapfile(fileName+".hdr");
+
+      for(int colNo = 1 ; colNo <= numColumns; colNo++)
+      {
+        Tuple dfileTuple = new ColumnarHeaderRecord(FileType.DATA_FILE, colNo, type[colNo-1],fileName + "." + colNo, null, 0).getTuple();
+        headerFile.insertRecord(dfileTuple.getTupleByteArray());
+      }
   }
 
   /**
@@ -143,6 +167,7 @@ public class Columnarfile {
    * Return the number of tuples in the columnar file.
    */
   int getTupleCnt() {
+
     return 0;
   }
 
@@ -186,14 +211,73 @@ public class Columnarfile {
   /**
    * if it doesn’t exist, create a BTree index for the given column
    */
-  boolean createBTreeIndex(int column) {
-    return false;
+  public boolean createBTreeIndex(int column)
+      throws Exception {
+
+    // Check all the files it contains
+
+    //TODO: Modify delete fashion if necessary
+    int keySize = getKeySize(column);
+      BTreeFile btf = new BTreeFile("BTree" + fileName + column, type[column - 1].attrType,
+          keySize, 1);//full delete
+
+    Scan scan = new Scan(columnFiles[column-1]);
+    RID rid = new RID();
+
+    Tuple temp = null;
+
+    ValueClass valueClass = Util.valueClassFactory(type[column - 1]);
+    try {
+      temp = scan.getNext(rid);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    while (temp != null) {
+      // Copy to another variable so that the fields of the tuple are initialized.
+
+      Tuple t = new Tuple(temp.getTupleByteArray());
+      t.tupleCopy(temp);
+      KeyClass key = valueClass.getKeyClassFromColumnTuple(t, 1);
+      btf.insert(key, rid);
+
+      temp = scan.getNext(rid);
+    }
+    return true;
+  }
+
+  int getKeySize(int column)
+  {
+    int strPtr = 0;
+    for(int i = 0; i< column-1; i++)
+    {
+      if(type[i].attrType == AttrType.attrString)
+        strPtr++;
+    }
+
+    AttrType attrType = type[column-1];
+    int keySize = 0;
+
+    switch (attrType.attrType)
+    {
+      case AttrType.attrInteger:
+        keySize = 4;
+        break;
+      case AttrType.attrReal:
+        keySize = 4;
+        break;
+      case AttrType.attrString:
+        keySize = strSizes[strPtr];
+    }
+
+    return keySize;
   }
 
   /**
    * if it doesn’t exist, create a bitmap index for the given column and value
    */
   boolean createBitMapIndex(int columnNo, ValueClass value) {
+   // BitMapFile file = new BitMapFile("", this,columnNo,value);
     return false;
   }
 

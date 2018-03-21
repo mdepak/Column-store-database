@@ -1,5 +1,6 @@
 package columnar;
 
+import btree.KeyClass;
 import heap.FieldNumberOutOfBoundException;
 import heap.Tuple;
 import java.io.IOException;
@@ -15,5 +16,8 @@ public abstract class ValueClass {
 
   // Should ensure the headers are specified.. otherwise this will not work
   abstract void setValueinRowTuple(Tuple rowTuple, int fieldNo)
+      throws IOException, FieldNumberOutOfBoundException;
+
+  abstract KeyClass getKeyClassFromColumnTuple(Tuple columnarTuple, int fieldPos)
       throws IOException, FieldNumberOutOfBoundException;
 }

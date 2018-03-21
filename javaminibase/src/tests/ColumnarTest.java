@@ -1,6 +1,7 @@
 package tests;
 
 import columnar.Columnarfile;
+import diskmgr.PCounter;
 import global.AttrType;
 import global.GlobalConst;
 import global.SystemDefs;
@@ -182,6 +183,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     int size = t.size();
 
+    PCounter.initialize();
+
     // inserting the tuple into file "sailors"
     TID tid;
     Columnarfile f = null;
@@ -257,6 +260,18 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         e.printStackTrace();
       }
     }
+
+    System.out.println("DiskMgr Read Count = "+ PCounter.rcounter + "\t Write Count = "+ PCounter.wcounter);
+
+    try {
+      f.createBTreeIndex(1);
+    }
+    catch (Exception ex)
+    {
+      status = FAIL;
+      ex.printStackTrace();
+    }
+
     if (status != OK) {
       //bail out
       System.err.println("*** Error creating relation for sailors");
