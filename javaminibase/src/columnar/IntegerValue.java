@@ -11,7 +11,7 @@ public class IntegerValue extends ValueClass {
   Integer val;
 
   @Override
-  Object getValue() {
+  public Object getValue() {
     return val;
   }
 

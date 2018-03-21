@@ -181,7 +181,7 @@ public class Columnarfile {
   /**
    * Initiate a sequential scan along a given column.
    */
-  Scan openColumnScan(int columnNo) {
+  public Scan openColumnScan(int columnNo) {
     return null;
   }
 

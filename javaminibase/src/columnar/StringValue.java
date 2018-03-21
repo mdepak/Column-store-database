@@ -11,7 +11,7 @@ public class StringValue extends ValueClass {
   String val;
 
   @Override
-  Object getValue() {
+  public Object getValue() {
     return val;
   }
 
