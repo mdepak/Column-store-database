@@ -16,6 +16,9 @@ import heap.InvalidTupleSizeException;
 import heap.InvalidTypeException;
 import heap.SpaceNotAvailableException;
 import heap.Tuple;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.Exception;
 import java.util.ArrayList;
@@ -151,8 +154,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
 
 
-  private static void createIndexOnColumnarFile(String columnarDatabase, String columnarFile, String columnName, String indexType)
-  {
+  private static void createIndexOnColumnarFile(String columnarDatabase, String columnarFile,
+      String columnName, String indexType) {
 
     //TODO: Change to the 1 param constructor
     //Columnarfile file = new Columnarfile(columnarFile);
@@ -274,25 +277,23 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           status = FAIL;
         }
 
-        t.setFloFld(4, (float) ((sailors.get(i).age)+1));
+        t.setFloFld(4, (float) ((sailors.get(i).age) + 1));
 
         f.updateTuple(tid, t);
 
-
         Tuple updatedTuple = f.getTuple(tid);
 
-        int sidUp  = updatedTuple.getIntFld(1);
+        int sidUp = updatedTuple.getIntFld(1);
         String snameUp = updatedTuple.getStrFld(2);
         int ratingUp = updatedTuple.getIntFld(3);
         double ageUp = Double.parseDouble(new Float(updatedTuple.getFloFld(4)).toString());
 
-        SailorDetails updatedRecord = new SailorDetails(sidUp, snameUp, ratingUp, ageUp-1);
+        SailorDetails updatedRecord = new SailorDetails(sidUp, snameUp, ratingUp, ageUp - 1);
         if (!sailors.get(i).equals(updatedRecord)) {
           System.err.println(
                   "*** error in ColumnarFile.insertTuple() - retrieved data is not proper based on tuple ID ***");
           status = FAIL;
         }
-
 
 
       } catch (Exception e) {
@@ -302,7 +303,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       }
     }
 
-    System.out.println("DiskMgr Read Count = "+ PCounter.rcounter + "\t Write Count = "+ PCounter.wcounter);
+    System.out.println(
+        "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
 
     //TupleScan test
 
@@ -315,14 +317,29 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     try {
       f.createBTreeIndex(1);
-    }
-    catch (Exception ex)
-    {
+    } catch (Exception ex) {
       status = FAIL;
       ex.printStackTrace();
     }
 
-    if (status != OK) {
+    //Insert data after creating index - to test for index updating
+    for (int i = 0; i < sailors.size(); i++) {
+      try {
+        t.setIntFld(1, ((SailorDetails) sailors.get(i)).sid);
+        t.setStrFld(2, ((SailorDetails) sailors.get(i)).sname);
+        t.setIntFld(3, ((SailorDetails) sailors.get(i)).rating);
+        t.setFloFld(4, (float) ((SailorDetails) sailors.get(i)).age);
+
+        tid = f.insertTuple(t.returnTupleByteArray());
+
+      } catch (Exception e) {
+        System.err.println("*** ColumnarFile error in Tuple.setStrFld() ***");
+        status = FAIL;
+        e.printStackTrace();
+      }
+    }
+
+        if (status != OK) {
       //bail out
       System.err.println("*** Error creating relation for sailors");
       Runtime.getRuntime().exit(1);
@@ -342,21 +359,21 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     String[] headers;
     String fileLines = br.readLine();
     headers = fileLines.split("\\t");
-    if(headers == null) {
+    if (headers == null) {
       throw new Exception("*** Input file read error! ***");
     }
     int len = headers.length;
-    if(len != numOfColumns) {
+    if (len != numOfColumns) {
       throw new Exception("*** Input file, number of columns error! ***");
     }
     AttrType[] Stypes = new AttrType[numOfColumns];
     int numOfStringValues = 0;
     String headerLine = fileLines;
-    while(headerLine.contains("char") != false) {
+    while (headerLine.contains("char") != false) {
       int index = headerLine.indexOf("char");
-      if(index > 0) {
+      if (index > 0) {
         numOfStringValues++;
-        headerLine = headerLine.substring(index+4);
+        headerLine = headerLine.substring(index + 4);
       }
     }
     short[] strSizes = new short[numOfStringValues];
@@ -381,7 +398,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     Tuple t = new Tuple();
     try {
-      t.setHdr((short)numOfColumns, Stypes, strSizes);
+      t.setHdr((short) numOfColumns, Stypes, strSizes);
     } catch (Exception e) {
       System.err.println("*** error in Tuple.setHdr() ***");
       e.printStackTrace();
@@ -409,16 +426,16 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       e.printStackTrace();
     }
 
-    while((fileLines = br.readLine()) != null) {
+    while ((fileLines = br.readLine()) != null) {
       try {
         String[] columnValues = fileLines.split("\\t");
-        for(int i=1; i<=numOfColumns; i++) {
-          if(Stypes[i].attrType == AttrType.attrInteger) {
-            t.setIntFld(i, Integer.parseInt(columnValues[i-1]));
-          }else if(Stypes[i].attrType == AttrType.attrReal) {
-            t.setFloFld(i, Integer.parseInt(columnValues[i-1]));
-          }else if(Stypes[i].attrType == AttrType.attrString) {
-            t.setStrFld(i, columnValues[i-1]);
+        for (int i = 1; i <= numOfColumns; i++) {
+          if (Stypes[i].attrType == AttrType.attrInteger) {
+            t.setIntFld(i, Integer.parseInt(columnValues[i - 1]));
+          } else if (Stypes[i].attrType == AttrType.attrReal) {
+            t.setFloFld(i, Integer.parseInt(columnValues[i - 1]));
+          } else if (Stypes[i].attrType == AttrType.attrString) {
+            t.setStrFld(i, columnValues[i - 1]);
           }
         }
       } catch (Exception e) {
@@ -433,8 +450,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       }
     }
 
-    System.out.println("DiskMgr Read Count = "+ PCounter.rcounter + "\t Write Count = "+ PCounter.wcounter);
+    System.out.println(
+        "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
   }
+
 
   protected String testName() {
 

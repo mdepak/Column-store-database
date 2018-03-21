@@ -288,9 +288,9 @@ public class Utility implements Catalogglobal {
   ;
 
   // LOADS INDEXES
-  void loadIndexesUT(Tuple tuple, int attrCnt, int indexCnt,
+  /*void loadIndexesUT(Tuple tuple, int attrCnt, int indexCnt,
       AttrDesc[] attrs, IndexDesc[] indexes, void[] iFiles, RID rid) {
-  }
+  }*/
 
   ;
 

@@ -80,7 +80,8 @@ public class BitMapFile
             Convert.setFloValue(val, 0, byteValue);
         }
         while((tScan = cfs.getNext(rid))!=null){
-            byte[] cData=tScan.getData(); // need to check this..
+
+            byte[] cData=tScan.getTupleByteArray(); // need to check this..
             if(Arrays.equals(byteValue,cData))
             {
                 this.bitmapFile.insertRecord(yes);
@@ -130,7 +131,7 @@ public class BitMapFile
         return false;
     }
 
-    boolean Insert(int position)
+    public boolean insert(int position)
     {
         return false;
     }

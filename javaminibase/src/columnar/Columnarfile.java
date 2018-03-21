@@ -1,7 +1,23 @@
 package columnar;
 
+import bitmap.BitMapFile;
 import btree.BTreeFile;
+import btree.ConstructPageException;
+import btree.ConvertException;
+import btree.DeleteRecException;
+import btree.GetFileEntryException;
+import btree.IndexInsertRecException;
+import btree.IndexSearchException;
+import btree.InsertException;
+import btree.IteratorException;
 import btree.KeyClass;
+import btree.KeyNotMatchException;
+import btree.KeyTooLongException;
+import btree.LeafDeleteException;
+import btree.LeafInsertRecException;
+import btree.NodeNotMatchException;
+import btree.PinPageException;
+import btree.UnpinPageException;
 import global.AttrType;
 import global.RID;
 import global.TID;
@@ -18,7 +34,11 @@ import heap.SpaceNotAvailableException;
 import heap.Tuple;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 public class Columnarfile {
@@ -32,11 +52,19 @@ public class Columnarfile {
   private Heapfile[] columnFiles;
   private String[] heapFileNames;
   private Heapfile headerFile;
+  String infoHeaderFileName;
 
 
-  private boolean[] hasBTreeIndex;
   private List<ColumnarHeaderRecord> columnarHeaderRecords;
 
+  private Map<Integer, String> bTreeIndexes;
+  private Map<Integer, List<ColumnarHeaderRecord>> bitmapIndexes;
+
+
+  public Columnarfile() {
+    //TODO: Columnar file - if the file already exists then then get the information from the header file and then do the work
+
+  }
 
   public AttrType[] getType(){
     return type;
@@ -61,10 +89,11 @@ public class Columnarfile {
 
     heapFileNames = new String[numColumns];
     columnFiles = new Heapfile[numColumns];
-    hasBTreeIndex = new boolean[numColumns];
+
     strSizes = new short[1];
     columnarHeaderRecords = new ArrayList<>();
 
+    //TODO: Init headers on demand basis - no need to load the data every time - in case of insert
     initHeaderFile();
 
     for (int i = 0; i < numColumns; i++) {
@@ -79,13 +108,63 @@ public class Columnarfile {
 
   private void initHeaderFile()
       throws IOException, HFException, HFBufMgrException, HFDiskMgrException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidTypeException, SpaceNotAvailableException, InvalidSlotNumberException {
-      headerFile = new Heapfile(fileName+".hdr");
+    infoHeaderFileName = fileName + ".hdr";
+    headerFile = new Heapfile(infoHeaderFileName);
 
-      for(int colNo = 1 ; colNo <= numColumns; colNo++)
-      {
-        Tuple dfileTuple = new ColumnarHeaderRecord(FileType.DATA_FILE, colNo, type[colNo-1],fileName + "." + colNo, null, 0).getTuple();
-        headerFile.insertRecord(dfileTuple.getTupleByteArray());
+    //TODO: Insert the headers info only if the file already does not exist - do it only once.
+
+    for (int colNo = 1; colNo <= numColumns; colNo++) {
+      Tuple dfileTuple = new ColumnarHeaderRecord(FileType.DATA_FILE, colNo, type[colNo - 1],
+          fileName + "." + colNo, null, 0).getTuple();
+      headerFile.insertRecord(dfileTuple.getTupleByteArray());
+    }
+
+    bitmapIndexes = new HashMap<>();
+    bTreeIndexes = new HashMap<>();
+
+    loadInfoHeaderFileData();
+  }
+
+  private void loadInfoHeaderFileData()
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, FieldNumberOutOfBoundException {
+
+    infoHeaderFileName = fileName + ".hdr";
+    headerFile = new Heapfile(infoHeaderFileName);
+
+    Scan scan = new Scan(headerFile);
+    columnarHeaderRecords = new ArrayList<>();
+
+    RID rid = new RID();
+
+    Tuple temp = null;
+
+    try {
+      temp = scan.getNext(rid);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    while (temp != null) {
+      // Copy to another variable so that the fields of the tuple are initialized.
+
+      Tuple tuple = new Tuple(temp.getTupleByteArray());
+      tuple.tupleCopy(temp);
+
+      ColumnarHeaderRecord record = ColumnarHeaderRecord.getInstanceFromInfoTuple(tuple);
+      columnarHeaderRecords.add(record);
+
+      if (record.getFileType() == FileType.BTREE_FILE) {
+        bTreeIndexes.put(record.getColumnNo(), record.getFileName());
+      } else if (record.getFileType() == FileType.BITMAP_FILE) {
+        if (bitmapIndexes.get(record.getColumnNo()) == null) {
+          bitmapIndexes.put(record.getColumnNo(), new ArrayList<>());
+        }
+
+        bitmapIndexes.get(record.getColumnNo()).add(record);
       }
+
+      temp = scan.getNext(rid);
+    }
   }
 
   /**
@@ -99,7 +178,7 @@ public class Columnarfile {
    * Insert tuple into file, return its tid
    */
   public TID insertTuple(byte[] tuplePtr)
-      throws IOException, InvalidTypeException, FieldNumberOutOfBoundException, InvalidTupleSizeException, SpaceNotAvailableException, HFException, HFBufMgrException, InvalidSlotNumberException, HFDiskMgrException {
+      throws IOException, InvalidTypeException, FieldNumberOutOfBoundException, InvalidTupleSizeException, SpaceNotAvailableException, HFException, HFBufMgrException, InvalidSlotNumberException, HFDiskMgrException, UnpinPageException, LeafDeleteException, LeafInsertRecException, KeyTooLongException, ConvertException, PinPageException, DeleteRecException, IndexSearchException, GetFileEntryException, IndexInsertRecException, NodeNotMatchException, KeyNotMatchException, ConstructPageException, IteratorException, InsertException {
 
     // Input byte array has all the column values for a record.
     // Now the column values have to be separated and corresponding tuples should be created for insertion
@@ -113,9 +192,62 @@ public class Columnarfile {
     for (int i = 0; i < numColumns; i++) {
       Tuple columnTuple = Util.createColumnarTuple(rowTuple, i + 1, type[i]);
       resultRIDs[i] = columnFiles[i].insertRecord(columnTuple.getTupleByteArray());
+
+      position = columnFiles[i].getLastInsertedPosition();
+
+      //Update Btree Index file if exists
+      updateBtreeIndexIfExists(i + 1, columnTuple, resultRIDs[i]);
+
+      //Update BitMap index file if exits
+      updateBitMapIndexIfExists(i + 1, columnTuple, position);
     }
 
     return new TID(numColumns, position, resultRIDs);
+  }
+
+  private void updateBtreeIndexIfExists(int column, Tuple columnarTuple, RID rid)
+      throws ConstructPageException, GetFileEntryException, PinPageException, IOException, FieldNumberOutOfBoundException, IteratorException, NodeNotMatchException, UnpinPageException, LeafInsertRecException, IndexSearchException, InsertException, ConvertException, DeleteRecException, KeyNotMatchException, LeafDeleteException, KeyTooLongException, IndexInsertRecException {
+    String treeFileName = bTreeIndexes.get(column);
+    if (treeFileName != null) {
+      BTreeFile bTreeFile = new BTreeFile(treeFileName);
+      ValueClass valueClass = Util.valueClassFactory(type[column - 1]);
+      KeyClass key = valueClass.getKeyClassFromColumnTuple(columnarTuple, 1);
+      bTreeFile.insert(key, rid);
+    }
+  }
+
+
+  private void updateBitMapIndexIfExists(int column, Tuple columnarTuple, int position)
+      throws IOException, FieldNumberOutOfBoundException, HFDiskMgrException, InvalidTupleSizeException, HFException, SpaceNotAvailableException, InvalidTypeException, InvalidSlotNumberException, HFBufMgrException {
+
+    List<ColumnarHeaderRecord> bitMapFiles = bitmapIndexes.get(column);
+    if (bitMapFiles != null) {
+      ValueClass valueClass = Util.valueClassFactory(type[column - 1]);
+      valueClass.setValueFromColumnTuple(columnarTuple, 1);
+
+      ColumnarHeaderRecord record = null;
+      for (ColumnarHeaderRecord infoRecord : bitMapFiles) {
+        if (valueClass.equals(infoRecord)) {
+          record = infoRecord;
+          break;
+        }
+      }
+
+      if (record == null) {
+        //Create a new BitMap file for that particular value
+        createBitMapIndex(column, valueClass);
+      } else {
+        // Update the position for the value
+        //TODO: Check whether the functionality will work
+        BitMapFile file = new BitMapFile(getBitMapFileName(column, valueClass));
+        file.insert(position);
+      }
+    }
+  }
+
+
+  private String getBitMapFileName(int columnNo, ValueClass value) {
+    return "BM_" + value.toString() + "_" + fileName + "." + columnNo;
   }
 
 
@@ -200,9 +332,9 @@ public class Columnarfile {
    */
   public boolean updateTuple(TID tid, Tuple newtuple) throws Exception {
 
-    for(int field =1; field<=numColumns; field++) {
+    for (int field = 1; field <= numColumns; field++) {
       boolean status = updateColumnofTuple(tid, newtuple, field);
-      if(!status) {
+      if (!status) {
         return status;
       }
     }
@@ -214,8 +346,37 @@ public class Columnarfile {
    */
   public boolean updateColumnofTuple(TID tid, Tuple newtuple, int column)
       throws Exception {
-    Tuple columnTuple = Util.createColumnarTuple(newtuple, column, type[column-1]);
-    return columnFiles[column-1].updateRecord(tid.getRID(column-1), columnTuple);
+    Tuple columnTuple = Util.createColumnarTuple(newtuple, column, type[column - 1]);
+    return columnFiles[column - 1].updateRecord(tid.getRID(column - 1), columnTuple);
+  }
+
+  private void insertHeaderInfoRecord(FileType fileType, int columnNo, String fileName,
+      ValueClass value)
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidSlotNumberException, SpaceNotAvailableException, InvalidTupleSizeException, FieldNumberOutOfBoundException, InvalidTypeException {
+    headerFile = new Heapfile(infoHeaderFileName);
+    ColumnarHeaderRecord infoRecord = new ColumnarHeaderRecord(fileType, columnNo, type[columnNo - 1],
+        fileName, value, 0);
+    Tuple dfileTuple = infoRecord.getTuple();
+    headerFile.insertRecord(dfileTuple.getTupleByteArray());
+
+    //Also add the info the in memory map
+    switch (infoRecord.getFileType())
+    {
+      case BTREE_FILE:
+        bTreeIndexes.put(infoRecord.getColumnNo(), infoRecord.getFileName());
+        break;
+      case BITMAP_FILE:
+        if (bitmapIndexes.get(infoRecord.getColumnNo()) == null) {
+          bitmapIndexes.put(infoRecord.getColumnNo(), new ArrayList<>());
+        }
+        bitmapIndexes.get(infoRecord.getColumnNo()).add(infoRecord);
+        break;
+    }
+  }
+
+  private String getBtreeFileName(int column)
+  {
+    return "BTree" + fileName + column;
   }
 
   /**
@@ -228,10 +389,14 @@ public class Columnarfile {
 
     //TODO: Modify delete fashion if necessary
     int keySize = getKeySize(column);
-      BTreeFile btf = new BTreeFile("BTree" + fileName + column, type[column - 1].attrType,
-          keySize, 1);//full delete
+    String bTreeFileName = getBtreeFileName(column);
 
-    Scan scan = new Scan(columnFiles[column-1]);
+    insertHeaderInfoRecord(FileType.BTREE_FILE, column, bTreeFileName, null);
+
+    BTreeFile btf = new BTreeFile(bTreeFileName, type[column - 1].attrType,
+        keySize, 1);//full delete
+
+    Scan scan = new Scan(columnFiles[column - 1]);
     RID rid = new RID();
 
     Tuple temp = null;
@@ -256,20 +421,18 @@ public class Columnarfile {
     return true;
   }
 
-  int getKeySize(int column)
-  {
+  int getKeySize(int column) {
     int strPtr = 0;
-    for(int i = 0; i< column-1; i++)
-    {
-      if(type[i].attrType == AttrType.attrString)
+    for (int i = 0; i < column - 1; i++) {
+      if (type[i].attrType == AttrType.attrString) {
         strPtr++;
+      }
     }
 
-    AttrType attrType = type[column-1];
+    AttrType attrType = type[column - 1];
     int keySize = 0;
 
-    switch (attrType.attrType)
-    {
+    switch (attrType.attrType) {
       case AttrType.attrInteger:
         keySize = 4;
         break;
@@ -286,8 +449,55 @@ public class Columnarfile {
   /**
    * if it doesn’t exist, create a bitmap index for the given column and value
    */
-  boolean createBitMapIndex(int columnNo, ValueClass value) {
-   // BitMapFile file = new BitMapFile("", this,columnNo,value);
+  public boolean createBitMapIndex(int columnNo, ValueClass value)
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidTypeException, SpaceNotAvailableException, InvalidSlotNumberException {
+
+    //Store the BitMap index file name in the header info heap
+    insertHeaderInfoRecord(FileType.BITMAP_FILE, columnNo, getBitMapFileName(columnNo, value),
+        value);
+
+    // Create new BitMapFile
+    BitMapFile file = new BitMapFile(getBitMapFileName(columnNo, value), this, columnNo, value);
+
+    return true;
+  }
+
+  public boolean createBitMapIndex(int columnNo)
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, FieldNumberOutOfBoundException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTypeException {
+
+    Set uniqueValues = new HashSet<ValueClass>();
+    Heapfile columnHeapFile = new Heapfile(heapFileNames[columnNo - 1]);
+
+    Scan scan = new Scan(columnHeapFile);
+    RID rid = new RID();
+
+    Tuple temp = null;
+
+    try {
+      temp = scan.getNext(rid);
+    } catch (Exception e) {
+      System.out.println("Exception in createBitMapIndex()...");
+      e.printStackTrace();
+
+      return false;
+    }
+
+    while (temp != null) {
+      // Copy to another variable so that the fields of the tuple are initialized.
+
+      Tuple tuple = new Tuple(temp.getTupleByteArray());
+      tuple.tupleCopy(temp);
+      ValueClass value = Util.valueClassFactory(type[columnNo - 1]);
+      value.setValueFromColumnTuple(tuple, 1);
+
+      //Create bitmap index for a unique value only once.
+      if (!uniqueValues.contains(value)) {
+        createBitMapIndex(columnNo, value);
+        uniqueValues.add(uniqueValues);
+      }
+      temp = scan.getNext(rid);
+    }
+
     return false;
   }
 

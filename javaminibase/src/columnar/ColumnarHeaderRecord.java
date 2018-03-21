@@ -11,6 +11,20 @@ enum FileType
 {
   DATA_FILE, BTREE_FILE, BITMAP_FILE;
 
+  public static FileType getFileType(int fileType)
+  {
+    switch (fileType)
+    {
+      case 0:
+        return DATA_FILE;
+      case 1:
+        return BTREE_FILE;
+      case 2:
+        return BITMAP_FILE;
+
+    }
+    return null;
+  }
 }
 
 public class ColumnarHeaderRecord {
@@ -25,12 +39,38 @@ public class ColumnarHeaderRecord {
   private AttrType[] attrTypes;
   private short[] strSizes;
 
+  public FileType getFileType() {
+    return fileType;
+  }
+
+  public String getFileName() {
+    return fileName;
+  }
+
+  public ValueClass getValueClass() {
+    return valueClass;
+  }
+
+  public int getMaxValSize() {
+    return maxValSize;
+  }
+
+  public int getColumnNo() {
+    return columnNo;
+  }
+
+  public AttrType getAttrType() {
+    return attrType;
+  }
+
   public ColumnarHeaderRecord(FileType fileType, int columnNo, AttrType attrType, String fileName, ValueClass valueClass,
       int maxValSize) {
     this.fileType = fileType;
     this.columnNo = columnNo;
+
     this.attrType = attrType;
     this.fileName = fileName;
+    //TODO: Not used so far - have to figure out where we store the value in the field easy for range serach in case of Bitmap range search.
     this.valueClass = valueClass;
     this.maxValSize = maxValSize;
   }
@@ -60,12 +100,23 @@ public class ColumnarHeaderRecord {
 
     Tuple tuple = new Tuple(size);
     tuple.setHdr((short) 4, attrTypes, strSizes);
-
+    //TODO: Set short field if possible
     tuple.setIntFld(1, fileType.ordinal());
     tuple.setIntFld(2, columnNo);
     tuple.setIntFld(3, attrType.attrType);
     tuple.setStrFld(4, fileName);
 
     return tuple;
+  }
+
+  public static ColumnarHeaderRecord getInstanceFromInfoTuple(Tuple tuple)
+      throws IOException, FieldNumberOutOfBoundException {
+
+    FileType fileType = FileType.getFileType(tuple.getIntFld(1));
+    int columnNo = tuple.getIntFld(2);
+    AttrType attrType = new AttrType(tuple.getIntFld(3));
+    String fileName = tuple.getStrFld(4);
+
+    return new ColumnarHeaderRecord(fileType, columnNo, attrType, fileName, null, 0);
   }
 }
