@@ -207,6 +207,7 @@ public class BTreeFile extends IndexFile
     if (headerPageId == null) //file not exist
     {
       headerPage = new BTreeHeaderPage();
+      headerPage = new BTreeHeaderPage();
       headerPageId = headerPage.getPageId();
       add_file_entry(filename, headerPageId);
       headerPage.set_magic0(MAGIC0);
