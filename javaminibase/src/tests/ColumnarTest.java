@@ -1,6 +1,7 @@
 package tests;
 
 import columnar.Columnarfile;
+import columnar.TupleScan;
 import diskmgr.PCounter;
 import global.AttrType;
 import global.GlobalConst;
@@ -262,6 +263,15 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     }
 
     System.out.println("DiskMgr Read Count = "+ PCounter.rcounter + "\t Write Count = "+ PCounter.wcounter);
+
+    //TupleScan test
+
+    TupleScan tupleScan = new TupleScan(f);
+    TID tid1 = new TID(4);
+    Tuple nextTuple = new Tuple();
+    while(nextTuple != null){
+      nextTuple = tupleScan.getNext(tid1);
+    }
 
     try {
       f.createBTreeIndex(1);

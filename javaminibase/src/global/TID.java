@@ -8,6 +8,10 @@ public class TID {
 
   public TID(int numRIDs) {
     this.numRIDs = numRIDs;
+    RID[] records = new RID[numRIDs];
+    for(int i=0; i<numRIDs; i++)
+      records[i] = new RID();
+    this.recordIDs = records;
   }
 
   public TID(int numRIDs, int position) {
@@ -25,6 +29,13 @@ public class TID {
   {
     return recordIDs[fieldNo];
   }
+
+  public int getNumRIDs()
+  {
+    return numRIDs;
+  }
+
+
 
   /**
    * make a copy of the given tid
@@ -58,7 +69,7 @@ public class TID {
   /**
    * set the RID of the given column
    */
-  void setRID(int column, RID recordID) {
+  public void setRID(int column, RID recordID) {
     recordIDs[column] = recordID;
   }
 

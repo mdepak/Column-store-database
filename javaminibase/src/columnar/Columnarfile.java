@@ -38,6 +38,12 @@ public class Columnarfile {
   private List<ColumnarHeaderRecord> columnarHeaderRecords;
 
 
+  public AttrType[] getType(){
+    return type;
+  }
+
+  public int getNumColumns() { return numColumns;}
+
   /**
    * Initialize: if columnar file does not exits, create one heapfile (‘‘name.columnid’’) per
    * column; also create a ‘‘name.hdr’’ file that contains relevant metadata.
@@ -65,6 +71,10 @@ public class Columnarfile {
       heapFileNames[i] = fileName + "." + (i + 1);
       columnFiles[i] = new Heapfile(heapFileNames[i]);
     }
+  }
+
+  public Heapfile[] getColumnFiles(){
+    return columnFiles;
   }
 
   private void initHeaderFile()
