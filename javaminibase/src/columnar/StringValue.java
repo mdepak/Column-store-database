@@ -59,4 +59,8 @@ public class StringValue extends ValueClass {
     return new StringKey(str);
   }
 
+  @Override
+  public String toString() {
+    return val;
+  }
 }

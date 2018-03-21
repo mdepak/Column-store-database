@@ -39,10 +39,35 @@ public class ColumnarHeaderRecord {
   private AttrType[] attrTypes;
   private short[] strSizes;
 
+  public FileType getFileType() {
+    return fileType;
+  }
+
+  public String getFileName() {
+    return fileName;
+  }
+
+  public ValueClass getValueClass() {
+    return valueClass;
+  }
+
+  public int getMaxValSize() {
+    return maxValSize;
+  }
+
+  public int getColumnNo() {
+    return columnNo;
+  }
+
+  public AttrType getAttrType() {
+    return attrType;
+  }
+
   public ColumnarHeaderRecord(FileType fileType, int columnNo, AttrType attrType, String fileName, ValueClass valueClass,
       int maxValSize) {
     this.fileType = fileType;
     this.columnNo = columnNo;
+
     this.attrType = attrType;
     this.fileName = fileName;
     //TODO: Not used so far - have to figure out where we store the value in the field easy for range serach in case of Bitmap range search.
@@ -75,7 +100,7 @@ public class ColumnarHeaderRecord {
 
     Tuple tuple = new Tuple(size);
     tuple.setHdr((short) 4, attrTypes, strSizes);
-
+    //TODO: Set short field if possible
     tuple.setIntFld(1, fileType.ordinal());
     tuple.setIntFld(2, columnNo);
     tuple.setIntFld(3, attrType.attrType);

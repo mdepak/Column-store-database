@@ -25,51 +25,52 @@ import java.util.Vector;
  * trees together.
  */
 
-//Define the Sailor schema
-class Sailor {
 
-  public int sid;
-  public String sname;
-  public int rating;
-  public double age;
+class JoinsDriver1 implements GlobalConst {
+  //Define the Sailor schema
+  class Sailor {
 
-  public Sailor(int _sid, String _sname, int _rating, double _age) {
-    sid = _sid;
-    sname = _sname;
-    rating = _rating;
-    age = _age;
+    public int sid;
+    public String sname;
+    public int rating;
+    public double age;
+
+    public Sailor(int _sid, String _sname, int _rating, double _age) {
+      sid = _sid;
+      sname = _sname;
+      rating = _rating;
+      age = _age;
+    }
   }
-}
 
-//Define the Boat schema
-class Boats {
+  //Define the Boat schema
+  class Boats {
 
-  public int bid;
-  public String bname;
-  public String color;
+    public int bid;
+    public String bname;
+    public String color;
 
-  public Boats(int _bid, String _bname, String _color) {
-    bid = _bid;
-    bname = _bname;
-    color = _color;
+    public Boats(int _bid, String _bname, String _color) {
+      bid = _bid;
+      bname = _bname;
+      color = _color;
+    }
   }
-}
 
-//Define the Reserves schema
-class Reserves {
+  //Define the Reserves schema
+  class Reserves {
 
-  public int sid;
-  public int bid;
-  public String date;
+    public int sid;
+    public int bid;
+    public String date;
 
-  public Reserves(int _sid, int _bid, String _date) {
-    sid = _sid;
-    bid = _bid;
-    date = _date;
+    public Reserves(int _sid, int _bid, String _date) {
+      sid = _sid;
+      bid = _bid;
+      date = _date;
+    }
   }
-}
 
-class JoinsDriver implements GlobalConst {
 
   private boolean OK = true;
   private boolean FAIL = false;
@@ -80,7 +81,7 @@ class JoinsDriver implements GlobalConst {
   /**
    * Constructor
    */
-  public JoinsDriver() {
+  public JoinsDriver1() {
 
     //build Sailor, Boats, Reserves table
     sailors = new Vector();
@@ -1147,7 +1148,7 @@ public class SM_JoinTest {
     //SystemDefs global = new SystemDefs("bingjiedb", 100, 70, null);
     //JavabaseDB.openDB("/tmp/nwangdb", 5000);
 
-    JoinsDriver jjoin = new JoinsDriver();
+    JoinsDriver1 jjoin = new JoinsDriver1();
 
     sortstatus = jjoin.runTests();
     if (sortstatus != true) {

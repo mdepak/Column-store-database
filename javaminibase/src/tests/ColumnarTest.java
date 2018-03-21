@@ -300,7 +300,24 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       ex.printStackTrace();
     }
 
-    if (status != OK) {
+    //Insert data after creating index - to test for index updating
+    for (int i = 0; i < sailors.size(); i++) {
+      try {
+        t.setIntFld(1, ((SailorDetails) sailors.get(i)).sid);
+        t.setStrFld(2, ((SailorDetails) sailors.get(i)).sname);
+        t.setIntFld(3, ((SailorDetails) sailors.get(i)).rating);
+        t.setFloFld(4, (float) ((SailorDetails) sailors.get(i)).age);
+
+        tid = f.insertTuple(t.returnTupleByteArray());
+
+      } catch (Exception e) {
+        System.err.println("*** ColumnarFile error in Tuple.setStrFld() ***");
+        status = FAIL;
+        e.printStackTrace();
+      }
+    }
+
+        if (status != OK) {
       //bail out
       System.err.println("*** Error creating relation for sailors");
       Runtime.getRuntime().exit(1);

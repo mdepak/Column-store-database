@@ -58,4 +58,9 @@ public class IntegerValue extends ValueClass {
     int val = columnarTuple.getIntFld(fieldPos);
     return new IntegerKey(val);
   }
+
+  @Override
+  public String toString() {
+    return val.toString();
+  }
 }

@@ -130,7 +130,7 @@ public class BitMapFile
         return false;
     }
 
-    boolean Insert(int position)
+    public boolean insert(int position)
     {
         return false;
     }
