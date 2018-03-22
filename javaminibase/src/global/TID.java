@@ -6,10 +6,15 @@ public class TID {
   int position;
   RID[] recordIDs;
 
+  public int getPosition() {
+    return position;
+  }
+
   public TID(int numRIDs) {
     this.numRIDs = numRIDs;
     RID[] records = new RID[numRIDs];
     for(int i=0; i<numRIDs; i++)
+
       records[i] = new RID();
     this.recordIDs = records;
   }

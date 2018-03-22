@@ -10,6 +10,16 @@ public class StringValue extends ValueClass {
 
   String val;
 
+  StringValue()
+  {
+
+  }
+
+  StringValue(String val)
+  {
+    this.val = val;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -57,6 +67,12 @@ public class StringValue extends ValueClass {
       throws IOException, FieldNumberOutOfBoundException {
     String str = columnarTuple.getStrFld(fieldPos);
     return new StringKey(str);
+  }
+
+  @Override
+  void setValueFromRowTuple(Tuple rowTuple, int fieldPos)
+      throws IOException, FieldNumberOutOfBoundException {
+    val = rowTuple.getStrFld(fieldPos);
   }
 
   @Override

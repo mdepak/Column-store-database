@@ -10,6 +10,16 @@ public class IntegerValue extends ValueClass {
 
   Integer val;
 
+  IntegerValue()
+  {
+
+  }
+
+  IntegerValue(Integer val)
+  {
+    this.val = val;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -57,6 +67,12 @@ public class IntegerValue extends ValueClass {
       throws IOException, FieldNumberOutOfBoundException {
     int val = columnarTuple.getIntFld(fieldPos);
     return new IntegerKey(val);
+  }
+
+  @Override
+  void setValueFromRowTuple(Tuple rowTuple, int fieldPos)
+      throws IOException, FieldNumberOutOfBoundException {
+    val = rowTuple.getIntFld(fieldPos);
   }
 
   @Override

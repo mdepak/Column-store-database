@@ -20,4 +20,7 @@ public abstract class ValueClass {
 
   abstract KeyClass getKeyClassFromColumnTuple(Tuple columnarTuple, int fieldPos)
       throws IOException, FieldNumberOutOfBoundException;
+
+  abstract void setValueFromRowTuple(Tuple rowTuple, int fieldPos)
+      throws IOException, FieldNumberOutOfBoundException;
 }

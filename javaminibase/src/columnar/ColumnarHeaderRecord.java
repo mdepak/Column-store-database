@@ -21,7 +21,6 @@ enum FileType
         return BTREE_FILE;
       case 2:
         return BITMAP_FILE;
-
     }
     return null;
   }
@@ -78,33 +77,43 @@ public class ColumnarHeaderRecord {
 
   Tuple getTuple()
       throws InvalidTupleSizeException, IOException, InvalidTypeException, FieldNumberOutOfBoundException {
-    attrTypes = new AttrType[4];
+    attrTypes = new AttrType[6];
 
     attrTypes[0] = new AttrType(AttrType.attrInteger);// File type
     attrTypes[1] = new AttrType(AttrType.attrInteger);// Column Number
     attrTypes[2] = new AttrType(AttrType.attrInteger);// Attribue Type
     //TODO: Assumes that the file name field is 30 characters
     attrTypes[3] = new AttrType(AttrType.attrString); // File name
+    attrTypes[4] = attrType;  // Actual value of the bitmap
+    attrTypes[5] = new AttrType(AttrType.attrInteger);
 
     //TODO: Save value also to the header file - for seraching in case of bitmap files
-    strSizes = new short[1];
-    strSizes[0] = 30;
 
-    int tupleSize = 4+ 4 + 4+ 30;
+    if(attrType.attrType ==AttrType.attrString) {
+      strSizes = new short[2];
+      strSizes[0] = 30;
+      strSizes[1] = (short) maxValSize;
+    }
+    else
+    {
+      strSizes = new short[2];
+      strSizes[0] = 30;
+    }
 
-
-    Tuple t = new Tuple(tupleSize);
-    t.setHdr((short) 4, attrTypes, strSizes);
+    Tuple t = new Tuple();
+    t.setHdr((short) 6, attrTypes, strSizes);
     int size = t.size();
 
 
     Tuple tuple = new Tuple(size);
-    tuple.setHdr((short) 4, attrTypes, strSizes);
+    tuple.setHdr((short) 6, attrTypes, strSizes);
     //TODO: Set short field if possible
     tuple.setIntFld(1, fileType.ordinal());
     tuple.setIntFld(2, columnNo);
     tuple.setIntFld(3, attrType.attrType);
     tuple.setStrFld(4, fileName);
+    valueClass.setValueinRowTuple(tuple, 5);
+    tuple.setIntFld(6, maxValSize);
 
     return tuple;
   }
@@ -117,6 +126,10 @@ public class ColumnarHeaderRecord {
     AttrType attrType = new AttrType(tuple.getIntFld(3));
     String fileName = tuple.getStrFld(4);
 
-    return new ColumnarHeaderRecord(fileType, columnNo, attrType, fileName, null, 0);
+    ValueClass value = Util.valueClassFactory(attrType);
+    value.setValueFromRowTuple(tuple, 5);
+    int maxValueSize = tuple.getIntFld(6);
+
+    return new ColumnarHeaderRecord(fileType, columnNo, attrType, fileName, value, maxValueSize);
   }
 }
