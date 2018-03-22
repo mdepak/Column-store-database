@@ -101,12 +101,12 @@ public class ColumnarHeaderRecord {
     }
 
     Tuple t = new Tuple();
-    t.setHdr((short) 5, attrTypes, strSizes);
+    t.setHdr((short) 6, attrTypes, strSizes);
     int size = t.size();
 
 
     Tuple tuple = new Tuple(size);
-    tuple.setHdr((short) 5, attrTypes, strSizes);
+    tuple.setHdr((short) 6, attrTypes, strSizes);
     //TODO: Set short field if possible
     tuple.setIntFld(1, fileType.ordinal());
     tuple.setIntFld(2, columnNo);

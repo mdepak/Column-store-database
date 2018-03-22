@@ -17,7 +17,7 @@ public class TupleScan {
 
   Columnarfile columnarfile;
   Scan[] scans;
-
+  int position;
 
   public TupleScan(Columnarfile cf) {
     int columns = cf.getNumColumns();
@@ -37,7 +37,8 @@ public class TupleScan {
    * Closes the TupleScan object
    */
   void closetuplescan() {
-
+    for(int i= 0; i< scans.length; i++)
+      scans[i].closescan();
   }
 
   /**
