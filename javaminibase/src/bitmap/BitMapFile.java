@@ -2,60 +2,70 @@ package bitmap;
 
 import java.io.IOException;
 import java.lang.*;
+
+
+import btree.*;
+import bufmgr.HashEntryNotFoundException;
+import bufmgr.InvalidFrameNumberException;
+import bufmgr.PageUnpinnedException;
+import bufmgr.ReplacerException;
+import columnar.ValueClass;
+import columnar.*;
+import diskmgr.Page;
 import java.util.Arrays;
 
 import btree.IntegerKey;
 import columnar.ValueClass;
 import columnar.*;
 import global.Convert;
+
 import global.PageId;
 import global.RID;
 import global.SystemDefs;
 import heap.*;
 
+
 public class BitMapFile
 {
+
     private PageId headerPageId;
     public Columnarfile columnfile;
-    public int ColumnNo;
+    public int columnNo;
     public ValueClass value;
     public String fileName;
     private BitMapHeaderPage headerPage;
     private String dbname;
-
     private Heapfile bitmapFile;
 
-    public BitMapFile(String filename)
-    {
-        headerPageId = get_file_entry(filename);
-        headerPage = new BitMapHeaderPage(headerPageId);
-        dbname = new String(filename);
-    }
+    BitMapFile(String filename) throws IOException, HFException, HFBufMgrException, HFDiskMgrException {
+        //super(filename);
+                headerPageId = get_file_entry(filename);
+                headerPage = new BitMapHeaderPage(headerPageId);
+                dbname = new String(filename);
+            }
 
-    public BitMapFile(String filename, Columnarfile columnfile,
-                      int ColumnNo, ValueClass value)
-            throws IOException, HFException, HFBufMgrException, HFDiskMgrException,InvalidTupleSizeException,SpaceNotAvailableException, HFException, HFBufMgrException, InvalidSlotNumberException, HFDiskMgrException
-    {
+    BitMapFile(String filename, Columnarfile columnfile,
+            int columnNo, ValueClass value) throws IOException, HFDiskMgrException, HFBufMgrException, HFException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTupleSizeException {
+        //super(filename);
         headerPageId = get_file_entry(filename);
-        if(headerPageId == null)
-        {
-            this.columnfile = columnfile;    // create in Header page
-            this.ColumnNo = ColumnNo;
-            this.value = value;
-            this.fileName = filename;
-            this.bitmapFile = new Heapfile(fileName);
+        if (headerPageId == null) {
+            headerPage = new BitMapHeaderPage();
+            headerPageId = headerPage.getPageId();
+            headerPage.setColumnFile(columnfile);   // create in Header page
+            headerPage.setColumnNo(columnNo);
+            headerPage.setValue(value);
+            headerPage.setFileName(filename);
             createBitMapIndex();
-        }
-        else
-        {
+        } else {
             // Yet to decide
         }
+
     }
 
     private boolean createBitMapIndex()
             throws java.io.IOException, InvalidTupleSizeException, SpaceNotAvailableException, HFException, HFBufMgrException, InvalidSlotNumberException, HFDiskMgrException
     {
-        Scan cfs = this.columnfile.openColumnScan(this.ColumnNo);// columnarFileScan instead of scan
+        Scan cfs = this.columnfile.openColumnScan(this.columnNo);// columnarFileScan instead of scan
         RID rid = new RID();
         Tuple tScan = new Tuple();
         byte[] yes = new byte[2];
@@ -80,8 +90,7 @@ public class BitMapFile
             Convert.setFloValue(val, 0, byteValue);
         }
         while((tScan = cfs.getNext(rid))!=null){
-
-            byte[] cData=tScan.getTupleByteArray(); // need to check this..
+            byte[] cData=tScan.getData(); // need to check this..
             if(Arrays.equals(byteValue,cData))
             {
                 this.bitmapFile.insertRecord(yes);
@@ -106,10 +115,78 @@ public class BitMapFile
         return null;
     }
 
-    void close()
-    {
+        private Page pinPage(PageId pageno)
+                throws PinPageException {
+            try {
+                Page page = new Page();
+                SystemDefs.JavabaseBM.pinPage(pageno, page, false/*Rdisk*/);
+                return page;
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new PinPageException(e, "");
+            }
+        }
 
-    }
+        private void add_file_entry(String fileName, PageId pageno)
+                throws AddFileEntryException {
+            try {
+                SystemDefs.JavabaseDB.add_file_entry(fileName, pageno);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new AddFileEntryException(e, "");
+            }
+        }
+
+        private void unpinPage(PageId pageno)
+                throws UnpinPageException {
+            try {
+                SystemDefs.JavabaseBM.unpinPage(pageno, false /* = not DIRTY */);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new UnpinPageException(e, "");
+            }
+        }
+
+        private void freePage(PageId pageno)
+                throws FreePageException {
+            try {
+                SystemDefs.JavabaseBM.freePage(pageno);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new FreePageException(e, "");
+            }
+
+        }
+
+        private void delete_file_entry(String filename)
+                throws DeleteFileEntryException {
+            try {
+                SystemDefs.JavabaseDB.delete_file_entry(filename);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new DeleteFileEntryException(e, "");
+            }
+        }
+
+        private void unpinPage(PageId pageno, boolean dirty)
+                throws UnpinPageException {
+            try {
+                SystemDefs.JavabaseBM.unpinPage(pageno, dirty);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new UnpinPageException(e, "");
+            }
+        }
+
+
+
+        void close() throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException
+        {
+            if ( headerPage!=null) {
+                SystemDefs.JavabaseBM.unpinPage(headerPageId, true);
+                headerPage = null;
+            }
+        }
 
     void destroyBitMapFile()
     {
@@ -123,7 +200,7 @@ public class BitMapFile
 
     BitMapHeaderPage getHeaderPage()
     {
-        return null;
+        return headerPage;
     }
 
     boolean Delete(int position)
@@ -131,13 +208,10 @@ public class BitMapFile
         return false;
     }
 
-    public boolean insert(int position)
+    boolean Insert(int position)
     {
         return false;
     }
 
-    void setCurPage_forGivenPosition(int Position)
-    {
-
-    }
 }
+

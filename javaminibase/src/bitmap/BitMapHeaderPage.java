@@ -1,11 +1,66 @@
 package bitmap;
 
+import columnar.Columnarfile;
+import columnar.ValueClass;
 import diskmgr.Page;
 import global.PageId;
 import global.SystemDefs;
 import heap.*;
 
+import java.io.IOException;
+
 class BitMapHeaderPage extends HFPage{
+
+    public Columnarfile columnFile;
+    public int columnNo;
+    public ValueClass value;
+    public String fileName;
+
+    void setColumnFile(Columnarfile columnfile) {
+        this.columnFile = columnfile;
+    }
+
+    Columnarfile getColumnfile()
+    {
+        return this.columnFile;
+    }
+
+    void setColumnNo(int columnNo) {
+        this.columnNo = columnNo;
+    }
+
+    int getColumnNo()
+    {
+        return this.columnNo;
+    }
+
+    void setValue(ValueClass value) {
+        this.value = value;
+    }
+
+    ValueClass getValue()
+    {
+        return this.value;
+    }
+
+    void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    String getFileName()
+    {
+        return this.fileName;
+    }
+
+    void setPageId(PageId pageno) throws IOException {
+        setCurPage(pageno);
+    }
+
+    PageId getPageId()
+            throws IOException {
+        return getCurPage();
+    }
+
 
 /*    void setPageId(PageId pageno)
             throws IOException {
