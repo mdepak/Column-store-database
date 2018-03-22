@@ -60,10 +60,19 @@ public class Columnarfile {
   private Map<Integer, String> bTreeIndexes;
   private Map<Integer, List<ColumnarHeaderRecord>> bitmapIndexes;
 
-
-  public Columnarfile() {
+  /**
+   * This constructor is called when the columnar file is already created.
+   */
+  public Columnarfile(String fileName)
+      throws HFDiskMgrException, InvalidTupleSizeException, HFException, IOException, FieldNumberOutOfBoundException, HFBufMgrException {
     //TODO: Columnar file - if the file already exists then then get the information from the header file and then do the work
+    this.fileName = fileName;
+    loadInfoHeaderFileData();
+  }
 
+  private String getDeleteFileName()
+  {
+    return fileName+".del";
   }
 
   public AttrType[] getType() {
@@ -114,17 +123,25 @@ public class Columnarfile {
     headerFile = new Heapfile(infoHeaderFileName);
 
     //TODO: Insert the headers info only if the file already does not exist - do it only once.
-
+    int strPtr = 0;
     for (int colNo = 1; colNo <= numColumns; colNo++) {
+
+      int maxValSize = 0;
+      if(type[colNo-1].attrType == AttrType.attrString)
+      {
+        maxValSize = strSizes[strPtr++];
+      }
+
       Tuple dfileTuple = new ColumnarHeaderRecord(FileType.DATA_FILE, colNo, type[colNo - 1],
-          fileName + "." + colNo, null, 0).getTuple();
+          fileName + "." + colNo, getDummyValue(type[colNo - 1]), maxValSize).getTuple();
+
       headerFile.insertRecord(dfileTuple.getTupleByteArray());
     }
 
     bitmapIndexes = new HashMap<>();
     bTreeIndexes = new HashMap<>();
 
-    loadInfoHeaderFileData();
+    //loadInfoHeaderFileData();
   }
 
   private void loadInfoHeaderFileData()
@@ -137,8 +154,9 @@ public class Columnarfile {
     columnarHeaderRecords = new ArrayList<>();
 
     RID rid = new RID();
-
     Tuple temp = null;
+
+    List<ColumnarHeaderRecord> columnarDataFiles = new ArrayList();
 
     try {
       temp = scan.getNext(rid);
@@ -164,8 +182,32 @@ public class Columnarfile {
 
         bitmapIndexes.get(record.getColumnNo()).add(record);
       }
+      else if(record.getFileType() == FileType.DATA_FILE)
+      {
+        columnarDataFiles.add(record);
+      }
 
       temp = scan.getNext(rid);
+    }
+
+    numColumns = columnarDataFiles.size();
+    type = new AttrType[numColumns];
+
+    List<Integer> strAttrSizes = new ArrayList();
+
+    for(int idx = 0;idx < numColumns; idx++)
+    {
+      type[idx] = columnarDataFiles.get(idx).getAttrType();
+      if(type[idx].attrType == AttrType.attrString)
+      {
+        strAttrSizes.add(columnarDataFiles.get(idx).getMaxValSize());
+      }
+    }
+
+    strSizes = new short[strAttrSizes.size()];
+    for(int idx = 0; idx <strAttrSizes.size(); idx++)
+    {
+      strSizes[idx] = (short)(int)strAttrSizes.get(idx);
     }
   }
 
@@ -319,7 +361,7 @@ public class Columnarfile {
    * Initiate a sequential scan of tuples.
    */
   TupleScan openTupleScan() {
-    return null;
+    return new TupleScan(this);
   }
 
   /**
@@ -350,6 +392,25 @@ public class Columnarfile {
       throws Exception {
     Tuple columnTuple = Util.createColumnarTuple(newtuple, column, type[column - 1]);
     return columnFiles[column - 1].updateRecord(tid.getRID(column - 1), columnTuple);
+  }
+
+
+  private ValueClass getDummyValue(AttrType attrType)
+  {
+    ValueClass value = null;
+    switch (attrType.attrType)
+    {
+      case AttrType.attrInteger:
+        value = new IntegerValue(1);
+        break;
+      case AttrType.attrString:
+        value = new StringValue(" ");
+        break;
+      case AttrType.attrReal:
+        value = new FloatValue((float) 1.0);
+        break;
+    }
+    return value;
   }
 
   private void insertHeaderInfoRecord(FileType fileType, int columnNo, String fileName,
@@ -506,14 +567,32 @@ public class Columnarfile {
   /**
    * add the tuple to a heapfile tracking the deleted tuples from the columnar file
    */
-  boolean markTupleDeleted(TID tid) {
-    return false;
+  boolean markTupleDeleted(TID tid)
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, InvalidTypeException, FieldNumberOutOfBoundException, SpaceNotAvailableException, InvalidSlotNumberException {
+
+    Heapfile deleteFile = new Heapfile(getDeleteFileName());
+
+    Tuple tuple = new Tuple();
+    AttrType[] type = new AttrType[1];
+    type[0] = new AttrType(AttrType.attrInteger);
+
+    tuple.setHdr((short) 1, type, new short[0]);
+    tuple.setIntFld(1,tid.getPosition() );
+    deleteFile.insertRecord(tuple.getTupleByteArray());
+
+    return true;
   }
 
   /**
    * merge all deleted tuples from the file as well as all from all index files.
    */
-  boolean purgeAllDeletedTuples() {
+  boolean purgeAllDeletedTuples()
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException {
+
+    Heapfile deleteFile = new Heapfile(getDeleteFileName());
+
+    //deleteFile.deleteRecord();
+
     return false;
   }
 }

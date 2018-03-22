@@ -18,6 +18,7 @@ public class TupleScan {
   Columnarfile columnarfile;
   Scan[] scans;
 
+
   public TupleScan(Columnarfile cf) {
     int columns = cf.getNumColumns();
     Heapfile[] columnFiles = cf.getColumnFiles();

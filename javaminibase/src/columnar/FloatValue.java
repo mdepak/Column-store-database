@@ -10,6 +10,16 @@ public class FloatValue extends ValueClass {
 
   Float val;
 
+  FloatValue()
+  {
+
+  }
+
+  FloatValue(Float val)
+  {
+    this.val = val;
+  }
+
   @Override
   public Object getValue() {
     return val;
@@ -38,5 +48,11 @@ public class FloatValue extends ValueClass {
       throws IOException, FieldNumberOutOfBoundException {
     float fltVal = columnarTuple.getFloFld(fieldPos);
     return new IntegerKey((int) fltVal);
+  }
+
+  @Override
+  void setValueFromRowTuple(Tuple rowTuple, int fieldPos)
+      throws IOException, FieldNumberOutOfBoundException {
+      val = rowTuple.getFloFld(fieldPos);
   }
 }
