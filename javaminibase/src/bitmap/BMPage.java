@@ -283,8 +283,8 @@ public class BMPage extends Page
     void writeBMPageArray(byte[] data) {
         // Need to implement
         // only bits not the metadata
-        byte[] bitsOnly = new byte[1004];
-        System.arraycopy(data, 24, this.data, 0, MAX_SPACE);
+        byte[] bitsOnly = new byte[MAX_SPACE-DPFIXED];
+        System.arraycopy(data, 0, this.data, DPFIXED, MAX_SPACE-DPFIXED);
     }
     /**
      * @return byte array
@@ -292,7 +292,9 @@ public class BMPage extends Page
     byte[] getBMPageArray(){
         // Need to implement
         // only bits not the metadata
-        return data;
+        byte[] bitdata = new byte[MAX_SPACE-DPFIXED];
+        System.arraycopy(this.data, DPFIXED, bitdata, 0, MAX_SPACE-DPFIXED);
+        return bitdata;
     }
 
     /**
