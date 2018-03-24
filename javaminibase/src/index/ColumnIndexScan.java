@@ -79,11 +79,7 @@ public class ColumnIndexScan extends Iterator{
       final String indName,
       AttrType types[],
       short str_sizes[],
-      int noInFlds,
-      int noOutFlds,
-      FldSpec outFlds[],
       CondExpr selects[],
-      final int fldNum,
       final boolean indexOnly
   )
       throws IndexException,
@@ -91,35 +87,11 @@ public class ColumnIndexScan extends Iterator{
       InvalidTupleSizeException,
       UnknownIndexTypeException,
       IOException {
-    _fldNum = fldNum;
-    _noInFlds = noInFlds;
     _types = types;
     _s_sizes = str_sizes;
 
-    AttrType[] Jtypes = new AttrType[noOutFlds];
     short[] ts_sizes;
     Jtuple = new Tuple();
-
-    try {
-      ts_sizes = TupleUtils
-          .setup_op_tuple(Jtuple, Jtypes, types, noInFlds, str_sizes, outFlds, noOutFlds);
-    } catch (TupleUtilsException e) {
-      throw new IndexException(e,
-          "IndexScan.java: TupleUtilsException caught from TupleUtils.setup_op_tuple()");
-    } catch (InvalidRelation e) {
-      throw new IndexException(e,
-          "IndexScan.java: InvalidRelation caught from TupleUtils.setup_op_tuple()");
-    }
-
-    _selects = selects;
-    perm_mat = outFlds;
-    _noOutFlds = noOutFlds;
-    tuple1 = new Tuple();
-    try {
-      tuple1.setHdr((short) noInFlds, types, str_sizes);
-    } catch (Exception e) {
-      throw new IndexException(e, "IndexScan.java: Heapfile error");
-    }
 
     t1_size = tuple1.size();
     index_only = indexOnly;  // added by bingjie miao

@@ -50,7 +50,7 @@ public class StringValue extends ValueClass {
   }
 
   @Override
-  void setValueFromColumnTuple(Tuple columnarTuple, int fieldPos)
+  public void setValueFromColumnTuple(Tuple columnarTuple, int fieldPos)
       throws IOException, FieldNumberOutOfBoundException {
     String str = columnarTuple.getStrFld(fieldPos);
     this.val = str;

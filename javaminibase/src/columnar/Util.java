@@ -71,4 +71,12 @@ public class Util {
 
     return columnTuple;
   }
+
+  public static void printBitsInByte(byte[] val)
+  {
+    for(int i =0 ; i<val.length; i++)
+    {
+    System.out.println(Integer.toBinaryString( (int) val[i]));
+    }
+  }
 }

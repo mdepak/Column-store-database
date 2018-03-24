@@ -11,7 +11,7 @@ public abstract class ValueClass {
 
   abstract void setValue(Object val);
 
-  abstract void setValueFromColumnTuple(Tuple columnarTuple, int fieldPos)
+  public abstract void setValueFromColumnTuple(Tuple columnarTuple, int fieldPos)
       throws IOException, FieldNumberOutOfBoundException;
 
   // Should ensure the headers are specified.. otherwise this will not work
