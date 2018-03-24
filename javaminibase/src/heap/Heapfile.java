@@ -974,7 +974,7 @@ public class Heapfile implements Filetype, GlobalConst {
 
   } // end of newPage
 
-  private PageId get_file_entry(String filename)
+  public static PageId get_file_entry(String filename)
       throws HFDiskMgrException {
 
     PageId tmpId = new PageId();

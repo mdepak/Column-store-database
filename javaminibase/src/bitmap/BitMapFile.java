@@ -37,7 +37,7 @@ public class BitMapFile
     private String dbname;
     private Heapfile bitmapFile;
 
-    BitMapFile(String filename) throws IOException, HFException, HFBufMgrException, HFDiskMgrException {
+    public BitMapFile(String filename) throws IOException, HFException, HFBufMgrException, HFDiskMgrException {
         //super(filename);
                 headerPageId = get_file_entry(filename);
                 headerPage = new BitMapHeaderPage(headerPageId);
@@ -45,7 +45,7 @@ public class BitMapFile
             }
 
     public BitMapFile(String filename, Columnarfile columnfile,
-            int columnNo, ValueClass value) throws IOException, HFDiskMgrException, HFBufMgrException, HFException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTupleSizeException {
+        int columnNo, ValueClass value) throws IOException, HFDiskMgrException, HFBufMgrException, HFException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTupleSizeException {
         //super(filename);
         headerPageId = get_file_entry(filename);
         if (headerPageId == null) {
@@ -90,7 +90,7 @@ public class BitMapFile
             Convert.setFloValue(val, 0, byteValue);
         }
         while((tScan = cfs.getNext(rid))!=null){
-            byte[] cData=tScan.getData(); // need to check this..
+            byte[] cData=tScan.getTupleByteArray(); // need to check this..
             if(Arrays.equals(byteValue,cData))
             {
                 this.bitmapFile.insertRecord(yes);
@@ -188,7 +188,7 @@ public class BitMapFile
             }
         }
 
-    void destroyBitMapFile()
+    public void destroyBitMapFile()
     {
 
     }
@@ -208,7 +208,7 @@ public class BitMapFile
         return false;
     }
 
-    boolean Insert(int position)
+    public boolean insert(int position)
     {
         return false;
     }

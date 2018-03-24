@@ -19,6 +19,7 @@ import btree.NodeNotMatchException;
 import btree.PinPageException;
 import btree.UnpinPageException;
 import global.AttrType;
+import global.PageId;
 import global.RID;
 import global.TID;
 import heap.FieldNumberOutOfBoundException;
@@ -57,8 +58,8 @@ public class Columnarfile {
 
   private List<ColumnarHeaderRecord> columnarHeaderRecords;
 
-  private Map<Integer, String> bTreeIndexes;
-  private Map<Integer, List<ColumnarHeaderRecord>> bitmapIndexes;
+  private Map<Integer, String> bTreeIndexes = new HashMap<>();
+  private Map<Integer, List<ColumnarHeaderRecord>> bitmapIndexes = new HashMap<>();
 
   /**
    * This constructor is called when the columnar file is already created.
@@ -72,6 +73,7 @@ public class Columnarfile {
     heapFileNames = new String[numColumns];
     columnFiles = new Heapfile[numColumns];
 
+
     for (int i = 0; i < numColumns; i++) {
       heapFileNames[i] = fileName + "." + (i + 1);
       columnFiles[i] = new Heapfile(heapFileNames[i]);
@@ -83,13 +85,11 @@ public class Columnarfile {
     return fileName + ".del";
   }
 
-  public AttrType[] getType() {
+  public AttrType[] getType(){
     return type;
   }
 
-  public int getNumColumns() {
-    return numColumns;
-  }
+  public int getNumColumns() { return numColumns;}
 
   /**
    * Initialize: if columnar file does not exits, create one heapfile (‘‘name.columnid’’) per
@@ -114,12 +114,24 @@ public class Columnarfile {
     columnarHeaderRecords = new ArrayList<>();
 
     //TODO: Init headers on demand basis - no need to load the data every time - in case of insert
-    initHeaderFile();
+
+    PageId firstDirPage = Heapfile.get_file_entry(getInfoHeaderFileName());
+    // Init the column related details to the file only once.
+    if(firstDirPage == null) {
+      initHeaderFile();
+    }
 
     for (int i = 0; i < numColumns; i++) {
       heapFileNames[i] = fileName + "." + (i + 1);
       columnFiles[i] = new Heapfile(heapFileNames[i]);
     }
+  }
+
+
+
+  private String getInfoHeaderFileName()
+  {
+    return fileName + ".hdr";
   }
 
   public Heapfile[] getColumnFiles() {
@@ -128,7 +140,7 @@ public class Columnarfile {
 
   private void initHeaderFile()
       throws IOException, HFException, HFBufMgrException, HFDiskMgrException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidTypeException, SpaceNotAvailableException, InvalidSlotNumberException {
-    infoHeaderFileName = fileName + ".hdr";
+    infoHeaderFileName = getInfoHeaderFileName();
     headerFile = new Heapfile(infoHeaderFileName);
 
     //TODO: Insert the headers info only if the file already does not exist - do it only once.
@@ -160,6 +172,7 @@ public class Columnarfile {
     bitmapIndexes = new HashMap<>();
     bTreeIndexes = new HashMap<>();
 
+
     Scan scan = new Scan(headerFile);
     columnarHeaderRecords = new ArrayList<>();
 
@@ -179,6 +192,7 @@ public class Columnarfile {
 
       Tuple tuple = new Tuple(temp.getTupleByteArray());
       tuple.tupleCopy(temp);
+
 
       ColumnarHeaderRecord record = ColumnarHeaderRecord.getInstanceFromInfoTuple(tuple);
       columnarHeaderRecords.add(record);
@@ -456,8 +470,7 @@ public class Columnarfile {
     int keySize = getKeySize(column);
     String bTreeFileName = getBtreeFileName(column);
 
-    insertHeaderInfoRecord(FileType.BTREE_FILE, column, bTreeFileName,
-        getDummyValue(type[column - 1]));
+    insertHeaderInfoRecord(FileType.BTREE_FILE, column, bTreeFileName, getDummyValue(type[column-1]));
 
     BTreeFile btf = new BTreeFile(bTreeFileName, type[column - 1].attrType,
         keySize, 1);//full delete
@@ -564,11 +577,8 @@ public class Columnarfile {
       temp = scan.getNext(rid);
     }
 
-    return true;
+    return false;
   }
-
-
-
 
   /**
    * add the tuple to a heapfile tracking the deleted tuples from the columnar file
@@ -593,11 +603,40 @@ public class Columnarfile {
    * merge all deleted tuples from the file as well as all from all index files.
    */
   boolean purgeAllDeletedTuples()
-      throws IOException, HFException, HFBufMgrException, HFDiskMgrException {
+      throws Exception {
 
     Heapfile deleteFile = new Heapfile(getDeleteFileName());
 
-    //deleteFile.deleteRecord();
+
+    //Open all the heap files and then scan the records position and jump to the desired position
+    // find the RID corresponding to a given position and then delete the record by the RID
+    Scan scan = new Scan(deleteFile);
+    RID rid = new RID();
+
+    Tuple temp = null;
+
+    try {
+      temp = scan.getNext(rid);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    while (temp != null) {
+      // Copy to another variable so that the fields of the tuple are initialized.
+
+      Tuple t = new Tuple(temp.getTupleByteArray());
+      t.tupleCopy(temp);
+      int position = t.getIntFld(1);
+
+      // find rids corresponding to all the columar files and then delete the file
+
+
+      //Once the data record is deleted, delete the position attribute from the deletion info heap file
+      //TODO: Check delete record while scan object is reading does not cause any problem
+      deleteFile.deleteRecord(rid);
+
+      temp = scan.getNext(rid);
+    }
 
     return false;
   }
