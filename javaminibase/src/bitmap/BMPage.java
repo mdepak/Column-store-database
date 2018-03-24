@@ -12,6 +12,7 @@ public class BMPage extends Page
         implements GlobalConst {
 
     public static final int DPFIXED = 2 * 2 + 3 * 4;
+    public static final int MAX_RECORDS = (MAX_SPACE - DPFIXED) *8;
 
     public static final int RECORD_CNT = 0;
     //public static final int USED_BITS_PTR = 2;
@@ -326,6 +327,12 @@ public class BMPage extends Page
         else{
             return false;
         }
+    }
+
+    public void incrementRecordCount() throws IOException {
+        recordCnt = Convert.getShortValue(RECORD_CNT, data);
+        recordCnt++;
+        Convert.setShortValue(recordCnt, RECORD_CNT, data);
     }
 
 }
