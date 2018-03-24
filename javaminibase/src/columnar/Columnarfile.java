@@ -388,7 +388,8 @@ public class Columnarfile {
   /**
    * Initiate a sequential scan along a given column.
    */
-  public Scan openColumnScan(int columnNo) throws InvalidTupleSizeException, IOException {
+  public Scan openColumnScan(int columnNo)
+      throws InvalidTupleSizeException, IOException, HFDiskMgrException, HFBufMgrException, HFException {
     return new Scan(columnFiles[columnNo-1]);
   }
 
@@ -546,7 +547,7 @@ public class Columnarfile {
   public boolean createBitMapIndex(int columnNo)
       throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, FieldNumberOutOfBoundException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTypeException, GetFileEntryException, ConstructPageException, PinPageException, BMBufMgrException, UnpinPageException, BMException {
 
-    Set uniqueValues = new HashSet<ValueClass>();
+    Set<ValueClass> uniqueValues = new HashSet();
     Heapfile columnHeapFile = new Heapfile(heapFileNames[columnNo - 1]);
 
     Scan scan = new Scan(columnHeapFile);
@@ -574,7 +575,7 @@ public class Columnarfile {
       //Create bitmap index for a unique value only once.
       if (!uniqueValues.contains(value)) {
         createBitMapIndex(columnNo, value);
-        uniqueValues.add(uniqueValues);
+        uniqueValues.add(value);
       }
       temp = scan.getNext(rid);
     }

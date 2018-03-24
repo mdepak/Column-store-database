@@ -56,6 +56,10 @@ public class BitMapFile {
       int columnNo, ValueClass value)
       throws IOException, HFDiskMgrException, HFBufMgrException, HFException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTupleSizeException, ConstructPageException, GetFileEntryException, FieldNumberOutOfBoundException, BMBufMgrException, BMException, PinPageException, UnpinPageException {
     headerPageId = get_file_entry(filename);
+    this.columnNo = columnNo;
+    this.columnfile = columnfile;
+    this.value = value;
+
     // Bit Map file already does not exist with this name
     if (headerPageId == null) {
       headerPage = new BitMapHeaderPage();
@@ -72,11 +76,12 @@ public class BitMapFile {
   private void createBitMapIndex()
       throws java.io.IOException, InvalidTupleSizeException, SpaceNotAvailableException, HFException, HFBufMgrException, InvalidSlotNumberException, HFDiskMgrException, FieldNumberOutOfBoundException, BMBufMgrException, BMException, PinPageException, UnpinPageException {
 
-    Scan scan = columnfile.openColumnScan(this.columnNo);// columnarFileScan instead of scan
+    Scan scan = columnfile.openColumnScan(columnNo);// columnarFileScan instead of scan
 
     RID rid = new RID();
     PageId firstBMPage = headerPage.getFirstBMPage();
-    BMPage currPage = (BMPage) pinPage(firstBMPage);
+    BMPage currPage = new BMPage();
+    pinPage(firstBMPage, currPage, false);
 
     ValueClass valueClass = Util.valueClassFactory(columnfile.getType()[columnNo - 1]);
 
@@ -93,7 +98,7 @@ public class BitMapFile {
 
       Tuple tuple = new Tuple(temp.getTupleByteArray());
       tuple.tupleCopy(temp);
-      value.setValueFromColumnTuple(tuple, 1);
+      valueClass.setValueFromColumnTuple(tuple, 1);
 
       // If values match set the bit position as 1 otherwise it is '0' by default - don't need to handle it
       if (currPage.available_space() > 0) {
@@ -177,12 +182,10 @@ public class BitMapFile {
     }
   }
 
-  private Page pinPage(PageId pageno)
+  private void pinPage(PageId pageno, Page page, boolean emptyPage)
       throws PinPageException {
     try {
-      Page page = new Page();
       SystemDefs.JavabaseBM.pinPage(pageno, page, false/*Rdisk*/);
-      return page;
     } catch (Exception e) {
       e.printStackTrace();
       throw new PinPageException(e, "");
@@ -257,7 +260,8 @@ public class BitMapFile {
   public  void printBitMap(BitMapHeaderPage header)
       throws IOException, PinPageException, UnpinPageException {
 
-    BMPage currPage = (BMPage) pinPage(header.getFirstBMPage());
+    BMPage currPage = new BMPage();
+    pinPage(header.getFirstBMPage(), currPage, false);
 
     while(true)
     {
@@ -273,7 +277,7 @@ public class BitMapFile {
 
       PageId nextPageId = currPage.getNextPage();
       unpinPage(currPage.getCurPage(), false);
-      currPage = (BMPage) pinPage(nextPageId);
+      pinPage(nextPageId, currPage, false);
     }
   }
 

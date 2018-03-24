@@ -1611,6 +1611,16 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       ex.printStackTrace();
     }
 
+    try
+    {
+      f.createBitMapIndex(3);
+    }
+    catch (Exception ex)
+    {
+      status = FAIL;
+      ex.printStackTrace();
+    }
+
     try {
       // Reopen te file again
       f = new Columnarfile("sailors");
