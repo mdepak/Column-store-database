@@ -317,8 +317,13 @@ public class BMPage extends Page
     public boolean empty()
             throws IOException {
         //Need to implement
-
-        return true;
+        recordCnt = Convert.getShortValue(RECORD_CNT, data);
+        if(recordCnt==0){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
 }
