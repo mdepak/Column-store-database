@@ -7,6 +7,7 @@ import diskmgr.PCounter;
 import global.AttrOperator;
 import global.AttrType;
 import global.GlobalConst;
+import global.IndexType;
 import global.SystemDefs;
 import global.TID;
 import heap.FieldNumberOutOfBoundException;
@@ -18,6 +19,7 @@ import heap.InvalidTupleSizeException;
 import heap.InvalidTypeException;
 import heap.SpaceNotAvailableException;
 import heap.Tuple;
+import index.ColumnIndexScan;
 import iterator.ColumnarFileScan;
 import java.io.BufferedReader;
 import java.io.File;
@@ -1780,5 +1782,36 @@ public class ColumnarTest {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
+  }
+}
+
+class ColumnIndexScanTest {
+
+  private static short REC_LEN1 = 32;
+  private static short REC_LEN2 = 160;
+
+  public void get_next() throws Exception {
+    AttrType[] attrType = new AttrType[2];
+    attrType[0] = new AttrType(AttrType.attrString);
+    attrType[1] = new AttrType(AttrType.attrString);
+    short[] attrSize = new short[2];
+    attrSize[0] = REC_LEN2;
+    attrSize[1] = REC_LEN1;
+    ColumnIndexScan colScan = null;
+    // set up an identity selection
+    CondExpr[] expr = new CondExpr[2];
+    expr[0] = new CondExpr();
+    expr[0].op = new AttrOperator(AttrOperator.aopEQ);
+    expr[0].type1 = new AttrType(AttrType.attrSymbol);
+    expr[0].type2 = new AttrType(AttrType.attrString);
+    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+    expr[0].operand2.string = "dsilva";
+    expr[0].next = null;
+    expr[1] = null;
+    colScan = new ColumnIndexScan(new IndexType(IndexType.B_Index), "test1.in", "BTreeIndex",
+        attrType, attrSize, expr, true);
+  }
+
+  public void close() throws Exception {
   }
 }
