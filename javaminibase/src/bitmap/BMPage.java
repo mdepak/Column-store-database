@@ -4,22 +4,22 @@ import diskmgr.Page;
 import global.Convert;
 import global.GlobalConst;
 import global.PageId;
-import global.RID;
+import java.util.BitSet;
 
 import java.io.IOException;
 
 public class BMPage extends Page
         implements GlobalConst {
 
-    public static final int DPFIXED = 4 * 2 + 3 * 4;
+    public static final int DPFIXED = 2 * 2 + 3 * 4;
 
-    public static final int SLOT_CNT = 0;
-    public static final int USED_PTR = 2;
-    public static final int FREE_SPACE = 4;
+    public static final int RECORD_CNT = 0;
+    //public static final int USED_BITS_PTR = 2;
+    public static final int FREE_BITS = 2;
     //public static final int TYPE = 6;
-    public static final int PREV_PAGE = 8;
-    public static final int NEXT_PAGE = 12;
-    public static final int CUR_PAGE = 16;
+    public static final int PREV_PAGE = 4;
+    public static final int NEXT_PAGE = 8;
+    public static final int CUR_PAGE = 12;
 
     /* Warning:
      These items must all pack tight, (no padding) for
@@ -28,24 +28,24 @@ public class BMPage extends Page
   */
 
     /**
-     * number of slots in use
+     * number of bits in use
      */
-    private short slotCnt;
+    private short recordCnt;
 
     /**
      * offset of first used byte by data records in data[]
      */
-    private short usedPtr;
+    //private short usedBitsPtr;
 
     /**
-     * number of bytes free in data[]
+     * number of bits free in data[]
      */
-    private short freeSpace;
+    private short freeBits;
 
     /**
      * an arbitrary value used by subclasses as needed
      */
-    private short type;
+    //private short type;
 
     /**
      * backward pointer to data page
@@ -87,16 +87,16 @@ public class BMPage extends Page
 
         curPage.pid = Convert.getIntValue(CUR_PAGE, data);
         nextPage.pid = Convert.getIntValue(NEXT_PAGE, data);
-        usedPtr = Convert.getShortValue(USED_PTR, data);
-        freeSpace = Convert.getShortValue(FREE_SPACE, data);
-        slotCnt = Convert.getShortValue(SLOT_CNT, data);
+        //usedBitsPtr = Convert.getShortValue(USED_BITS_PTR, data);
+        freeBits = Convert.getShortValue(FREE_BITS, data);
+        recordCnt = Convert.getShortValue(RECORD_CNT, data);
 
         System.out.println("dumpPage");
         System.out.println("curPage= " + curPage.pid);
         System.out.println("nextPage= " + nextPage.pid);
-        System.out.println("usedPtr= " + usedPtr);
-        System.out.println("freeSpace= " + freeSpace);
-        System.out.println("slotCnt= " + slotCnt);
+        //System.out.println("usedBitsPtr= " + usedBitsPtr);
+        System.out.println("freeBits= " + freeBits);
+        System.out.println("recordCnt= " + recordCnt);
 
 //        for (i = 0, n = DPFIXED; i < slotCnt; n += SIZE_OF_SLOT, i++) {
 //            length = Convert.getShortValue(n, data);
@@ -111,8 +111,8 @@ public class BMPage extends Page
             throws IOException {
         data = apage.getpage();
 
-        slotCnt = 0;                // no slots in use
-        Convert.setShortValue(slotCnt, SLOT_CNT, data);
+        recordCnt = 0;                // no slots in use
+        Convert.setShortValue(recordCnt, RECORD_CNT, data);
 
         curPage.pid = pageNo.pid;
         Convert.setIntValue(curPage.pid, CUR_PAGE, data);
@@ -121,11 +121,11 @@ public class BMPage extends Page
         Convert.setIntValue(prevPage.pid, PREV_PAGE, data);
         Convert.setIntValue(nextPage.pid, NEXT_PAGE, data);
 
-        usedPtr = (short) MAX_SPACE;  // offset in data array (grow backwards)
-        Convert.setShortValue(usedPtr, USED_PTR, data);
+        //usedBitsPtr = (short) MAX_SPACE*8;  // offset in data array (grow backwards)
+        //Convert.setShortValue(usedBitsPtr, USED_BITS_PTR, data);
 
-        freeSpace = (short) (MAX_SPACE - DPFIXED);    // amount of space available
-        Convert.setShortValue(freeSpace, FREE_SPACE, data);
+        freeBits = (short) (MAX_SPACE*8 - DPFIXED*8);    // amount of space available
+        Convert.setShortValue(freeBits, FREE_BITS, data);
 
     }
     void openBMpage(Page apage){
@@ -199,28 +199,13 @@ public class BMPage extends Page
     }
 
     /**
-     * @return slotCnt used in this page
+     * @return RecordCnt used in this page
      * @throws IOException I/O errors
      */
-    public short getSlotCnt()
+    public short getRecordCnt()
             throws IOException {
-        slotCnt = Convert.getShortValue(SLOT_CNT, data);
-        return slotCnt;
-    }
-
-    /**
-     * sets slot contents
-     *
-     * @param slotno the slot number
-     * @param length length of record the slot contains
-     * @param offset offset of record
-     * @throws IOException I/O errors
-     */
-    public void setSlot(int slotno, int length, int offset)
-            throws IOException {
-//        int position = DPFIXED + slotno * SIZE_OF_SLOT;
-//        Convert.setShortValue((short) length, position, data);
-//        Convert.setShortValue((short) offset, position + 2, data);
+        recordCnt = Convert.getShortValue(RECORD_CNT, data);
+        return recordCnt;
     }
 
     /**
@@ -230,9 +215,34 @@ public class BMPage extends Page
      * @return
      * @throws IOException I/O errors in C++ Status insertRecord(char *recPtr, int recLen, RID& rid)
      */
-    public void insertRecord(int position)
+    public boolean insertRecord(int position)
             throws IOException {
         //Need to implement this
+        freeBits = Convert.getShortValue(FREE_BITS, data);
+        if (freeBits < 1) {
+            return false;
+
+        } else {
+            int pos = MAX_SPACE*8 - position;
+
+            BitSet bs = BitSet.valueOf(data);
+            bs.set(pos);
+            data = bs.toByteArray();
+
+            freeBits -= 1;
+            Convert.setShortValue(freeBits, FREE_BITS, data);
+
+            recordCnt = Convert.getShortValue(RECORD_CNT, data);
+            recordCnt++;
+            Convert.setShortValue(recordCnt, RECORD_CNT, data);
+
+            //usedBitsPtr = Convert.getShortValue(USED_BITS_PTR, data);
+            //usedBitsPtr -= 1;    // adjust usedBitsPtr
+            //Convert.setShortValue(usedBitsPtr, USED_BITS_PTR, data);
+            return true;
+        }
+
+
     }
     /**
      * reset bit at position
@@ -241,10 +251,35 @@ public class BMPage extends Page
      * @return
      * @throws IOException I/O errors in C++ Status insertRecord(char *recPtr, int recLen, RID& rid)
      */
-    public void deleteRecord(int position)
+    public boolean deleteRecord(int position)
             throws IOException {
         //Need to implement this
+        recordCnt = Convert.getShortValue(RECORD_CNT, data);
+        if(position > recordCnt){
+            return false;
+            //position given is more than the number of re
+        }
+        else{
+            recordCnt = Convert.getShortValue(RECORD_CNT, data);
+            int pos = MAX_SPACE*8 - position;
+
+            BitSet bs = BitSet.valueOf(data);
+            bs.set(pos, false);
+            data = bs.toByteArray();
+
+            freeBits -= 1;
+            Convert.setShortValue(freeBits, FREE_BITS, data);
+
+            recordCnt++;
+            Convert.setShortValue(recordCnt, RECORD_CNT, data);
+
+            //usedBitsPtr = Convert.getShortValue(USED_BITS_PTR, data);
+            //usedBitsPtr -= 1;    // adjust usedBitsPtr
+            //Convert.setShortValue(usedBitsPtr, USED_BITS_PTR, data);
+            return true;
+        }
     }
+
     void writeBMPageArray(byte[] data){
         // Need to implement
         // only bits not the metadata
@@ -268,8 +303,8 @@ public class BMPage extends Page
     public int available_space()
             throws IOException {
         //check if this is correct
-        freeSpace = Convert.getShortValue(FREE_SPACE, data);
-        return (freeSpace - 1);
+        freeBits = Convert.getShortValue(FREE_BITS, data);
+        return (freeBits);
     }
 
 
