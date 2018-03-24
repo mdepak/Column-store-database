@@ -16,5 +16,4 @@ public class HFException extends ChainException {
     super(ex, name);
   }
 
-
 }

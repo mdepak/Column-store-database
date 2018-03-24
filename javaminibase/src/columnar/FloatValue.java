@@ -31,7 +31,7 @@ public class FloatValue extends ValueClass {
   }
 
   @Override
-  void setValueFromColumnTuple(Tuple columnarTuple, int fieldPos)
+  public void setValueFromColumnTuple(Tuple columnarTuple, int fieldPos)
       throws IOException, FieldNumberOutOfBoundException {
     float fltVal = columnarTuple.getFloFld(fieldPos);
     this.val = fltVal;

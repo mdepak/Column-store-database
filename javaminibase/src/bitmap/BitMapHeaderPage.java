@@ -9,8 +9,9 @@ import java.io.IOException;
 
 class BitMapHeaderPage extends HFPage {
 
-  public int columnNo;
-  public int recordCount;
+  public int columnNo; // Slot 1
+  public int recordCount; //Slot 2
+  public PageId firstBMPage = new PageId(); //Slot 3
   //TODO: Add file name if necessary
 
   void setColumnNo(int columnNo) throws IOException {
@@ -20,6 +21,16 @@ class BitMapHeaderPage extends HFPage {
 
   int getColumnNo() throws IOException {
     return getSlotLength(1);
+  }
+
+  void setFirstBMPage(PageId pageno) throws IOException {
+    firstBMPage.pid = pageno.pid;
+    setSlot(3, firstBMPage.pid, 0);
+  }
+
+  public PageId getFirstBMPage() throws IOException {
+    firstBMPage.pid = getSlotLength(3);
+    return firstBMPage;
   }
 
   void setPageId(PageId pageno) throws IOException {

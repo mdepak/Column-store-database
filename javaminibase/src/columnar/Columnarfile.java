@@ -1,5 +1,7 @@
 package columnar;
 
+import bitmap.BMBufMgrException;
+import bitmap.BMException;
 import bitmap.BitMapFile;
 import btree.BTreeFile;
 import btree.ConstructPageException;
@@ -241,7 +243,7 @@ public class Columnarfile {
    * Insert tuple into file, return its tid
    */
   public TID insertTuple(byte[] tuplePtr)
-      throws IOException, InvalidTypeException, FieldNumberOutOfBoundException, InvalidTupleSizeException, SpaceNotAvailableException, HFException, HFBufMgrException, InvalidSlotNumberException, HFDiskMgrException, UnpinPageException, LeafDeleteException, LeafInsertRecException, KeyTooLongException, ConvertException, PinPageException, DeleteRecException, IndexSearchException, GetFileEntryException, IndexInsertRecException, NodeNotMatchException, KeyNotMatchException, ConstructPageException, IteratorException, InsertException {
+      throws IOException, InvalidTypeException, FieldNumberOutOfBoundException, InvalidTupleSizeException, SpaceNotAvailableException, HFException, HFBufMgrException, InvalidSlotNumberException, HFDiskMgrException, UnpinPageException, LeafDeleteException, LeafInsertRecException, KeyTooLongException, ConvertException, PinPageException, DeleteRecException, IndexSearchException, GetFileEntryException, IndexInsertRecException, NodeNotMatchException, KeyNotMatchException, ConstructPageException, IteratorException, InsertException, BMBufMgrException, BMException {
 
     // Input byte array has all the column values for a record.
     // Now the column values have to be separated and corresponding tuples should be created for insertion
@@ -281,7 +283,7 @@ public class Columnarfile {
 
 
   private void updateBitMapIndexIfExists(int column, Tuple columnarTuple, int position)
-      throws IOException, FieldNumberOutOfBoundException, HFDiskMgrException, InvalidTupleSizeException, HFException, SpaceNotAvailableException, InvalidTypeException, InvalidSlotNumberException, HFBufMgrException, GetFileEntryException, ConstructPageException {
+      throws IOException, FieldNumberOutOfBoundException, HFDiskMgrException, InvalidTupleSizeException, HFException, SpaceNotAvailableException, InvalidTypeException, InvalidSlotNumberException, HFBufMgrException, GetFileEntryException, ConstructPageException, PinPageException, BMBufMgrException, UnpinPageException, BMException {
 
     List<ColumnarHeaderRecord> bitMapFiles = bitmapIndexes.get(column);
     if (bitMapFiles != null) {
@@ -529,7 +531,7 @@ public class Columnarfile {
    * if it doesn’t exist, create a bitmap index for the given column and value
    */
   public boolean createBitMapIndex(int columnNo, ValueClass value)
-      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidTypeException, SpaceNotAvailableException, InvalidSlotNumberException, GetFileEntryException, ConstructPageException {
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidTypeException, SpaceNotAvailableException, InvalidSlotNumberException, GetFileEntryException, ConstructPageException, PinPageException, BMBufMgrException, UnpinPageException, BMException {
 
     //Store the BitMap index file name in the header info heap
     insertHeaderInfoRecord(FileType.BITMAP_FILE, columnNo, getBitMapFileName(columnNo, value),
@@ -542,7 +544,7 @@ public class Columnarfile {
   }
 
   public boolean createBitMapIndex(int columnNo)
-      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, FieldNumberOutOfBoundException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTypeException, GetFileEntryException, ConstructPageException {
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, FieldNumberOutOfBoundException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTypeException, GetFileEntryException, ConstructPageException, PinPageException, BMBufMgrException, UnpinPageException, BMException {
 
     Set uniqueValues = new HashSet<ValueClass>();
     Heapfile columnHeapFile = new Heapfile(heapFileNames[columnNo - 1]);

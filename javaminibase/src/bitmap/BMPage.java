@@ -12,6 +12,7 @@ public class BMPage extends Page
         implements GlobalConst {
 
     public static final int DPFIXED = 4 * 2 + 3 * 4;
+    public static final int MAX_RECORDS = (MINIBASE_PAGESIZE - DPFIXED) * 8;
 
     public static final int SLOT_CNT = 0;
     public static final int USED_PTR = 2;
@@ -20,6 +21,19 @@ public class BMPage extends Page
     public static final int PREV_PAGE = 8;
     public static final int NEXT_PAGE = 12;
     public static final int CUR_PAGE = 16;
+
+    public  int recordCount = 0;
+
+    public int getRecordCount()
+    {
+        return recordCount;
+    }
+
+    public void setRecordCount(int recordCount)
+    {
+        //TODO: Ensure the data is written in the byte array in some position
+        this.recordCount = recordCount;
+    }
 
     /* Warning:
      These items must all pack tight, (no padding) for
