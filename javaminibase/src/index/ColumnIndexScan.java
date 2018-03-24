@@ -126,7 +126,49 @@ public class ColumnIndexScan extends Iterator{
 
       case IndexType.BIT_MAP:
         try{
-          bitMapFile = new BitMapFile(indName);
+//          bitMapFile = new BitMapFile(indName);
+          /* String matchingValueStr;
+          String unmatchingValueStr;
+          int numOfConstraints = _selects.length;
+          int numOfConstraints = 1;
+          for(int i=0; i<numOfConstraints; i++) {
+            int columnNumber = 1;
+            Columnarfile cf = new Columnarfile(relName);
+            List<columnar.ColumnarHeaderRecord> chr = cf.bitmapIndexes.get(columnNumber);
+            if (_selects[i].type1.toString() != _selects[i].type2.toString()) {
+              throw new Exception("Operand Attribute mismatch error");
+            } else {
+              if (_selects[i].op.toString() == "aopEQ") {
+                if (_selects[i].type1.toString() == _selects[i].type2.toString() && _selects[i].type2.toString() == "attrString") {
+                  matchingValueStr = _selects[i].operand2.string;
+                  List<String> listOfFiles = new ArrayList<String>();
+                  Iterator<String> itr = al.iterator();
+                  while (itr.hasNext()) {
+                    String element = itr.next();
+                    System.out.print(element + " ");
+                  }
+                }
+              } else if (_selects[i].op.toString() == "aopLT") {
+              } else if (_selects[i].op.toString() == "aopGT") {
+              } else if (_selects[i].op.toString() == "aopNE") {
+              } else if (_selects[i].op.toString() == "aopLE") {
+              } else if (_selects[i].op.toString() == "aopGE") {
+              }
+            }
+          } */
+          String bitMapIndexFileName = indName + ".";
+          if(_selects[0].type2.toString() == "attrString") {
+            bitMapIndexFileName += _selects[0].operand2.string;
+          } else if(_selects[0].type2.toString() == "attrInteger") {
+            bitMapIndexFileName += _selects[0].operand2.integer;
+          } else if(_selects[0].type2.toString() == "attrReal") {
+            bitMapIndexFileName += _selects[0].operand2.real;
+          }
+          if(bitMapIndexFileName.charAt(bitMapIndexFileName.length()-1) == '.') {
+            throw new Exception("Attribute Type Error in Value Constraints");
+          } else {
+            bitMapFile = new BitMapFile(bitMapIndexFileName);
+          }
         } catch (Exception e) {
           throw  new IndexException(e, "IndexScan.java: BitMapFile exceptions caught from BitMapFile constructor");
         }
@@ -135,11 +177,12 @@ public class ColumnIndexScan extends Iterator{
           bitMapScan = f.openScan();
         } catch (Exception e) {
           throw new IndexException(e,
-              "IndexScan.java: exception caught from Heapfile during bitmap scan.");
+                  "IndexScan.java: exception caught from Heapfile during bitmap scan.");
         }
-
         break;
+
       case IndexType.None:
+        
       default:
         throw new UnknownIndexTypeException("Only BTree and BitMap index is supported so far");
 
