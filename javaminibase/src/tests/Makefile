@@ -1,5 +1,5 @@
 # modify the paths appropriately
-JDKPATH = /Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk/Contents/Home
+JDKPATH = /Library/Java/JavaVirtualMachines/jdk1.8.0_152.jdk/Contents/Home
 LIBPATH = .:..
 CLASSPATH = $(LIBPATH)
 BINPATH = $(JDKPATH)/bin
@@ -22,7 +22,7 @@ DBTest:DBTest.java
 dbtest: DBTest
 	$(JAVA) tests.DBTest
 
-# test heapfile 
+# test heapfile
 
 HFTest:HFTest.java
 	$(JAVAC) TestDriver.java HFTest.java
@@ -74,4 +74,4 @@ ColumnarTest:ColumnarTest.java
 	$(JAVAC) ColumnarTest.java TestDriver.java
 
 columnar: ColumnarTest
-	$(JAVA) -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000 tests.ColumnarTest
+	$(JAVA) -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8001 tests.ColumnarTest
