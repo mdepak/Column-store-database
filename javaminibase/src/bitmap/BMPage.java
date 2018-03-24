@@ -215,7 +215,7 @@ public class BMPage extends Page
      * @return
      * @throws IOException I/O errors in C++ Status insertRecord(char *recPtr, int recLen, RID& rid)
      */
-    public boolean insertRecord(int position)
+    public boolean insertRecord(int position,boolean flag)
             throws IOException {
         //Need to implement this
         freeBits = Convert.getShortValue(FREE_BITS, data);
@@ -224,9 +224,8 @@ public class BMPage extends Page
 
         } else {
             int pos = MAX_SPACE*8 - position;
-
             BitSet bs = BitSet.valueOf(data);
-            bs.set(pos);
+            bs.set(pos,flag);
             data = bs.toByteArray();
 
             freeBits -= 1;

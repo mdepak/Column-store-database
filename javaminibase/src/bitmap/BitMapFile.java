@@ -80,8 +80,8 @@ public class BitMapFile {
 
     RID rid = new RID();
     PageId firstBMPage = headerPage.getFirstBMPage();
-    BMPage currPage = new BMPage();
-    pinPage(firstBMPage, currPage, false);
+    BMPage currPage = getNewBMPage();
+    headerPage.setFirstBMPage(currPage.getCurPage());
 
     ValueClass valueClass = Util.valueClassFactory(columnfile.getType()[columnNo - 1]);
 
@@ -92,7 +92,7 @@ public class BitMapFile {
     } catch (RuntimeException e) {
      throw e;
     }
-
+    int position = 1;
     while (temp != null) {
       // Copy to another variable so that the fields of the tuple are initialized.
 
@@ -100,26 +100,29 @@ public class BitMapFile {
       tuple.tupleCopy(temp);
       valueClass.setValueFromColumnTuple(tuple, 1);
 
-      // If values match set the bit position as 1 otherwise it is '0' by default - don't need to handle it
-      if (currPage.available_space() > 0) {
-        //Increment the records
-        currPage.recordCount++;
-      } else {
+      if(currPage.available_space()<1){
         // Create a new BMPage and set the proper values
-        BMPage nextPage = addNextBMPage(currPage);
-
         // Unpin page
         unpinPage(currPage.getCurPage(), true);
-
+        BMPage nextPage = addNextBMPage(currPage);
         currPage = nextPage;
-        currPage.recordCount++;
       }
+
       if (valueClass.equals(value)) {
-        currPage.insertRecord(headerPage.recordCount / BMPage.MAX_RECORDS);
+        currPage.insertRecord(position,true);
       }
+      else{
+        currPage.insertRecord(position,false);
+      }
+      // Unpin page
+      unpinPage(currPage.getCurPage(), true);
 
       temp = scan.getNext(rid);
-      headerPage.recordCount++;
+
+      position+=1;
+      int hdr_recordCont = headerPage.getRecordCount();
+      hdr_recordCont+=1;
+      headerPage.setRecordCount(hdr_recordCont);
     }
 
     unpinPage(headerPage.getPageId(), true);
