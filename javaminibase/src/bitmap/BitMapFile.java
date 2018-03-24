@@ -44,7 +44,7 @@ public class BitMapFile
                 dbname = new String(filename);
             }
 
-    BitMapFile(String filename, Columnarfile columnfile,
+    public BitMapFile(String filename, Columnarfile columnfile,
             int columnNo, ValueClass value) throws IOException, HFDiskMgrException, HFBufMgrException, HFException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTupleSizeException {
         //super(filename);
         headerPageId = get_file_entry(filename);

@@ -42,7 +42,7 @@ interface Filetype {
 public class Heapfile implements Filetype, GlobalConst {
 
 
-  PageId _firstDirPageId;   // page number of header page
+  public PageId _firstDirPageId;   // page number of header page
   int _ftype;
   private boolean _file_deleted;
   private String _fileName;
@@ -921,7 +921,7 @@ public class Heapfile implements Filetype, GlobalConst {
    *
    * @see bufmgr.pinPage
    */
-  private void pinPage(PageId pageno, Page page, boolean emptyPage)
+  public void pinPage(PageId pageno, Page page, boolean emptyPage)
       throws HFBufMgrException {
 
     try {
@@ -937,7 +937,7 @@ public class Heapfile implements Filetype, GlobalConst {
    *
    * @see bufmgr.unpinPage
    */
-  private void unpinPage(PageId pageno, boolean dirty)
+  public void unpinPage(PageId pageno, boolean dirty)
       throws HFBufMgrException {
 
     try {

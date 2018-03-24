@@ -72,7 +72,6 @@ public class Columnarfile {
     heapFileNames = new String[numColumns];
     columnFiles = new Heapfile[numColumns];
 
-
     for (int i = 0; i < numColumns; i++) {
       heapFileNames[i] = fileName + "." + (i + 1);
       columnFiles[i] = new Heapfile(heapFileNames[i]);
@@ -84,11 +83,13 @@ public class Columnarfile {
     return fileName + ".del";
   }
 
-  public AttrType[] getType(){
+  public AttrType[] getType() {
     return type;
   }
 
-  public int getNumColumns() { return numColumns;}
+  public int getNumColumns() {
+    return numColumns;
+  }
 
   /**
    * Initialize: if columnar file does not exits, create one heapfile (‘‘name.columnid’’) per
@@ -121,7 +122,7 @@ public class Columnarfile {
     }
   }
 
-  public Heapfile[] getColumnFiles(){
+  public Heapfile[] getColumnFiles() {
     return columnFiles;
   }
 
@@ -159,7 +160,6 @@ public class Columnarfile {
     bitmapIndexes = new HashMap<>();
     bTreeIndexes = new HashMap<>();
 
-
     Scan scan = new Scan(headerFile);
     columnarHeaderRecords = new ArrayList<>();
 
@@ -179,7 +179,6 @@ public class Columnarfile {
 
       Tuple tuple = new Tuple(temp.getTupleByteArray());
       tuple.tupleCopy(temp);
-
 
       ColumnarHeaderRecord record = ColumnarHeaderRecord.getInstanceFromInfoTuple(tuple);
       columnarHeaderRecords.add(record);
@@ -457,7 +456,8 @@ public class Columnarfile {
     int keySize = getKeySize(column);
     String bTreeFileName = getBtreeFileName(column);
 
-    insertHeaderInfoRecord(FileType.BTREE_FILE, column, bTreeFileName, getDummyValue(type[column-1]));
+    insertHeaderInfoRecord(FileType.BTREE_FILE, column, bTreeFileName,
+        getDummyValue(type[column - 1]));
 
     BTreeFile btf = new BTreeFile(bTreeFileName, type[column - 1].attrType,
         keySize, 1);//full delete
@@ -564,8 +564,11 @@ public class Columnarfile {
       temp = scan.getNext(rid);
     }
 
-    return false;
+    return true;
   }
+
+
+
 
   /**
    * add the tuple to a heapfile tracking the deleted tuples from the columnar file
