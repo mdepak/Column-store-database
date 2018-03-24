@@ -1,5 +1,6 @@
 package tests;
 
+import global.AttrOperator;
 import global.AttrType;
 import global.GlobalConst;
 import global.RID;
@@ -7,6 +8,7 @@ import global.SystemDefs;
 import global.TupleOrder;
 import heap.Heapfile;
 import heap.Tuple;
+import iterator.CondExpr;
 import iterator.FileScan;
 import iterator.FldSpec;
 import iterator.RelSpec;
@@ -188,8 +190,18 @@ class SORTDriver extends TestDriver
 
     FileScan fscan = null;
 
+    CondExpr[] expr = new CondExpr[2];
+    expr[0] = new CondExpr();
+    expr[0].op = new AttrOperator(AttrOperator.aopEQ);
+    expr[0].type1 = new AttrType(AttrType.attrSymbol);
+    expr[0].type2 = new AttrType(AttrType.attrString);
+    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+    expr[0].operand2.string = "leela";
+    expr[0].next = null;
+    expr[1] = null;
+
     try {
-      fscan = new FileScan("test1.in", attrType, attrSize, (short) 2, 2, projlist, null);
+      fscan = new FileScan("test1.in", attrType, attrSize, (short) 2, 2, projlist, expr);
     } catch (Exception e) {
       status = FAIL;
       e.printStackTrace();

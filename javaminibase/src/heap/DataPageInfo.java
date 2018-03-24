@@ -16,7 +16,7 @@ import java.io.IOException;
  * April 9, 1998
  */
 
-class DataPageInfo implements GlobalConst {
+public class DataPageInfo implements GlobalConst {
 
 
   /**
@@ -27,7 +27,7 @@ class DataPageInfo implements GlobalConst {
   /**
    * for efficient implementation of getRecCnt()
    */
-  int recct;
+  public int recct;
 
   /**
    * obvious: id of this particular data page (a HFPage)
