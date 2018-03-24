@@ -22,7 +22,13 @@ public class DataPageInfo implements GlobalConst {
   /**
    * HFPage returns int for avail space, so we use int here
    */
-  int availspace;
+  public int availspace;
+
+  public int getAvailspace() {
+    return availspace;
+  }
+
+
 
   /**
    * for efficient implementation of getRecCnt()
@@ -33,6 +39,14 @@ public class DataPageInfo implements GlobalConst {
    * obvious: id of this particular data page (a HFPage)
    */
   PageId pageId = new PageId();
+
+  public PageId getPageId() {
+    return pageId;
+  }
+
+  public void setPageId(PageId pageId) {
+    this.pageId.pid = pageId.pid;
+  }
 
   /**
    * auxiliary fields of DataPageInfo

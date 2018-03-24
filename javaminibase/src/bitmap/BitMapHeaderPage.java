@@ -11,7 +11,7 @@ class BitMapHeaderPage extends HFPage {
 
   public int columnNo; // Slot 1
   public int recordCount; //Slot 2
-  public PageId firstBMPage = new PageId(); //Slot 3
+  public PageId firstDirPage = new PageId(); //Slot 3
   //TODO: Add file name if necessary
 
   void setColumnNo(int columnNo) throws IOException {
@@ -23,14 +23,14 @@ class BitMapHeaderPage extends HFPage {
     return getSlotLength(1);
   }
 
-  void setFirstBMPage(PageId pageno) throws IOException {
-    firstBMPage.pid = pageno.pid;
-    setSlot(3, firstBMPage.pid, 0);
+  void setFirstDirPage(PageId pageno) throws IOException {
+    firstDirPage.pid = pageno.pid;
+    setSlot(3, firstDirPage.pid, 0);
   }
 
-  public PageId getFirstBMPage() throws IOException {
-    firstBMPage.pid = getSlotLength(3);
-    return firstBMPage;
+  public PageId getFirstDirPage() throws IOException {
+    firstDirPage.pid = getSlotLength(3);
+    return firstDirPage;
   }
 
   void setPageId(PageId pageno) throws IOException {
