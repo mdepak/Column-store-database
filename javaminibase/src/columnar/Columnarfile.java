@@ -281,7 +281,7 @@ public class Columnarfile {
 
 
   private void updateBitMapIndexIfExists(int column, Tuple columnarTuple, int position)
-      throws IOException, FieldNumberOutOfBoundException, HFDiskMgrException, InvalidTupleSizeException, HFException, SpaceNotAvailableException, InvalidTypeException, InvalidSlotNumberException, HFBufMgrException {
+      throws IOException, FieldNumberOutOfBoundException, HFDiskMgrException, InvalidTupleSizeException, HFException, SpaceNotAvailableException, InvalidTypeException, InvalidSlotNumberException, HFBufMgrException, GetFileEntryException, ConstructPageException {
 
     List<ColumnarHeaderRecord> bitMapFiles = bitmapIndexes.get(column);
     if (bitMapFiles != null) {
@@ -386,8 +386,8 @@ public class Columnarfile {
   /**
    * Initiate a sequential scan along a given column.
    */
-  public Scan openColumnScan(int columnNo) {
-    return null;
+  public Scan openColumnScan(int columnNo) throws InvalidTupleSizeException, IOException {
+    return new Scan(columnFiles[columnNo-1]);
   }
 
   /**
@@ -529,7 +529,7 @@ public class Columnarfile {
    * if it doesn’t exist, create a bitmap index for the given column and value
    */
   public boolean createBitMapIndex(int columnNo, ValueClass value)
-      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidTypeException, SpaceNotAvailableException, InvalidSlotNumberException {
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidTypeException, SpaceNotAvailableException, InvalidSlotNumberException, GetFileEntryException, ConstructPageException {
 
     //Store the BitMap index file name in the header info heap
     insertHeaderInfoRecord(FileType.BITMAP_FILE, columnNo, getBitMapFileName(columnNo, value),
@@ -542,7 +542,7 @@ public class Columnarfile {
   }
 
   public boolean createBitMapIndex(int columnNo)
-      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, FieldNumberOutOfBoundException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTypeException {
+      throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, FieldNumberOutOfBoundException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTypeException, GetFileEntryException, ConstructPageException {
 
     Set uniqueValues = new HashSet<ValueClass>();
     Heapfile columnHeapFile = new Heapfile(heapFileNames[columnNo - 1]);
