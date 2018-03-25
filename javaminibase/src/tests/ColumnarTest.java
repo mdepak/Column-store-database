@@ -219,22 +219,19 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
                                         List<String> columnNames, List<String> valueConstraint, int numBuf, String accessType) {
 
 
-    AttrType[] attrTypes = new AttrType[0];
-    int columns = 1;
     try {
-
 
       switch(accessType)
       {
         case "COLUMNSCAN":
 
-          int columnNum = Util.getColumnNumber(valueConstraint.get(0));
-          String filename = columnFileName + '.' + String.valueOf(columnNum);
+          int colnum = Util.getColumnNumber(valueConstraint.get(0));
+          String filename = columnFileName + '.' + String.valueOf(colnum);
           Columnarfile columnarFile = new Columnarfile(filename);
           AttrType[] types = columnarFile.getType();
 
           AttrType[] attrs = new AttrType[1];
-          attrs[0] = new AttrType(types[columnNum].attrType);
+          attrs[0] = new AttrType(types[colnum].attrType);
 
           FldSpec[] projlist = new FldSpec[1];
           RelSpec rel = new RelSpec(RelSpec.outer);
@@ -671,11 +668,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     for(int i=0; i<numOfColumns; i++) {
       String[] columnHeader = headers[i].split(":");
       if(columnHeader[1].contains("int")) {
-        Stypes[i] = new AttrType(AttrType.attrInteger);
+        Stypes[i-1] = new AttrType(AttrType.attrInteger);
       } else if(columnHeader[1].contains("float")) {
-        Stypes[i] = new AttrType(AttrType.attrReal);
+        Stypes[i-1] = new AttrType(AttrType.attrReal);
       } else if(columnHeader[1].contains("char")) {
-        Stypes[i] = new AttrType(AttrType.attrString);
+        Stypes[i-1] = new AttrType(AttrType.attrString);
         int startIndex = columnHeader[1].indexOf("(");
         int endIndex = columnHeader[1].indexOf(")");
         String columnLengthInStr = columnHeader[1].substring(startIndex+1, endIndex);

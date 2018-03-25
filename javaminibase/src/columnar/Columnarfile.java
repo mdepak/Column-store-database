@@ -116,8 +116,9 @@ public class Columnarfile {
     heapFileNames = new String[numColumns];
     columnFiles = new Heapfile[numColumns];
 
-    strSizes = new short[1];
+    strSizes = new short[2];
     strSizes[0] = 50;
+    strSizes[1] = 50;
     columnarHeaderRecords = new ArrayList<>();
 
     //TODO: Init headers on demand basis - no need to load the data every time - in case of insert
