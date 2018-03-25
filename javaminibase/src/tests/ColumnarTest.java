@@ -37,6 +37,9 @@ import java.lang.Exception;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.*;
+import java.util.Random;
+
+import static tests.ColumnarDriver.runQueryOnColumnar;
 
 
 //Define the SailorDetails schema
@@ -166,8 +169,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   }
 
 
-  private static void runQueryOnColumnar(String columnDBName, String columnFileName,
-      List<String> columnNames, List<String> valueConstraint , int numBuf, String accessType) {
+  public static void runQueryOnColumnar(String columnDBName, String columnFileName,
+                                        List<String> columnNames, List<String> valueConstraint, int numBuf, String accessType) {
 
 
     AttrType[] attrTypes = new AttrType[0];
@@ -629,4 +632,127 @@ class ColumnIndexScanTest {
 
   public void close() throws Exception {
   }
+}
+
+class runTest implements GlobalConst
+{
+
+  public void runTests() throws IOException {
+    String choice;
+    String operation;
+    String columnDBName ="";
+    String columnFileName ="";
+    String datafileName ="";
+    String columns ="";
+    List<String> columnNames = new ArrayList<String>();
+    String valConstraint ="";
+    List<String> valueConstraint = new ArrayList<String>();
+    int numBuf = 0;
+    String accessType ="";
+    String indexType ="";
+    int noOfCols = 0;
+    boolean purge = false;
+    menu();
+    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+    choice = in.readLine();
+    String[] input = choice.split("\\s+");
+    operation = input[0];
+    if(operation == "delete")
+    {
+      columnDBName = input[1];
+      columnFileName = input[2];
+      String colCons = input[3];
+      if(colCons != "NA") {
+        String opCons = input[4];
+        String valCons = input[5];
+
+        valueConstraint.add(colCons);
+        valueConstraint.add(opCons);
+        valueConstraint.add(valCons);
+
+        //SET THE NUMBUF AND ACCESSTYPE
+        numBuf = Integer.parseInt((input[6] == "NA") ? null : input[6]);
+        purge = Boolean.valueOf(input[7]);
+
+      }
+      else
+      {
+        numBuf =Integer.parseInt((input[5] == "NA") ? null: input[5]);;
+        accessType = (input[6] == "NA") ? null : input[6];
+      }
+
+    }
+    else if(operation == "query"){
+        // COLUMN DB NAME
+        columnDBName = input[1];
+        //COLUMN FILE NAME
+        columnFileName = input[2];
+        //LIST OF COLUMNS
+        columns = input[3];
+        columns = columns.replaceAll("\\[", "").replaceAll("\\]","");
+        String[] colArray = columns.split(",");
+        if(colArray.length > 0 && colArray != null)
+        {
+          for(String col : colArray)
+          {
+            columnNames.add(col);
+          }
+        }else
+        {
+          columnNames.add(columns);
+        }
+      //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
+      String colCons = input[4];
+      valueConstraint.add(colCons);
+      if(colCons != "NA") {
+        String opCons = input[5];
+        String valCons = input[6];
+
+        //valueConstraint.add(colCons);
+        valueConstraint.add(opCons);
+        valueConstraint.add(valCons);
+
+        //SET THE NUMBUF AND ACCESSTYPE
+        numBuf = Integer.parseInt((input[7] == "NA") ? null : input[7]);
+        accessType = (input[8] == "NA") ? null : input[8];
+        runQueryOnColumnar(columnDBName, columnFileName, columnNames,  valueConstraint , numBuf, accessType);
+      }
+      else
+      {
+        numBuf = Integer.parseInt((input[5] == "NA") ? null : input[5]);;
+        accessType = (input[6] == "NA") ? null : input[6];
+        runQueryOnColumnar(columnDBName, columnFileName, columnNames,  valueConstraint , numBuf, accessType);
+      }
+    }
+    else if(operation == "batchinsert")
+    {
+      datafileName = input[1];
+      columnDBName = input[2];
+      columnFileName = input[3];
+      noOfCols = Integer.parseInt(input[4]);
+
+    }
+    else if(operation =="index")
+    {
+      columnDBName = input[1];
+      columnFileName =input[2];
+      String colName = input[3];
+      indexType = input[4];
+    }
+
+  }
+  private void menu() {
+    System.out.println("-------------------------- MENU ------------------");
+    System.out.println("\n\n[0]   Batch Insert (batchinsert DATAFILENAME COLUMNDBNAME COLUMNARFILENAME NUMCOLUMNS)");
+    System.out.println("\n[1]  Index (index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE)");
+    System.out.println("\n[2]  Query (query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE)");
+    System.out.println("\n[3]  Delete Query (delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE)");
+    System.out.println("\n[4]  Quit!");
+    System.out.println("\nNote: for any value not being specified please mention NA");
+    System.out.print("Hi, Please mention the operation in the given format:");
+  }
+  /**
+   * To get the integer off the command line
+   */
+
 }
