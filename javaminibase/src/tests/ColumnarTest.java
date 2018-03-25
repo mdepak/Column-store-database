@@ -602,7 +602,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     try
     {
-      //f.createBitMapIndex(3);
+      f.createBitMapIndex(3);
     }
     catch (Exception ex)
     {
@@ -796,8 +796,7 @@ class ColumnIndexScanTest {
     expr[0].operand2.string = "dsilva";
     expr[0].next = null;
     expr[1] = null;
-    colScan = new ColumnIndexScan(new IndexType(IndexType.B_Index), "test1.in", "BTreeIndex",
-        attrType, attrSize, expr, true);
+    //colScan = new ColumnIndexScan(new IndexType(IndexType.B_Index), "test1.in", "BTreeIndex",     attrType, attrSize, expr, true);
   }
 
   public void close() throws Exception {
