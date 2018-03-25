@@ -11,7 +11,7 @@ import java.io.IOException;
 public class BMPage extends Page
         implements GlobalConst {
 
-    public static final int DPFIXED = (2 * 2 )+ (3 * 4) + 4;
+    public static final int DPFIXED = (2 * 2 )+ (3 * 4);
     public static final int MAX_RECORDS = (MAX_SPACE - DPFIXED)*8;
 
     public static final int RECORD_CNT = 0;
@@ -226,7 +226,7 @@ public class BMPage extends Page
             return false;
 
         } else {
-            int pos = DPFIXED + position;
+            int pos = (DPFIXED*8) + position;
             BitSet bs = BitSet.valueOf(data);
             bs.set(pos,valueMatch);
             data = bs.toByteArray();
@@ -264,7 +264,7 @@ public class BMPage extends Page
         }
         else{
             recordCnt = Convert.getShortValue(RECORD_CNT, data);
-            int pos = DPFIXED + position;
+            int pos = (DPFIXED*8) + position;
 
             BitSet bs = BitSet.valueOf(data);
             bs.set(pos, false);

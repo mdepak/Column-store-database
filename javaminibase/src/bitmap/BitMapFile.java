@@ -127,7 +127,7 @@ public class BitMapFile {
     } catch (RuntimeException e) {
       throw e;
     }
-    int position = 1;
+    int position = 0;
     while (temp != null) {
       // Copy to another variable so that the fields of the tuple are initialized.
 
@@ -147,7 +147,7 @@ public class BitMapFile {
           nextBMPage.setPrevPage(currentDataPage.getCurPage());
           nextBMPage.setNextPage(new PageId(Page.INVALID_PAGE));
           currentDataPage.setNextPage(nextBMPage.getCurPage());
-
+          position = 0;
           //TODO: Check for the proper place to unpin page
           unpinPage(currentDataPage.getCurPage(), true);
 
