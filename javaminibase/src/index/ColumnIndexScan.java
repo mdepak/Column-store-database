@@ -271,12 +271,15 @@ public class ColumnIndexScan extends Iterator {
                     int j = 0;
                     for (int i = 0; i < numOfOutputColumns; i++) {
                         attrType[i] = _types[_outputColumnsIndexes[i]];
-                        if(attrType.toString == "attrString") {
-                            s_sizes2[j] = _s_sizes[i];
-                            j++;
-                        }
+                        //TODO: Fix the compilation error and uncomment
+//                        if(attrType.toString == "attrString") {
+//                            s_sizes2[j] = _s_sizes[i];
+//                            j++;
+//                        }
                     }
-                    short[] s_sizes = Arrays.copyOf(s_sizes2, 0, j-1);
+                    //TODO: Fix the compilation error and uncomment
+                    short[] s_sizes = new short[0];
+                    //short[] s_sizes = Arrays.copyOf(s_sizes2, 0, j-1);
                     try {
                         outputTuple.setHdr((short) numOfOutputColumns, attrType, s_sizes);
                     } catch (Exception e) {
@@ -285,7 +288,8 @@ public class ColumnIndexScan extends Iterator {
 
                     for (int i = 0; i < numOfOutputColumns; i++) {
                         int indexNumber = _outputColumnsIndexes[i];
-                        outputRIDs[i] = getRIDFromPosition(position, indexNumber);
+                        //TODO: Fix the compilation error and uncomment
+                        //outputRIDs[i] = getRIDFromPosition(position, indexNumber);
                         Scan scan = scans[indexNumber];
                         outputTuple = scan.getNext(outputRIDs[i]);
                         if (outputTuple == null) {

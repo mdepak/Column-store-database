@@ -209,10 +209,10 @@ public class BitMapFile {
       }
 
       if (valueClass.equals(value)) {
-        currentDataPage.insertRecord(position,true);
+        currentDataPage.insertRecord(position,true, true);
       }
       else{
-        currentDataPage.insertRecord(position,false);
+        currentDataPage.insertRecord(position,false, true);
       }
       // Unpin page
 
@@ -612,7 +612,7 @@ public class BitMapFile {
       throw new BMException(null, "can't find Data page");
     }
 
-    currentDataPage.insertRecord(position, true);
+    currentDataPage.insertRecord(position, true, true);
 
     dpinfo.recct++;
     dpinfo.availspace = currentDataPage.available_space();
