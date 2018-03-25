@@ -223,22 +223,26 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
       if(accessType.equals("COLUMNSCAN")){
 
-        int colnum = Util.getColumnNumber(valueConstraint.get(0));
+        int colnum = Util.getColumnNumber(valueConstraint.get(0)) - 1;
         String filename = columnFileName + '.' + String.valueOf(colnum);
-        Columnarfile columnarFile = new Columnarfile(filename);
+        Columnarfile columnarFile = new Columnarfile(columnFileName);
         AttrType[] types = columnarFile.getType();
+
+        AttrType[] attrs = new AttrType[1];
+        attrs[0] = types[colnum];
 
         FldSpec[] projlist = new FldSpec[1];
         RelSpec rel = new RelSpec(RelSpec.outer);
         projlist[0] = new FldSpec(rel, 1);
 
-        short[] strsizes = new short[1];
+        short[] strsizes = new short[2];
         strsizes[0] = 100;
+        strsizes[1] = 100;
 
         CondExpr[] expr = Util.getValueContraint(valueConstraint);
 
         try {
-          ColumnarFileScan columnarFileScan = new ColumnarFileScan(filename, types, strsizes, (short) 1, 1, projlist, expr);
+          ColumnarFileScan columnarFileScan = new ColumnarFileScan(filename, attrs, strsizes, (short) 1, 1, projlist, expr);
           Tuple tuple;
           while(true){
             tuple = columnarFileScan.get_next();
@@ -266,13 +270,14 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     //Columnarfile file = new Columnarfile(columnarFile);
 
     try {
+
       Columnarfile file = new Columnarfile(columnarFile);
       int columnNo = Integer.parseInt(columnName);
 
       switch(indexType)
       {
         case "BTREE":
-          file.createBTreeIndex(columnNo);
+          file.createBTreeIndex(1);
           break;
         case "BITMAP":
           file.createBitMapIndex(columnNo);

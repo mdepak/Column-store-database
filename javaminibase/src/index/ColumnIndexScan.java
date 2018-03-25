@@ -108,7 +108,6 @@ public class ColumnIndexScan extends Iterator {
                     throw new IndexException(e,
                             "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
                 }
-
                 try {
                     indScan = (BTFileScan) IndexUtils.BTree_scan(selects, indFile);
                 } catch (Exception e) {

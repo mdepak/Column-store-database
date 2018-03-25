@@ -20,11 +20,11 @@ public class Util {
     expr[0] = new CondExpr();
     expr[0].op = new AttrOperator(operator);
     expr[0].type1 = new AttrType(AttrType.attrSymbol);
-    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), column);
+    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
     expr[0].next = null;
 
     String value = valueContraint.get(2);
-    if (value.matches("\\d*\\.?\\d*")) {
+    if (value.matches("\\d*\\.\\d*")) {
       expr[0].type2 = new AttrType(AttrType.attrReal);
       expr[0].operand2.real = Float.valueOf(value);
     }
