@@ -639,10 +639,16 @@ public class Columnarfile {
       Tuple t = new Tuple(temp.getTupleByteArray());
       t.tupleCopy(temp);
       int position = t.getIntFld(1);
-
       // find rids corresponding to all the columar files and then delete the file
+      for (int i = 0; i < numColumns; i++) {
+        RID ridd = Util.getRIDFromPosition(position,columnFiles[i]);
+        columnFiles[i].deleteRecord(ridd);
+        //Update Btree Index file if exists
+        //updateBtreeIndexIfExists(i + 1, columnTuple, resultRIDs[i]);
 
-
+        //Update BitMap index file if exits
+        //updateBitMapIndexIfExists(i + 1, columnTuple, position);
+      }
       //Once the data record is deleted, delete the position attribute from the deletion info heap file
       //TODO: Check delete record while scan object is reading does not cause any problem
       deleteFile.deleteRecord(rid);
