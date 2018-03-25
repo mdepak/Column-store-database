@@ -204,10 +204,10 @@ public class BitMapFile {
       }
 
       if (valueClass.equals(value)) {
-        currentDataPage.insertRecord(position,true, true);
+        currentDataPage.insertRecord(position,true, false);
       }
       else{
-        currentDataPage.insertRecord(position,false, true);
+        currentDataPage.insertRecord(position,false, false);
       }
       // Unpin page
 

@@ -227,9 +227,11 @@ public class BMPage extends Page
 
         } else {
             int pos = (DPFIXED*8) + position;
-            BitSet bs = BitSet.valueOf(data);
-            bs.set(pos,valueMatch);
-            data = bs.toByteArray();
+            //BitSet bs = BitSet.valueOf(data);
+            //bs.set(pos,valueMatch);
+            //data = bs.toByteArray();
+
+            setByteArrayBit(data, pos, valueMatch);
 
             freeBits -= 1;
             Convert.setShortValue(freeBits, FREE_BITS, data);
@@ -335,4 +337,18 @@ public class BMPage extends Page
         Convert.setShortValue(recordCnt, RECORD_CNT, data);
     }
 
+
+    private static void setByteArrayBit(byte[] data, int pos, boolean setBit) {
+        int posByte = pos/8;
+        int posBit = pos%8;
+        byte oldByte = data[posByte];
+        if(setBit) {
+            oldByte = (byte) (oldByte | (1 << (7-posBit)));
+        }
+        else
+        {
+            oldByte = (byte) (oldByte & ~(1 << (7-posBit)));
+        }
+        data[posByte] = oldByte;
+    }
 }

@@ -76,7 +76,11 @@ public class Util {
   {
     for(int i =0 ; i<val.length; i++)
     {
-    System.out.println(Integer.toBinaryString( (int) val[i]));
+      byte b1 = val[i];
+      String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
+      System.out.println(s1); // 10000001
+
+      //System.out.println(Integer.toBinaryString( (int) val[i]));
     }
   }
 }
