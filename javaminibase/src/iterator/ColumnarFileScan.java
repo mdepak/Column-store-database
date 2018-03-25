@@ -86,7 +86,7 @@ public class ColumnarFileScan extends Iterator {
     t1_size = tuple1.size();
 
     try {
-      f = new Heapfile("sailors.1");
+      f = new Heapfile(file_name);
 
     } catch (Exception e) {
       throw new FileScanException(e, "Create new heapfile failed");
