@@ -8,6 +8,7 @@ import static global.AttrType.attrSymbol;
 
 import diskmgr.Page;
 import global.AttrType;
+import global.Convert;
 import global.PageId;
 import global.RID;
 import heap.*;
@@ -101,10 +102,10 @@ public class Util {
 
         boolean flag = true;
 
+        RID recid = new RID();
         while (currentDirPageId.pid != hf.INVALID_PAGE && flag) {
             hf.pinPage(currentDirPageId, currentDirPage, false);
 
-            RID recid = new RID();
             Tuple atuple;
             for (recid = currentDirPage.firstRecord();
                  recid != null;  // rid==NULL means no more record
@@ -130,15 +131,19 @@ public class Util {
                 currentDirPageId.pid = nextDirPageId.pid;
             }
         }
+        //recid points to data page with the position
 
-        RID cur = currentDirPage.firstRecord();
-        Scan sc = new Scan(hf);
-        Tuple nextTuple = new Tuple();
-        while (nextTuple != null && curcount >= 0) {
-            nextTuple = sc.getNext(cur);
+        HFPage currentDataPage = new HFPage();
+        PageId currentDataPageId = new PageId(recid.pageNo.pid);
+        hf.pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
+
+        RID record = currentDataPage.firstRecord();
+        curcount--;
+        while( record != null && curcount>0) {
+            record = currentDataPage.nextRecord(record);
             curcount--;
         }
-        return cur;
+        return record;
     }
 
 
