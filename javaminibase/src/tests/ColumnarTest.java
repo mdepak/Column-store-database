@@ -281,6 +281,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       e.printStackTrace();
     }
     String[] input = choice.split("\\s+");
+    if(input[0].contains("quit"))
+    {
+      return false;
+    }
     operation = input[0];
     if(operation.contains("delete"))
     {
