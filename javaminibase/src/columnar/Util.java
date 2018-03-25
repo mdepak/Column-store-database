@@ -73,6 +73,12 @@ public class Util {
     return columnTuple;
   }
 
+  public static String getBitAsString(byte dataByte, int position)
+  {
+    String s1 = String.format("%8s", Integer.toBinaryString(dataByte & 0xFF)).replace(' ', '0');
+    return  new String(""+s1.charAt(position));
+  }
+
   public static void printBitsInByte(byte[] val)
   {
     for(int i =0 ; i<val.length; i++)

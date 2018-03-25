@@ -549,7 +549,7 @@ public class Columnarfile {
 
     // Create new BitMapFile
     BitMapFile file = new BitMapFile(getBitMapFileName(columnNo, value), this, columnNo, value);
-    file.printBitMap();
+    file.printBitMap(columnFiles[columnNo-1]);
     return true;
   }
 

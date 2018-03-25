@@ -333,14 +333,21 @@ public class BitMapFile {
   }
 
 
-  public void printBitMap()
-      throws IOException, PinPageException, UnpinPageException, BMException, InvalidSlotNumberException, InvalidTupleSizeException, HFBufMgrException {
+  public void printBitMap(Heapfile file)
+      throws IOException, PinPageException, UnpinPageException, BMException, InvalidSlotNumberException, InvalidTupleSizeException, HFBufMgrException, FieldNumberOutOfBoundException {
     PageId currentDirPageId = new PageId(_firstDirPageId.pid);
 
     HFPage currentDirPage = new HFPage();
     BMPage currentDataPage = new BMPage();
     RID currentDataPageRid = new RID();
     PageId nextDirPageId = new PageId();
+
+    Scan scan = new Scan(file);
+    RID rid = new RID();
+
+    Tuple temp = null;
+
+    temp = scan.getNext(rid);
 
     pinPage(currentDirPageId, currentDirPage, false/*read disk*/);
 
@@ -357,7 +364,31 @@ public class BitMapFile {
           pinPage(dpinfo.getPageId(), currentDataPage, false/*Rddisk*/);
 
           byte[] bitMapData = currentDataPage.getBMPageArray();
-          Util.printBitsInByte(bitMapData);
+
+          int recordCount = currentDataPage.getRecordCnt();
+          for(int index = 0; index<bitMapData.length && recordCount>0; index++)
+          {
+              for(int position = 0; position<8 && recordCount>0; position++)
+              {
+                Tuple tuple = new Tuple(temp.getTupleByteArray());
+                tuple.tupleCopy(temp);
+                ValueClass colVal = Util.valueClassFactory(columnfile.getType()[columnNo - 1]);
+                colVal.setValueFromColumnTuple(tuple, 1);
+                String bitVal = Util.getBitAsString(bitMapData[index], position);
+                if(colVal.equals(value) && bitVal.equalsIgnoreCase("1"))
+                {
+                  System.out.println("Proper bit set");
+                }
+                else
+                {
+                  System.out.println("Improper bit set");
+                }
+                recordCount--;
+                temp = scan.getNext(rid);
+              }
+          }
+          //Util.printBitsInByte(bitMapData);
+
           unpinPage(currentDataPage.getCurPage(), false/*undirty*/);
         } catch (Exception e) {
           throw e;
