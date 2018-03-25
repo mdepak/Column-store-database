@@ -196,7 +196,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     }
 
     //Run the tests. Return type different from C++
-    boolean _pass = runAllTests();
+     boolean _pass = runAllTests();
 
     //Clean up again
     try {
@@ -432,7 +432,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     }while(!input[0].contains("exit"));
 
-    return false;
+    return true;
   }
 
   @Override
@@ -773,8 +773,7 @@ public class ColumnarTest {
     ColumnarDriver cd = new ColumnarDriver();
     boolean dbstatus;
     try {
-      cd.setupDatabase();
-      dbstatus = cd.runTests();
+        dbstatus = cd.setupDatabase();
 
       if (dbstatus != true) {
         System.err.println("Error encountered during columnar file tests:\n");
