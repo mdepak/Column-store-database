@@ -221,40 +221,34 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     try {
 
-      switch(accessType)
-      {
-        case "COLUMNSCAN":
+      if(accessType.equals("COLUMNSCAN")){
 
-          int colnum = Util.getColumnNumber(valueConstraint.get(0));
-          String filename = columnFileName + '.' + String.valueOf(colnum);
-          Columnarfile columnarFile = new Columnarfile(filename);
-          AttrType[] types = columnarFile.getType();
+        int colnum = Util.getColumnNumber(valueConstraint.get(0));
+        String filename = columnFileName + '.' + String.valueOf(colnum);
+        Columnarfile columnarFile = new Columnarfile(filename);
+        AttrType[] types = columnarFile.getType();
 
-          AttrType[] attrs = new AttrType[1];
-          attrs[0] = new AttrType(types[colnum].attrType);
+        FldSpec[] projlist = new FldSpec[1];
+        RelSpec rel = new RelSpec(RelSpec.outer);
+        projlist[0] = new FldSpec(rel, 1);
 
-          FldSpec[] projlist = new FldSpec[1];
-          RelSpec rel = new RelSpec(RelSpec.outer);
-          projlist[0] = new FldSpec(rel, 1);
+        short[] strsizes = new short[1];
+        strsizes[0] = 100;
 
-          short[] strsizes = new short[1];
-          strsizes[0] = 100;
+        CondExpr[] expr = Util.getValueContraint(valueConstraint);
 
-          CondExpr[] expr = Util.getValueContraint(valueConstraint);
-
-          try {
-            ColumnarFileScan columnarFileScan = new ColumnarFileScan(filename, attrs, strsizes, (short) 1, 1, projlist, expr);
-            Tuple tuple;
-            while(true){
-              tuple = columnarFileScan.get_next();
-              if(tuple == null) break;
-              tuple.initHeaders();
-              System.out.println(tuple.getIntFld(1));
-            }
-          } catch (Exception e) {
-            e.printStackTrace();
+        try {
+          ColumnarFileScan columnarFileScan = new ColumnarFileScan(filename, types, strsizes, (short) 1, 1, projlist, expr);
+          Tuple tuple;
+          while(true){
+            tuple = columnarFileScan.get_next();
+            if(tuple == null) break;
+            tuple.initHeaders();
+            System.out.println(tuple.getIntFld(1));
           }
-          break;
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       }
 
     } catch (Exception e) {
@@ -673,11 +667,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     for(int i=0; i<numOfColumns; i++) {
       String[] columnHeader = headers[i].split(":");
       if(columnHeader[1].contains("int")) {
-        Stypes[i-1] = new AttrType(AttrType.attrInteger);
+        Stypes[i] = new AttrType(AttrType.attrInteger);
       } else if(columnHeader[1].contains("float")) {
-        Stypes[i-1] = new AttrType(AttrType.attrReal);
+        Stypes[i] = new AttrType(AttrType.attrReal);
       } else if(columnHeader[1].contains("char")) {
-        Stypes[i-1] = new AttrType(AttrType.attrString);
+        Stypes[i] = new AttrType(AttrType.attrString);
         int startIndex = columnHeader[1].indexOf("(");
         int endIndex = columnHeader[1].indexOf(")");
         String columnLengthInStr = columnHeader[1].substring(startIndex+1, endIndex);
@@ -721,11 +715,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       try {
         String[] columnValues = fileLines.split("\\t");
         for (int i = 1; i <= numOfColumns; i++) {
-          if (Stypes[i].attrType == AttrType.attrInteger) {
+          if (Stypes[i-1].attrType == AttrType.attrInteger) {
             t.setIntFld(i, Integer.parseInt(columnValues[i - 1]));
-          } else if (Stypes[i].attrType == AttrType.attrReal) {
+          } else if (Stypes[i-1].attrType == AttrType.attrReal) {
             t.setFloFld(i, Integer.parseInt(columnValues[i - 1]));
-          } else if (Stypes[i].attrType == AttrType.attrString) {
+          } else if (Stypes[i-1].attrType == AttrType.attrString) {
             t.setStrFld(i, columnValues[i - 1]);
           }
         }

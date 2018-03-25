@@ -40,7 +40,7 @@ public class BTreeFile extends IndexFile
    * @param filename input parameter. The trace file name
    * @throws IOException error from the lower layer
    */
-  protected static void traceFilename(String filename)
+  public static void traceFilename(String filename)
       throws IOException {
 
     fos = new FileOutputStream(filename);
@@ -74,7 +74,7 @@ public class BTreeFile extends IndexFile
    *
    * @return Return a BTreeHeaderPage object that is the header page of this btree file.
    */
-  protected BTreeHeaderPage getHeaderPage() {
+  public BTreeHeaderPage getHeaderPage() {
     return headerPage;
   }
 

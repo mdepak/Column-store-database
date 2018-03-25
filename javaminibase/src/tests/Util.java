@@ -78,19 +78,19 @@ public class Util {
 
     int column = 1;
     switch(columnName){
-      case "sid":
+      case "A":
         column = 1;
         break;
 
-      case "sname":
+      case "B":
         column = 2;
         break;
 
-      case "rating":
+      case "C":
         column = 3;
         break;
 
-      case "age":
+      case "D":
         column = 4;
         break;
     }
