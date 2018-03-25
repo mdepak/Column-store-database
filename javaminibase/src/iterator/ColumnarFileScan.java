@@ -143,6 +143,8 @@ public class ColumnarFileScan extends Iterator {
 
           int curcount = rowpos;
           HFPage currentDirPage = new HFPage();
+          //TODO: Remove the hardcoding of the heap file
+
           Heapfile hf = new Heapfile("sailors.2");
           int reccount = 0;
           PageId currentDirPageId = new PageId(hf._firstDirPageId.pid);

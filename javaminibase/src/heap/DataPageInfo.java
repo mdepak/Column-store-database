@@ -24,6 +24,10 @@ public class DataPageInfo implements GlobalConst {
    */
   int availspace;
 
+  public PageId getPageId() {
+      return pageId;
+  }
+
   /**
    * for efficient implementation of getRecCnt()
    */
