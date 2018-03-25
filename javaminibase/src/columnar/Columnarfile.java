@@ -62,6 +62,11 @@ public class Columnarfile {
 
   private Map<Integer, String> bTreeIndexes = new HashMap<>();
   private Map<Integer, List<ColumnarHeaderRecord>> bitmapIndexes = new HashMap<>();
+  private Map<String, Integer> attrNameColNoMapping = new HashMap();
+
+  public int getColumnNumber(String key) {
+    return ((int)attrNameColNoMapping.get(key));
+  }
 
   /**
    * This constructor is called when the columnar file is already created.
