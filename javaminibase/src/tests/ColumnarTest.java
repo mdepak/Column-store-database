@@ -41,6 +41,52 @@ import java.util.Random;
 
 import static tests.ColumnarDriver.runQueryOnColumnar;
 
+//Define the Sample Data schema
+
+class SampleData{
+
+  public String A;
+  public String B;
+  public int C;
+  public int D;
+
+  public SampleData(String _A, String _B, int _C, int _D){
+    A = _A;
+    B = _B;
+    C = _C;
+    D = _D;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SampleData that = (SampleData) o;
+
+    if (C != that.C) {
+      return false;
+    }
+    if (D != that.D) {
+      return false;
+    }
+
+    if(!A.equals(that.A)){
+      return false;
+    }
+
+    if(!B.equals(that.B)){
+      return false;
+    }
+
+    return true;
+  }
+
+}
 
 //Define the SailorDetails schema
 class SailorDetails {
@@ -360,6 +406,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columnDBName = input[2];
       columnFileName = input[3];
       noOfCols = Integer.parseInt(input[4]);
+      try {
+        batchInsertQuery(datafileName, columnDBName, columnFileName, noOfCols);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
 
     }
     else if(operation.contains("index"))
@@ -596,7 +647,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     return status;
   }
 
-  protected void readFileTest(String dataFileName, String columnDBName, String columnarFileName, int numOfColumns) throws Exception {
+  protected void batchInsertQuery(String dataFileName, String columnDBName, String columnarFileName, int numOfColumns) throws Exception {
     File file = new File(dataFileName);
     BufferedReader br = new BufferedReader(new FileReader(file));
     String[] headers;
