@@ -282,7 +282,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     }
     String[] input = choice.split("\\s+");
     operation = input[0];
-    if(operation == "delete")
+    if(operation.contains("delete"))
     {
       columnDBName = input[1];
       columnFileName = input[2];
@@ -296,18 +296,19 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         valueConstraint.add(valCons);
 
         //SET THE NUMBUF AND ACCESSTYPE
-        numBuf = Integer.parseInt((input[6] == "NA") ? null : input[6]);
+        numBuf = Integer.parseInt((input[6].contains("NA")) ? "0" : input[6]);
         purge = Boolean.valueOf(input[7]);
 
       }
       else
       {
-        numBuf =Integer.parseInt((input[5] == "NA") ? null: input[5]);;
-        accessType = (input[6] == "NA") ? null : input[6];
+        numBuf =Integer.parseInt((input[5].contains("NA")) ? "0": input[5]);;
+        purge = Boolean.valueOf(input[6]);
       }
 
     }
-    else if(operation == "query"){
+    else if(operation.contains("query"))
+    {
       // COLUMN DB NAME
       columnDBName = input[1];
       //COLUMN FILE NAME
@@ -322,34 +323,34 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         {
           columnNames.add(col);
         }
-      }else
-      {
-        columnNames.add(columns);
       }
       //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
       String colCons = input[4];
-      valueConstraint.add(colCons);
-      if(colCons != "NA") {
+      //valueConstraint.add(colCons);
+        if(colCons.contains("NA"))
+        {
+            colCons = null;
+            valueConstraint.add(colCons);
+            numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);;
+            accessType = (input[6].contains("NA")) ? null : input[6];
+            runQueryOnColumnar(columnDBName, columnFileName, columnNames,  valueConstraint , numBuf, accessType);
+        }
+        else {
         String opCons = input[5];
         String valCons = input[6];
 
-        //valueConstraint.add(colCons);
+        valueConstraint.add(colCons);
         valueConstraint.add(opCons);
         valueConstraint.add(valCons);
 
         //SET THE NUMBUF AND ACCESSTYPE
-        numBuf = Integer.parseInt((input[7] == "NA") ? null : input[7]);
-        accessType = (input[8] == "NA") ? null : input[8];
+        numBuf = Integer.parseInt((input[7].contains("NA")) ? "0" : input[7]);
+        accessType = (input[8].contains("NA")) ? null : input[8];
         runQueryOnColumnar(columnDBName, columnFileName, columnNames,  valueConstraint , numBuf, accessType);
       }
-      else
-      {
-        numBuf = Integer.parseInt((input[5] == "NA") ? null : input[5]);;
-        accessType = (input[6] == "NA") ? null : input[6];
-        runQueryOnColumnar(columnDBName, columnFileName, columnNames,  valueConstraint , numBuf, accessType);
-      }
+
     }
-    else if(operation == "batchinsert")
+    else if(operation.contains("batchinsert"))
     {
       datafileName = input[1];
       columnDBName = input[2];
@@ -357,7 +358,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       noOfCols = Integer.parseInt(input[4]);
 
     }
-    else if(operation =="index")
+    else if(operation.contains("index"))
     {
       columnDBName = input[1];
       columnFileName =input[2];
@@ -551,7 +552,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     try
     {
-      f.createBitMapIndex(3);
+      //f.createBitMapIndex(3);
     }
     catch (Exception ex)
     {
