@@ -336,9 +336,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     String columnFileName ="";
     String datafileName ="";
     String columns ="";
-    List<String> columnNames = new ArrayList<String>();
     String valConstraint ="";
-    List<String> valueConstraint = new ArrayList<String>();
     int numBuf = 0;
     String accessType ="";
     String indexType ="";
@@ -356,7 +354,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     System.out.println("\nNote: for any value not being specified please mention NA");
     System.out.print("Hi, Please mention the operation in the given format:");
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-    try {
+    List<String> valueConstraint = new ArrayList<String>();
+    List<String> columnNames = new ArrayList<String>();
+      try {
       choice = in.readLine();
     } catch (IOException e) {
       e.printStackTrace();

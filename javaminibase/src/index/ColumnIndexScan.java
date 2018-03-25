@@ -268,7 +268,7 @@ public class ColumnIndexScan extends Iterator {
                     rid = ((LeafData) nextentry.data).getData();
                     int position = getPositionFromRID(rid, hf);
                     int numOfOutputColumns = _outputColumnsIndexes.length;
-                    RID[] outputRIDs = new RID[numOfOutputColumns];
+/*                    RID[] outputRIDs = new RID[numOfOutputColumns];
                     Tuple outputTuple = new Tuple();
                     AttrType[] attrTypes = cf.getType();
                     Scan[] scans = selectiveTupleScan(cf, _outputColumnsIndexes);
@@ -281,14 +281,14 @@ public class ColumnIndexScan extends Iterator {
                     for (int i = 0; i < numOfOutputColumns; i++) {
                         attrType[i] = _types[_outputColumnsIndexes[i]];
                         //TODO: Fix the compilation error and uncomment
-//                        if(attrType.toString == "attrString") {
-//                            s_sizes2[j] = _s_sizes[i];
-//                            j++;
-//                        }
+                        if(attrType.toString == "attrString") {
+                            s_sizes2[j] = _s_sizes[i];
+                            j++;
+                        }
                     }
                     //TODO: Fix the compilation error and uncomment
                     short[] s_sizes = new short[0];
-                    //short[] s_sizes = Arrays.copyOf(s_sizes2, 0, j-1);
+                    short[] s_sizes = Arrays.copyOf(s_sizes2, 0, j-1);
                     try {
                         outputTuple.setHdr((short) numOfOutputColumns, attrType, s_sizes);
                     } catch (Exception e) {
@@ -310,6 +310,21 @@ public class ColumnIndexScan extends Iterator {
                         System.out.println(value.getValue());
                     }
                     return outputTuple;
+                    */
+
+                    for(int i=0; i<numOfOutputColumns; i++){
+                        int indexNumber = _outputColumnsIndexes[i];
+                        Heapfile heapfile = cf.getColumnFiles()[indexNumber-1];
+                        Tuple tuple = Util.getTupleFromPosition(position, heapfile);
+                        tuple.initHeaders();
+                        //
+                        System.out.println(tuple.getStrFld(1));
+                    }
+                }
+                try {
+                    nextentry = indScan.get_next();
+                } catch (Exception e) {
+                    throw new IndexException(e, "IndexScan.java: BTree error");
                 }
             }
         }
@@ -382,6 +397,7 @@ public class ColumnIndexScan extends Iterator {
                 if (rid.pageNo.pid == dpinfo.getPageId().pid) {
                     currPosition += rid.slotNo;
                     flag = false;
+                    break;
                 } else {
                     currPosition += dpinfo.recct;
                 }
