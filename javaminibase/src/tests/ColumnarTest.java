@@ -406,11 +406,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columnDBName = input[2];
       columnFileName = input[3];
       noOfCols = Integer.parseInt(input[4]);
-      try {
-        batchInsertQuery(datafileName, columnDBName, columnFileName, noOfCols);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
 
     }
     else if(operation.contains("index"))
