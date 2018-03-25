@@ -427,13 +427,16 @@ public class Columnarfile {
     ValueClass value = null;
     switch (attrType.attrType) {
       case AttrType.attrInteger:
-        value = new IntegerValue(1);
+        value = new IntegerValue();
+        value.setValue(1);
         break;
       case AttrType.attrString:
-        value = new StringValue(" ");
+        value = new StringValue();
+        value.setValue("");
         break;
       case AttrType.attrReal:
-        value = new FloatValue((float) 1.0);
+        value = new FloatValue();
+        value.setValue(1.0);
         break;
     }
     return value;
