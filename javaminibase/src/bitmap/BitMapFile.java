@@ -70,10 +70,27 @@ public class BitMapFile {
       headerPage.setPrevPage(new PageId(INVALID_PAGE));
       headerPage.setNextPage(new PageId(INVALID_PAGE));
 
-      HFPage firstDirectoryPage = new HFPage();
-      _firstDirPageId = newPage(firstDirectoryPage, 1);
 
-      headerPage.setFirstDirPage(_firstDirPageId);
+
+
+      //Create and init the first directory page
+      /*HFPage firstDirPage = new HFPage();
+      _firstDirPageId = newPage(firstDirPage, 1);
+
+      Page apage = new Page();
+
+      firstDirPage.init(_firstDirPageId, apage);
+      PageId pageId = new PageId(INVALID_PAGE);
+      firstDirPage.setNextPage(pageId);
+      firstDirPage.setPrevPage(pageId);
+
+     */
+      // unpinPage(_firstDirPageId, true /*dirty*/);
+
+
+
+
+      //headerPage.setFirstDirPage(_firstDirPageId);
       createBitMapIndex();
     } else {
       headerPage = new BitMapHeaderPage(headerPageId);
@@ -86,12 +103,32 @@ public class BitMapFile {
     Scan scan = columnfile.openColumnScan(columnNo);// columnarFileScan instead of scan
 
     RID rid = new RID();
-    PageId firstBMPage = headerPage.getFirstBMPage();
-    BMPage currPage = getNewBMPage();
-    headerPage.setFirstBMPage(currPage.getCurPage());
-    PageId firstBMPage = headerPage.getFirstDirPage();
-    BMPage currPage = new BMPage();
-    pinPage(firstBMPage, currPage, false);
+
+    Page pageinbuffer = new Page();
+
+    HFPage currentDirPage = new HFPage();
+    _firstDirPageId = newPage(pageinbuffer, 1);
+
+    PageId currentDirPageId = new PageId(_firstDirPageId.pid);
+
+    Page apage = new Page();
+
+    currentDirPage.init(_firstDirPageId, apage);
+    PageId pageId = new PageId(INVALID_PAGE);
+    currentDirPage.setNextPage(pageId);
+    currentDirPage.setPrevPage(pageId);
+
+    //pinPage(_firstDirPageId, currentDirPage, false/*Rdisk*/);
+
+    DataPageInfo dpinfo = new DataPageInfo();
+    BMPage currentDataPage = newDatapage(dpinfo);
+    PageId nextDirPageId = new PageId();  // OK
+    HFPage nextDirPage = new HFPage();
+
+    Tuple atuple = dpinfo.convertToTuple();
+    byte[] tmpData = atuple.getTupleByteArray();
+    RID firstRID = currentDirPage.insertRecord(tmpData);
+
 
     ValueClass valueClass = Util.valueClassFactory(columnfile.getType()[columnNo - 1]);
 
@@ -110,22 +147,76 @@ public class BitMapFile {
       tuple.tupleCopy(temp);
       valueClass.setValueFromColumnTuple(tuple, 1);
 
-      if(currPage.available_space()<1){
-        // Create a new BMPage and set the proper values
-        // Unpin page
-        unpinPage(currPage.getCurPage(), true);
-        BMPage nextPage = addNextBMPage(currPage);
-        currPage = nextPage;
+      if(currentDataPage.available_space()<1){
+        //When the page is full - unpin the page
+        //TODO: Check for the proper place to unpin page
+        unpinPage(currentDataPage.getCurPage(), true);
+
+        // When the current BM Page cannot hold the data create new BM page
+
+        //Check whether the current Directory has the space to hold the datapageinfo
+        if(currentDirPage.available_space() >= dpinfo.size)
+        {
+          currentDataPage = newDatapage(dpinfo);
+          atuple = dpinfo.convertToTuple();
+          tmpData = atuple.getTupleByteArray();
+          currentDirPage.insertRecord(tmpData);
+        }
+        else
+        {
+          nextDirPageId = currentDirPage.getNextPage();
+          if (nextDirPageId.pid != INVALID_PAGE) { //Start IF03
+            unpinPage(currentDirPageId, false);
+
+            currentDirPageId.pid = nextDirPageId.pid;
+
+            pinPage(currentDirPageId,
+                currentDirPage, false);
+
+            // now go back to the beginning of the outer while-loop and
+            // search on the current directory page for a suitable datapage
+          } //End of IF03
+          else {  //Start Else03
+            // case (2.2): append a new directory page after currentDirPage
+            //             since it is the last directory page
+            nextDirPageId = newPage(pageinbuffer, 1);
+            // need check error!
+            if (nextDirPageId == null) {
+              throw new HFException(null, "can't new pae");
+            }
+
+            // initialize new directory page
+            nextDirPage.init(nextDirPageId, pageinbuffer);
+            PageId temppid = new PageId(INVALID_PAGE);
+            nextDirPage.setNextPage(temppid);
+            nextDirPage.setPrevPage(currentDirPageId);
+
+            // update current directory page and unpin it
+            // currentDirPage is already locked in the Exclusive mode
+            currentDirPage.setNextPage(nextDirPageId);
+            unpinPage(currentDirPageId, true/*dirty*/);
+
+            currentDirPageId.pid = nextDirPageId.pid;
+            currentDirPage = new HFPage(nextDirPage);
+
+            // remark that MINIBASE_BM->newPage already
+            // pinned the new directory page!
+            // Now back to the beginning of the while-loop, using the
+            // newly created directory page.
+
+          }
+        }
       }
 
       if (valueClass.equals(value)) {
-        currPage.insertRecord(position,true);
+        currentDataPage.insertRecord(position,true);
       }
       else{
-        currPage.insertRecord(position,false);
+        currentDataPage.insertRecord(position,false);
       }
       // Unpin page
-      unpinPage(currPage.getCurPage(), true);
+
+      //unpinPage(currentDataPage.getCurPage(), true);
 
       temp = scan.getNext(rid);
 
@@ -135,6 +226,10 @@ public class BitMapFile {
       headerPage.setRecordCount(hdr_recordCont);
     }
 
+    unpinPage(currentDirPageId, true);
+    unpinPage(currentDataPage.getCurPage(), true);
+
+    //TODO: Check if this is required.
     unpinPage(headerPage.getPageId(), true);
   }
 
@@ -195,15 +290,6 @@ public class BitMapFile {
     }
   }
 
-  private void pinPage(PageId pageno, Page page, boolean emptyPage)
-      throws PinPageException {
-    try {
-      SystemDefs.JavabaseBM.pinPage(pageno, page, false/*Rdisk*/);
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new PinPageException(e, "");
-    }
-  }
 
   private void add_file_entry(String fileName, PageId pageno)
       throws AddFileEntryException {
@@ -215,15 +301,6 @@ public class BitMapFile {
     }
   }
 
-  private void unpinPage(PageId pageno)
-      throws UnpinPageException {
-    try {
-      SystemDefs.JavabaseBM.unpinPage(pageno, false /* = not DIRTY */);
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new UnpinPageException(e, "");
-    }
-  }
 
   private void freePage(PageId pageno)
       throws FreePageException {
@@ -246,15 +323,6 @@ public class BitMapFile {
     }
   }
 
-  private void unpinPage(PageId pageno, boolean dirty)
-      throws UnpinPageException {
-    try {
-      SystemDefs.JavabaseBM.unpinPage(pageno, dirty);
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new UnpinPageException(e, "");
-    }
-  }
 
 
   void close()
@@ -271,25 +339,53 @@ public class BitMapFile {
 
 
   public void printBitMap()
-      throws IOException, PinPageException, UnpinPageException {
+      throws IOException, PinPageException, UnpinPageException, BMException, InvalidSlotNumberException, InvalidTupleSizeException, HFBufMgrException {
+    PageId currentDirPageId = new PageId(_firstDirPageId.pid);
 
-    BMPage currPage = new BMPage();
-    pinPage(headerPage.getFirstDirPage(), currPage, false);
+    HFPage currentDirPage = new HFPage();
+    BMPage currentDataPage = new BMPage();
+    RID currentDataPageRid = new RID();
+    PageId nextDirPageId = new PageId();
+    // datapageId is stored in dpinfo.pageId
 
-    while (true) {
-      byte[] data = currPage.getBMPageArray();
+    pinPage(currentDirPageId, currentDirPage, false/*read disk*/);
 
-      //Print the byte data as bit in every byte
-      Util.printBitsInByte(data);
+    Tuple atuple = new Tuple();
 
-      if (currPage.getNextPage().pid != Page.INVALID_PAGE) {
-        break;
+    while (currentDirPageId.pid != INVALID_PAGE) {// Start While01
+
+      for (currentDataPageRid = currentDirPage.firstRecord();
+          currentDataPageRid != null;
+          currentDataPageRid = currentDirPage.nextRecord(currentDataPageRid)) {
+        atuple = currentDirPage.getRecord(currentDataPageRid);
+        DataPageInfo dpinfo = new DataPageInfo(atuple);
+        try {
+          pinPage(dpinfo.getPageId(), currentDataPage, false/*Rddisk*/);
+
+          byte[] bitMapData = currentDataPage.getBMPageArray();
+          Util.printBitsInByte(bitMapData);
+          unpinPage(currentDirPageId, false/*undirty*/);
+        } catch (Exception e) {
+          throw e;
+        }
       }
 
-      PageId nextPageId = currPage.getNextPage();
-      unpinPage(currPage.getCurPage(), false);
-      pinPage(nextPageId, currPage, false);
-    }
+      nextDirPageId = currentDirPage.getNextPage();
+      try {
+        unpinPage(currentDirPageId, false /*undirty*/);
+      } catch (Exception e) {
+        throw new BMException(e, "heapfile,_find,unpinpage failed");
+      }
+
+      currentDirPageId.pid = nextDirPageId.pid;
+      if (currentDirPageId.pid != INVALID_PAGE) {
+        pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
+        if (currentDirPage == null) {
+          throw new BMException(null, "pinPage return null page");
+        }
+      }
+    } // end of While01
+    // checked all dir pages and all data pages; user record not found:(
   }
 
   BitMapHeaderPage getHeaderPage() {
@@ -297,7 +393,7 @@ public class BitMapFile {
   }
 
   boolean delete(int position)
-      throws PinPageException, IOException, InvalidTupleSizeException, UnpinPageException, BMException, InvalidSlotNumberException {
+      throws PinPageException, IOException, InvalidTupleSizeException, UnpinPageException, BMException, InvalidSlotNumberException, HFBufMgrException {
 
     int deletePosition = position;
 
@@ -334,10 +430,9 @@ public class BitMapFile {
           try {
             pinPage(dpinfo.getPageId(), currentDataPage, false/*Rddisk*/);
             currentDataPage.deleteRecord(deletePosition);
-
+            unpinPage(currentDirPageId, true/*undirty*/);
             //check error;need unpin currentDirPage
           } catch (Exception e) {
-            unpinPage(currentDirPageId, false/*undirty*/);
             throw e;
           }
 
@@ -410,6 +505,7 @@ public class BitMapFile {
           found = true;
           break;
         }
+      }
 
         if (!found) {
           // add a new page entry and make it point to the new DMPage created.
@@ -436,7 +532,6 @@ public class BitMapFile {
             // in the current directorypage was created and inserted into
             // the heapfile; the new datapage has enough space for the
             // record which the user wants to insert
-
             found = true;
           }
           // Current directory page does not hold any
@@ -502,7 +597,6 @@ public class BitMapFile {
           pinPage(dpinfo.getPageId(), currentDataPage, false);
         }
       }
-    }
 
     //Now the proper DM page is found and the page is pinned in the memory
     if ((dpinfo.getPageId()).pid == INVALID_PAGE) // check error!
@@ -518,7 +612,7 @@ public class BitMapFile {
       throw new BMException(null, "can't find Data page");
     }
 
-    currentDataPage.insertRecord(position);
+    currentDataPage.insertRecord(position, true);
 
     dpinfo.recct++;
     dpinfo.availspace = currentDataPage.available_space();
@@ -564,5 +658,39 @@ public class BitMapFile {
 
     return bmPage;
   }
+
+
+  /**
+   * short cut to access the pinPage function in bufmgr package.
+   *
+   * @see bufmgr.pinPage
+   */
+  public void pinPage(PageId pageno, Page page, boolean emptyPage)
+      throws HFBufMgrException {
+
+    try {
+      SystemDefs.JavabaseBM.pinPage(pageno, page, emptyPage);
+    } catch (Exception e) {
+      throw new HFBufMgrException(e, "Heapfile.java: pinPage() failed");
+    }
+
+  } // end of pinPage
+
+  /**
+   * short cut to access the unpinPage function in bufmgr package.
+   *
+   * @see bufmgr.unpinPage
+   */
+  public void unpinPage(PageId pageno, boolean dirty)
+      throws HFBufMgrException {
+
+    try {
+      SystemDefs.JavabaseBM.unpinPage(pageno, dirty);
+    } catch (Exception e) {
+      throw new HFBufMgrException(e, "Heapfile.java: unpinPage() failed");
+    }
+
+  } // end of unpinPage
+
 }
 

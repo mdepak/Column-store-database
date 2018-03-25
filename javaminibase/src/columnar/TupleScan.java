@@ -73,6 +73,7 @@ public class TupleScan {
       }
     }
 
+    //TODO: Init with proper size
     Tuple rowTuple = new Tuple();
     short[] strSizes = new short[stringSizes.size()];
     for (int idx = 0; idx < stringSizes.size(); idx++) {

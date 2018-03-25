@@ -1615,7 +1615,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     try
     {
+      // Create a bitmap index on any of the columns
       f.createBitMapIndex(3);
+
     }
     catch (Exception ex)
     {

@@ -22,7 +22,7 @@ public class DataPageInfo implements GlobalConst {
   /**
    * HFPage returns int for avail space, so we use int here
    */
-  int availspace;
+  public int availspace;
 
   /**
    * for efficient implementation of getRecCnt()
@@ -44,16 +44,28 @@ public class DataPageInfo implements GlobalConst {
 
   private int offset;
 
-/**
+  public int getAvailspace() {
+    return availspace;
+  }
+
+  /**
  *  We can store roughly pagesize/sizeof(DataPageInfo) records per
  *  directory page; for any given HeapFile insertion, it is likely
  *  that at least one of those referenced data pages will have
  *  enough free space to satisfy the request.
  */
+  public PageId getPageId() {
 
+    return pageId;
+  }
+
+  public void setPageId(PageId pageId) {
+    this.pageId.pid = pageId.pid;
+  }
 
   /**
    * Default constructor
+
    */
   public DataPageInfo() {
     data = new byte[12]; // size of datapageinfo
