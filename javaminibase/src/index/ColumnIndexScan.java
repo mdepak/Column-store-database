@@ -46,6 +46,7 @@ public class ColumnIndexScan extends Iterator {
      * @throws IOException from the lower layer
      */
     public FldSpec[] perm_mat;
+    private String _colFileName;
     private String _relName;
     private String _indName;
     private IndexFile indFile;
@@ -67,10 +68,12 @@ public class ColumnIndexScan extends Iterator {
 
     public ColumnIndexScan(
             IndexType index,
+            final String colFileName,
             final String relName,
             final String indName,
             AttrType types[],
             short str_sizes[],
+            int fldNum,
             int outputColumnsIndexes[],
             CondExpr selects[],
             final boolean indexOnly
@@ -80,13 +83,21 @@ public class ColumnIndexScan extends Iterator {
 
         _relName = relName;
         _indName = indName;
+        _fldNum = fldNum;
         _types = types;
+        _colFileName = colFileName;
         _s_sizes = str_sizes;
         _outputColumnsIndexes = outputColumnsIndexes;
 
         short[] ts_sizes;
         Jtuple = new Tuple();
 
+        tuple1 = new Tuple();
+        try {
+            tuple1.setHdr((short) 1, types, str_sizes);
+        } catch (Exception e) {
+            throw new IndexException(e, "ColumnIndexScan.java: Heapfile error");
+        }
         t1_size = tuple1.size();
         index_only = indexOnly;  // added by bingjie miao
 
@@ -250,9 +261,8 @@ public class ColumnIndexScan extends Iterator {
                     }
                     return Jtuple;
                 } else {
-                    Columnarfile cf = new Columnarfile(_relName);
-                    int columnNumber = cf.getColumnNumber(_indName);
-                    Heapfile hf = new Heapfile(_relName + "." + columnNumber);
+                    Columnarfile cf = new Columnarfile(_colFileName);
+                    Heapfile hf = new Heapfile(_relName);
 
                     // not index_only, need to return the whole tuple
                     rid = ((LeafData) nextentry.data).getData();

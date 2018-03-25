@@ -255,6 +255,40 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         }
       }
 
+      else if(accessType.equals("BTREE")){
+
+        AttrType[] attrType = new AttrType[1];
+        attrType[0] = new AttrType(AttrType.attrInteger);
+
+        short[] attrSize = new short[1];
+        attrSize[0] = 100;
+
+        ColumnIndexScan colScan;
+        CondExpr[] expr = Util.getValueContraint(valueConstraint);
+        IndexType indexType = new IndexType(IndexType.B_Index);
+
+        int select[] = new int[columnNames.size()];
+        for(int i=0; i<columnNames.size(); i++){
+          select[i] = Util.getColumnNumber(columnNames.get(i));
+        }
+
+
+        boolean indexOnly = select.length == 1 && !valueConstraint.isEmpty() && select[0] == Util.getColumnNumber(valueConstraint.get(0));
+        try {
+          colScan = new ColumnIndexScan(indexType, columnFileName, "sampledata.3", "BTreesampledata3", attrType, attrSize, 1, select, expr, indexOnly);
+          Tuple tuple;
+          while(true){
+            tuple = colScan.get_next();
+            if(tuple == null) break;
+            tuple.initHeaders();
+            System.out.println(tuple.getIntFld(1));
+          }
+        }
+        catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+
     } catch (Exception e) {
       System.out.println("Exception in creating index for the columnar database");
       e.printStackTrace();
@@ -272,12 +306,12 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     try {
 
       Columnarfile file = new Columnarfile(columnarFile);
-      int columnNo = Integer.parseInt(columnName);
+      int columnNo = Util.getColumnNumber(columnName);
 
       switch(indexType)
       {
         case "BTREE":
-          file.createBTreeIndex(1);
+          file.createBTreeIndex(columnNo);
           break;
         case "BITMAP":
           file.createBitMapIndex(columnNo);
@@ -427,8 +461,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       indexType = input[4];
       createIndexOnColumnarFile(columnDBName,columnFileName,colName,indexType);
     }
-
-    return true;
 
     }while(!input[0].contains("exit"));
 
@@ -788,33 +820,4 @@ public class ColumnarTest {
 
 }
 
-class ColumnIndexScanTest {
-
-  private static short REC_LEN1 = 32;
-  private static short REC_LEN2 = 160;
-
-  public void get_next() throws Exception {
-    AttrType[] attrType = new AttrType[2];
-    attrType[0] = new AttrType(AttrType.attrString);
-    attrType[1] = new AttrType(AttrType.attrString);
-    short[] attrSize = new short[2];
-    attrSize[0] = REC_LEN2;
-    attrSize[1] = REC_LEN1;
-    ColumnIndexScan colScan = null;
-    // set up an identity selection
-    CondExpr[] expr = new CondExpr[2];
-    expr[0] = new CondExpr();
-    expr[0].op = new AttrOperator(AttrOperator.aopEQ);
-    expr[0].type1 = new AttrType(AttrType.attrSymbol);
-    expr[0].type2 = new AttrType(AttrType.attrString);
-    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-    expr[0].operand2.string = "dsilva";
-    expr[0].next = null;
-    expr[1] = null;
-    //colScan = new ColumnIndexScan(new IndexType(IndexType.B_Index), "test1.in", "BTreeIndex",     attrType, attrSize, expr, true);
-  }
-
-  public void close() throws Exception {
-  }
-}
 
