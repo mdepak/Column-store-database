@@ -265,10 +265,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     //TODO: Change to the 1 param constructor
     //Columnarfile file = new Columnarfile(columnarFile);
 
-    AttrType[] attrTypes = new AttrType[0];
-    int columns = 1;
     try {
-      Columnarfile file = new Columnarfile(columnarFile, columns, attrTypes);
+      Columnarfile file = new Columnarfile(columnarFile);
       int columnNo = Integer.parseInt(columnName);
 
       switch(indexType)
@@ -277,7 +275,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           file.createBTreeIndex(columnNo);
           break;
         case "BITMAP":
-          //file.createBitMapIndex(columnNo);
+          file.createBitMapIndex(columnNo);
           break;
       }
 
@@ -289,6 +287,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
   @Override
   protected boolean runAllTests() {
+
+
+    //test1();
+
     String choice = null;
     String operation;
     String columnDBName ="";
@@ -410,6 +412,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columnFileName =input[2];
       String colName = input[3];
       indexType = input[4];
+      createIndexOnColumnarFile(columnDBName,columnFileName,colName,indexType);
     }
 
     return true;

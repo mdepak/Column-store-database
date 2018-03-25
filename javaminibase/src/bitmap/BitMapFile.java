@@ -70,27 +70,21 @@ public class BitMapFile {
       headerPage.setPrevPage(new PageId(INVALID_PAGE));
       headerPage.setNextPage(new PageId(INVALID_PAGE));
 
-
-
-
       //Create and init the first directory page
-      /*HFPage firstDirPage = new HFPage();
-      _firstDirPageId = newPage(firstDirPage, 1);
+      HFPage firstDirPage = new HFPage();
 
       Page apage = new Page();
+      _firstDirPageId = newPage(apage, 1);
 
       firstDirPage.init(_firstDirPageId, apage);
       PageId pageId = new PageId(INVALID_PAGE);
       firstDirPage.setNextPage(pageId);
       firstDirPage.setPrevPage(pageId);
 
-     */
-      // unpinPage(_firstDirPageId, true /*dirty*/);
 
+      unpinPage(_firstDirPageId, true /*dirty*/);
 
-
-
-      //headerPage.setFirstDirPage(_firstDirPageId);
+      headerPage.setFirstDirPage(_firstDirPageId);
       createBitMapIndex();
     } else {
       headerPage = new BitMapHeaderPage(headerPageId);
@@ -107,18 +101,9 @@ public class BitMapFile {
     Page pageinbuffer = new Page();
 
     HFPage currentDirPage = new HFPage();
-    _firstDirPageId = newPage(pageinbuffer, 1);
-
     PageId currentDirPageId = new PageId(_firstDirPageId.pid);
 
-    Page apage = new Page();
-
-    currentDirPage.init(_firstDirPageId, apage);
-    PageId pageId = new PageId(INVALID_PAGE);
-    currentDirPage.setNextPage(pageId);
-    currentDirPage.setPrevPage(pageId);
-
-    //pinPage(_firstDirPageId, currentDirPage, false/*Rdisk*/);
+    pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
 
     DataPageInfo dpinfo = new DataPageInfo();
     BMPage currentDataPage = newDatapage(dpinfo);
@@ -129,6 +114,9 @@ public class BitMapFile {
     byte[] tmpData = atuple.getTupleByteArray();
     RID firstRID = currentDirPage.insertRecord(tmpData);
 
+    //Set the pointers appropriately.
+    currentDataPage.setPrevPage(new PageId(Page.INVALID_PAGE));
+    currentDataPage.setNextPage(new PageId(Page.INVALID_PAGE));
 
     ValueClass valueClass = Util.valueClassFactory(columnfile.getType()[columnNo - 1]);
 
@@ -149,18 +137,25 @@ public class BitMapFile {
 
       if(currentDataPage.available_space()<1){
         //When the page is full - unpin the page
-        //TODO: Check for the proper place to unpin page
-        unpinPage(currentDataPage.getCurPage(), true);
 
         // When the current BM Page cannot hold the data create new BM page
 
         //Check whether the current Directory has the space to hold the datapageinfo
         if(currentDirPage.available_space() >= dpinfo.size)
         {
-          currentDataPage = newDatapage(dpinfo);
+          BMPage nextBMPage = newDatapage(dpinfo);
+          nextBMPage.setPrevPage(currentDataPage.getCurPage());
+          nextBMPage.setNextPage(new PageId(Page.INVALID_PAGE));
+          currentDataPage.setNextPage(nextBMPage.getCurPage());
+
+          //TODO: Check for the proper place to unpin page
+          unpinPage(currentDataPage.getCurPage(), true);
+
+          currentDataPage = nextBMPage;
           atuple = dpinfo.convertToTuple();
           tmpData = atuple.getTupleByteArray();
           currentDirPage.insertRecord(tmpData);
+
         }
         else
         {
@@ -226,8 +221,8 @@ public class BitMapFile {
       headerPage.setRecordCount(hdr_recordCont);
     }
 
-    unpinPage(currentDirPageId, true);
     unpinPage(currentDataPage.getCurPage(), true);
+    unpinPage(currentDirPage.getCurPage(), true);
 
     //TODO: Check if this is required.
     unpinPage(headerPage.getPageId(), true);
@@ -346,7 +341,6 @@ public class BitMapFile {
     BMPage currentDataPage = new BMPage();
     RID currentDataPageRid = new RID();
     PageId nextDirPageId = new PageId();
-    // datapageId is stored in dpinfo.pageId
 
     pinPage(currentDirPageId, currentDirPage, false/*read disk*/);
 
@@ -364,7 +358,7 @@ public class BitMapFile {
 
           byte[] bitMapData = currentDataPage.getBMPageArray();
           Util.printBitsInByte(bitMapData);
-          unpinPage(currentDirPageId, false/*undirty*/);
+          unpinPage(currentDataPage.getCurPage(), false/*undirty*/);
         } catch (Exception e) {
           throw e;
         }

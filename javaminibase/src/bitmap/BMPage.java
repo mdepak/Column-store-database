@@ -11,7 +11,7 @@ import java.io.IOException;
 public class BMPage extends Page
         implements GlobalConst {
 
-    public static final int DPFIXED = 2 * 2 + 3 * 4;
+    public static final int DPFIXED = (2 * 2 )+ (3 * 4) + 4;
     public static final int MAX_RECORDS = (MAX_SPACE - DPFIXED)*8;
 
     public static final int RECORD_CNT = 0;
@@ -117,6 +117,8 @@ public class BMPage extends Page
 
         curPage.pid = pageNo.pid;
         Convert.setIntValue(curPage.pid, CUR_PAGE, data);
+
+        setCurPage(pageNo);
 
         nextPage.pid = prevPage.pid = INVALID_PAGE;
         Convert.setIntValue(prevPage.pid, PREV_PAGE, data);
@@ -316,7 +318,7 @@ public class BMPage extends Page
      * @throws IOException I/O errors
      */
     public boolean empty()
-            throws IOException {
+        throws IOException {
         //Need to implement
         recordCnt = Convert.getShortValue(RECORD_CNT, data);
         if(recordCnt==0){
