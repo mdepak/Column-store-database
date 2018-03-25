@@ -309,7 +309,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     String accessType ="";
     String indexType ="";
     int noOfCols = 0;
+    String[] input = new String[10];
     boolean purge = false;
+    do
+    {
     System.out.println("-------------------------- MENU ------------------");
     System.out.println("\n\n[0]   Batch Insert (batchinsert DATAFILENAME COLUMNDBNAME COLUMNARFILENAME NUMCOLUMNS)");
     System.out.println("\n[1]  Index (index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE)");
@@ -324,11 +327,16 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    String[] input = choice.split("\\s+");
-    if(input[0].contains("quit"))
-    {
-      return false;
-    }
+    input = choice.split("\\s+");
+
+        if(input[0].contains("quit"))
+        {
+         continue;
+        }
+        if(input[0].contains("exit"))
+        {
+            break;
+        }
     operation = input[0];
     if(operation.contains("delete"))
     {
@@ -421,6 +429,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     }
 
     return true;
+
+    }while(!input[0].contains("exit"));
+
+    return false;
   }
 
   @Override
