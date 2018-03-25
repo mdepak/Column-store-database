@@ -12,7 +12,7 @@ public class BMPage extends Page
         implements GlobalConst {
 
     public static final int DPFIXED = 2 * 2 + 3 * 4;
-    public static final int MAX_RECORDS = (MAX_SPACE - DPFIXED) *8;
+    public static final int MAX_RECORDS = (MAX_SPACE - DPFIXED)*8;
 
     public static final int RECORD_CNT = 0;
     //public static final int USED_BITS_PTR = 2;
@@ -216,7 +216,7 @@ public class BMPage extends Page
      * @return
      * @throws IOException I/O errors in C++ Status insertRecord(char *recPtr, int recLen, RID& rid)
      */
-    public boolean insertRecord(int position,boolean flag)
+    public boolean insertRecord(int position,boolean valueMatch, boolean updateFlag)
             throws IOException {
         //Need to implement this
         freeBits = Convert.getShortValue(FREE_BITS, data);
@@ -224,17 +224,18 @@ public class BMPage extends Page
             return false;
 
         } else {
-            int pos = MAX_SPACE*8 - position;
+            int pos = DPFIXED + position;
             BitSet bs = BitSet.valueOf(data);
-            bs.set(pos,flag);
+            bs.set(pos,valueMatch);
             data = bs.toByteArray();
 
             freeBits -= 1;
             Convert.setShortValue(freeBits, FREE_BITS, data);
-
-            recordCnt = Convert.getShortValue(RECORD_CNT, data);
-            recordCnt++;
-            Convert.setShortValue(recordCnt, RECORD_CNT, data);
+            if(updateFlag == false){ //inserting new record
+                recordCnt = Convert.getShortValue(RECORD_CNT, data);
+                recordCnt++;
+                Convert.setShortValue(recordCnt, RECORD_CNT, data);
+            }
 
             //usedBitsPtr = Convert.getShortValue(USED_BITS_PTR, data);
             //usedBitsPtr -= 1;    // adjust usedBitsPtr
@@ -261,7 +262,7 @@ public class BMPage extends Page
         }
         else{
             recordCnt = Convert.getShortValue(RECORD_CNT, data);
-            int pos = MAX_SPACE*8 - position;
+            int pos = DPFIXED + position;
 
             BitSet bs = BitSet.valueOf(data);
             bs.set(pos, false);
@@ -270,7 +271,7 @@ public class BMPage extends Page
             freeBits -= 1;
             Convert.setShortValue(freeBits, FREE_BITS, data);
 
-            recordCnt++;
+            recordCnt--;
             Convert.setShortValue(recordCnt, RECORD_CNT, data);
 
             //usedBitsPtr = Convert.getShortValue(USED_BITS_PTR, data);
@@ -282,16 +283,13 @@ public class BMPage extends Page
 
     void writeBMPageArray(byte[] data) {
         // Need to implement
-        // only bits not the metadata
-        byte[] bitsOnly = new byte[MAX_SPACE-DPFIXED];
         System.arraycopy(data, 0, this.data, DPFIXED, MAX_SPACE-DPFIXED);
     }
     /**
      * @return byte array
      */
     byte[] getBMPageArray(){
-        // Need to implement
-        // only bits not the metadata
+        // needed to reverse bits string using a for loop for returning.
         byte[] bitdata = new byte[MAX_SPACE-DPFIXED];
         System.arraycopy(this.data, DPFIXED, bitdata, 0, MAX_SPACE-DPFIXED);
         return bitdata;
