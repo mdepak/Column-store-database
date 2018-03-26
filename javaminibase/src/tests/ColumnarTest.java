@@ -536,6 +536,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     String[] input = new String[10];
     boolean purge = false;
     do {
+
+      PCounter.initialize();
       System.out.println("-------------------------- MENU ------------------");
       System.out.println(
           "\n\n[0]   Batch Insert (batchinsert DATAFILENAME COLUMNDBNAME COLUMNARFILENAME NUMCOLUMNS)");
@@ -612,10 +614,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columns = input[3];
       columns = columns.replaceAll("\\[", "").replaceAll("\\]","");
       String[] colArray = columns.split(",");
-      if(colArray.length > 0 && colArray != null)
-      {
-        for(String col : colArray)
-        {
+      if(colArray.length > 0 && colArray != null) {
+        for (String col : colArray) {
           columnNames.add(col);
         }
         //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
@@ -630,14 +630,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           try {
             runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
                 accessType);
-          }
-          catch (Exception ex)
-          {
+          } catch (Exception ex) {
             ex.printStackTrace();
           }
-        }
-          } else {
-          String colCons = input[4];
+        } else {
           String opCons = input[5];
           String valCons = input[6];
 
@@ -651,12 +647,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           try {
             runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
                 accessType);
-          }
-          catch (Exception ex)
-          {
+          } catch (Exception ex) {
             ex.printStackTrace();
           }
-          }
+        }
+      }
 
       } else if (operation.contains("batchinsert")) {
         datafileName = input[1];
@@ -676,6 +671,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         indexType = input[4];
         createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
       }
+
+      System.out.println(
+          "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
 
     } while (!input[0].contains("exit"));
 
