@@ -135,7 +135,7 @@ public class Util {
 
         HFPage currentDataPage = new HFPage();
         PageId currentDataPageId = new PageId(recid.pageNo.pid);
-        hf.pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
+        hf.pinPage(currentDataPageId, currentDataPage, false/*Rdisk*/);
 
         RID record = currentDataPage.firstRecord();
         curcount--;
@@ -156,17 +156,18 @@ public class Util {
     Page pageinbuffer = new Page();
 
     boolean flag = true;
+    DataPageInfo dpinfo = null;
 
+    RID recid = new RID();
     while (currentDirPageId.pid != hf.INVALID_PAGE && flag) {
       hf.pinPage(currentDirPageId, currentDirPage, false);
 
-      RID recid = new RID();
       Tuple atuple;
       for (recid = currentDirPage.firstRecord();
           recid != null;  // rid==NULL means no more record
           recid = currentDirPage.nextRecord(recid)) {
         atuple = currentDirPage.getRecord(recid);
-        DataPageInfo dpinfo = new DataPageInfo(atuple);
+        dpinfo = new DataPageInfo(atuple);
 
         if (curcount - dpinfo.recct > 0) {
           curcount -= dpinfo.recct;
@@ -187,13 +188,27 @@ public class Util {
       }
     }
 
-    RID cur = currentDirPage.firstRecord();
-    Scan sc = new Scan(hf);
+
+    HFPage currentDataPage = new HFPage();
+    PageId currentDataPageId = dpinfo.getPageId();
+    hf.pinPage(currentDataPageId, currentDataPage, false/*Rdisk*/);
+
+
+    Tuple nextTuple = new Tuple();
+    for (recid = currentDataPage.firstRecord();
+        recid != null && curcount>=0;  // rid==NULL means no more record
+        recid = currentDataPage.nextRecord(recid)) {
+      nextTuple = currentDataPage.getRecord(recid);
+      curcount--;
+    }
+
+     /* Scan sc = new Scan(hf);
+    RID cur = new RID();
     Tuple nextTuple = new Tuple();
     while (nextTuple != null && curcount >= 0) {
       nextTuple = sc.getNext(cur);
       curcount--;
-    }
+    }*/
     return nextTuple;
   }
 

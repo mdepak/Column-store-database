@@ -263,26 +263,30 @@ public class ColumnIndexScan extends Iterator {
                 } else {
                     // not index_only, need to return the whole tuple
                     rid = ((LeafData) nextentry.data).getData();
-                    int position = getPositionFromRID(rid, hf);
                     int numOfOutputColumns = _outputColumnsIndexes.length;
 
                     Columnarfile cf = new Columnarfile(_colFileName);
                     Heapfile hf = new Heapfile(_relName);
+                    int position = getPositionFromRID(rid, hf);
                     AttrType[] attrType = cf.getType();
                     AttrType[] reqAttrType = new AttrType[numOfOutputColumns];
                     short[] s_sizes = new short[numOfOutputColumns];
                     int j = 0;
                     for(int i=0; i<numOfOutputColumns; i++) {
                         reqAttrType[i] = attrType[_outputColumnsIndexes[i] - 1];
-                        if(reqAttrType[i].toString() == "attrString") {
+                        if(reqAttrType[i].attrType == AttrType.attrString) {
                             s_sizes[j] = _s_sizes[_outputColumnsIndexes[i] - 1];
                             j++;
                         }
                     }
                     short[] strSizes = Arrays.copyOfRange(s_sizes, 0, j);
 
-                    Tuple tuple= null;
-                    tuple.setHdr((short) numOfOutputColumns, reqAttrType, strSizes);
+                    Tuple tuple = new Tuple();
+                    try {
+                        tuple.setHdr((short) numOfOutputColumns, reqAttrType, strSizes);
+                    } catch (InvalidTypeException e) {
+                        e.printStackTrace();
+                    }
 
                     for(int i=0; i<numOfOutputColumns; i++){
                         int indexNumber = _outputColumnsIndexes[i];
@@ -299,11 +303,6 @@ public class ColumnIndexScan extends Iterator {
 //                        System.out.println(tuple.getStrFld(1));
                     }
                     return tuple;
-                }
-                try {
-                    nextentry = indScan.get_next();
-                } catch (Exception e) {
-                    throw new IndexException(e, "IndexScan.java: BTree error");
                 }
             }
         }

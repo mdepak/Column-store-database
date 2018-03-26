@@ -225,11 +225,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             selectCols[i] = Util.getColumnNumber(columnNames.get(i));
         }
 
-        boolean filescan = selectCols.length > 1 && !valueConstraint.isEmpty() && selectCols[0] == Util.getColumnNumber(valueConstraint.get(0));
 
       if(accessType.equals("COLUMNSCAN")){
 
-        int colnum = Util.getColumnNumber(valueConstraint.get(0)) - 1;
+        int colnum = Util.getColumnNumber(valueConstraint.get(0));
         String filename = columnFileName + '.' + String.valueOf(colnum);
         Columnarfile columnarFile = new Columnarfile(columnFileName);
         AttrType[] types = columnarFile.getType();
@@ -251,13 +250,24 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
               selectedCols[i] = Util.getColumnNumber(columnNames.get(i));
           }
         try {
-          ColumnarFileScan columnarFileScan = new ColumnarFileScan(filename, attrs, strsizes, (short) 1, 1, selectedCols,projlist, expr, filescan);
+          ColumnarFileScan columnarFileScan = new ColumnarFileScan(columnFileName, filename, attrs, strsizes, (short) 1, 1, selectedCols,projlist, expr, false);
           Tuple tuple;
           while(true){
             tuple = columnarFileScan.get_next();
             if(tuple == null) break;
             tuple.initHeaders();
-            System.out.println(tuple.getIntFld(1));
+            for(int i=0; i<tuple.noOfFlds(); i++){
+              if(types[selectCols[i]-1].attrType == AttrType.attrString){
+                System.out.println(tuple.getStrFld(i+1));
+              }
+              if(types[selectCols[i]-1].attrType == AttrType.attrInteger){
+                System.out.println(tuple.getIntFld(i+1));
+              }
+              if(types[selectCols[i]-1].attrType == AttrType.attrReal){
+                System.out.println(tuple.getFloFld(i+1));
+              }
+            }
+            System.out.println("");
           }
         } catch (Exception e) {
           e.printStackTrace();
@@ -327,7 +337,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           }
 
           try {
-              ColumnarFileScan columnarFileScan = new ColumnarFileScan(filename, attrs, strsizes, (short) 1, 1, selectedCols, projlist, expr, filescan);
+              ColumnarFileScan columnarFileScan = new ColumnarFileScan(columnFileName, filename, attrs, strsizes, (short) 1, 1, selectedCols, projlist, expr, true);
               Tuple tuple;
               while(true){
                   tuple = columnarFileScan.get_next();
@@ -679,7 +689,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     strsizes[0] = 100;
 
     try {
-      fscan = new ColumnarFileScan("test1.in", attrTypes, strsizes, (short) 1, 1, selectedCols, projlist, expr, false);
+      //fscan = new ColumnarFileScan("test1.in", attrTypes, strsizes, (short) 1, 1, selectedCols, projlist, expr, false);
       Tuple tuple = null;
       while(true){
         tuple = fscan.get_next();

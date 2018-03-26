@@ -2,6 +2,8 @@ package iterator;
 
 
 import bufmgr.PageNotReadException;
+import columnar.Columnarfile;
+import columnar.Util;
 import diskmgr.Page;
 import global.AttrType;
 import global.PageId;
@@ -15,6 +17,7 @@ import heap.InvalidTypeException;
 import heap.Scan;
 import heap.Tuple;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -35,12 +38,14 @@ public class ColumnarFileScan extends Iterator {
   private CondExpr[] OutputFilter;
   public FldSpec[] perm_mat;
   private int[] selectedCols;
-  private boolean fileScan;
+  private boolean _fileaccess;
+  private String _columnfile;
+  private String relname;
   int rowpos;
 
 
   /**
-   * constructor
+   * corowposnstructor
    *
    * @param file_name heapfile to be opened
    * @param in1[] array showing what the attributes of the input fields are.
@@ -54,7 +59,8 @@ public class ColumnarFileScan extends Iterator {
    * @throws TupleUtilsException exception from this class
    * @throws InvalidRelation invalid relation
    */
-  public ColumnarFileScan(String file_name,
+  public ColumnarFileScan(String columnfile,
+      String file_name,
       AttrType in1[],
       short s1_sizes[],
       short len_in1,
@@ -71,6 +77,8 @@ public class ColumnarFileScan extends Iterator {
     _in1 = in1;
     in1_len = len_in1;
     s_sizes = s1_sizes;
+    _columnfile = columnfile;
+    relname = file_name;
 
     Jtuple = new Tuple();
     AttrType[] Jtypes = new AttrType[n_out_flds];
@@ -83,7 +91,7 @@ public class ColumnarFileScan extends Iterator {
     nOutFlds = n_out_flds;
     tuple1 = new Tuple();
     this.selectedCols = selectedCols;
-    this.fileScan = fileScan;
+    this._fileaccess = fileScan;
 
     try {
       tuple1.setHdr(in1_len, _in1, s1_sizes);
@@ -145,67 +153,46 @@ public class ColumnarFileScan extends Iterator {
 
       tuple1.setHdr(in1_len, _in1, s_sizes);
       if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true) {
-        Projection.Project(tuple1, _in1, Jtuple, perm_mat, nOutFlds);
+        //Projection.Project(tuple1, _in1, Jtuple, perm_mat, nOutFlds);
+
         try {
-
-          int curcount = rowpos;
-          HFPage currentDirPage = new HFPage();
-          //TODO: Remove the hardcoding of the heap file
-
-          Heapfile hf = new Heapfile("sailors.2");
-          int reccount = 0;
-          PageId currentDirPageId = new PageId(hf._firstDirPageId.pid);
-
-          PageId nextDirPageId = new PageId(0);
-
-          Page pageinbuffer = new Page();
-
-          boolean flag = true;
-
-          while (currentDirPageId.pid != hf.INVALID_PAGE && flag) {
-            hf.pinPage(currentDirPageId, currentDirPage, false);
-
-            RID recid = new RID();
-            Tuple atuple;
-            for (recid = currentDirPage.firstRecord();
-                recid != null;  // rid==NULL means no more record
-                recid = currentDirPage.nextRecord(recid)) {
-              atuple = currentDirPage.getRecord(recid);
-              DataPageInfo dpinfo = new DataPageInfo(atuple);
-
-              if( curcount - dpinfo.recct > 0){
-                curcount -= dpinfo.recct;
-              }
-              else
-              {
-                flag = false;
-                break;
-              }
-            }
-
-            // ASSERTIONS: no more record
-            // - we have read all datapage records on
-            //   the current directory page.
-
-            if(flag){
-              nextDirPageId = currentDirPage.getNextPage();
-              hf.unpinPage(currentDirPageId, false /*undirty*/);
-              currentDirPageId.pid = nextDirPageId.pid;
+          Columnarfile cf = new Columnarfile(_columnfile);
+          Heapfile hf = new Heapfile(relname);
+          AttrType[] attrType = cf.getType();
+          int numOfOutputColumns = selectedCols.length;
+          AttrType[] reqAttrType = new AttrType[numOfOutputColumns];
+          short[] str_sizes = new short[numOfOutputColumns];
+          int j = 0;
+          for(int i=0; i<numOfOutputColumns; i++) {
+            reqAttrType[i] = attrType[selectedCols[i] - 1];
+            if(reqAttrType[i].attrType == AttrType.attrString) {
+              str_sizes[j] = s_sizes[selectedCols[i] - 1];
+              j++;
             }
           }
+          short[] strSizes = Arrays.copyOfRange(str_sizes, 0, j);
 
-          RID cur = currentDirPage.firstRecord();
-          Scan sc = new Scan(hf);
-          Tuple nextTuple = new Tuple();
-          while(nextTuple != null && curcount >= 0){
-            nextTuple = sc.getNext(cur);
-            curcount--;
+          Tuple tuple = new Tuple();
+          tuple.setHdr((short) numOfOutputColumns, reqAttrType, strSizes);
+
+          for(int i=0; i<numOfOutputColumns; i++){
+            int indexNumber = selectedCols[i];
+            Heapfile heapfile = cf.getColumnFiles()[indexNumber-1];
+            Tuple tupleTemp = Util.getTupleFromPosition(rowpos, heapfile);
+            tupleTemp.initHeaders();
+            if(attrType[indexNumber-1].attrType == AttrType.attrString) {
+              tuple.setStrFld(i+1, tupleTemp.getStrFld(1));
+            }else if(attrType[indexNumber-1].attrType == AttrType.attrInteger) {
+              tuple.setIntFld(i+1, tupleTemp.getIntFld(1));
+            }else if(attrType[indexNumber-1].attrType == AttrType.attrReal) {
+              tuple.setFloFld(i+1, tupleTemp.getFloFld(1));
+            }
           }
-          nextTuple.initHeaders();
-          nextTuple.getStrFld(1);
-
+          rowpos++;
+          return tuple;
         } catch (Exception e) {
           System.out.println("Failed");
+          e.printStackTrace();
         }
       }
       rowpos++;
