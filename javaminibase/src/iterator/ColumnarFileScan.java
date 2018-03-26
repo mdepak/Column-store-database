@@ -15,6 +15,7 @@ import heap.InvalidTypeException;
 import heap.Scan;
 import heap.Tuple;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * open a heapfile and according to the condition expression to get output file, call get_next to
@@ -33,6 +34,8 @@ public class ColumnarFileScan extends Iterator {
   private int nOutFlds;
   private CondExpr[] OutputFilter;
   public FldSpec[] perm_mat;
+  private int[] selectedCols;
+  private boolean fileScan;
   int rowpos;
 
 
@@ -56,8 +59,10 @@ public class ColumnarFileScan extends Iterator {
       short s1_sizes[],
       short len_in1,
       int n_out_flds,
+      int[] selectedCols,
       FldSpec[] proj_list,
-      CondExpr[] outFilter
+      CondExpr[] outFilter,
+      boolean fileScan
   )
       throws IOException,
       FileScanException,
@@ -77,6 +82,8 @@ public class ColumnarFileScan extends Iterator {
     perm_mat = proj_list;
     nOutFlds = n_out_flds;
     tuple1 = new Tuple();
+    this.selectedCols = selectedCols;
+    this.fileScan = fileScan;
 
     try {
       tuple1.setHdr(in1_len, _in1, s1_sizes);
