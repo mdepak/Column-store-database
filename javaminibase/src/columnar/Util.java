@@ -293,7 +293,7 @@ public class Util {
     fscan = new FileScan(fileName, attrType, attrSize, (short) 1, 1, projlist, null);
 
     Sort sort;
-    sort = new Sort(attrType, (short) 1, attrSize, fscan, 1, order[0], 10,file.getRecCnt() );
+    sort = new Sort(attrType, (short) 1, attrSize, fscan, 1, order[0], 10,4 );
 
     return sort;
   }

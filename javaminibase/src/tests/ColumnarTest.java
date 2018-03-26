@@ -8,6 +8,7 @@ import global.AttrOperator;
 import global.AttrType;
 import global.GlobalConst;
 import global.IndexType;
+import global.RID;
 import global.SystemDefs;
 import global.TID;
 import heap.*;
@@ -220,6 +221,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
 
       if(accessType.equals("COLUMNSCAN")) {
+        //List<RID> rids = Util.getRIDListHeapFile(valueConstraint, columnFileName);
         Columnarfile columnarFile = new Columnarfile(columnFileName);
         int numOfColumns = columnarFile.getNumColumns();
         AttrType[] types = columnarFile.getType();

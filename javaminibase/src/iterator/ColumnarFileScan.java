@@ -233,6 +233,46 @@ public class ColumnarFileScan extends Iterator {
   }
 
 
+  public RID get_next_rid()
+      throws Exception {
+    RID rid = new RID();
+    ;
+
+    while (true) {
+      RID oldrid = rid;
+      if ((tuple1 = scan.getNext(rid)) == null) {
+        return null;
+      }
+
+      tuple1.setHdr(in1_len, _in1, s_sizes);
+
+
+      while(doDelCheck && topDelRecord<rowpos)
+      {
+        Tuple sortTuple = delSortIter.get_next();
+        if(sortTuple!= null) {
+          topDelRecord = sortTuple.getIntFld(1);
+        }
+        else
+        {
+          doDelCheck = false;
+          break;
+        }
+      }
+
+      if (doDelCheck && topDelRecord == rowpos) {
+        //Record is deleted.
+        rowpos++;
+        continue;
+      }
+
+      if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true) {
+          return oldrid;
+      }
+    }
+  }
+
+
 
   /*
   public RID get_next_rid() throws InvalidTupleSizeException, IOException {

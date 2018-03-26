@@ -1,10 +1,15 @@
 package tests;
 
+import columnar.Columnarfile;
 import global.AttrOperator;
 import global.AttrType;
+import global.RID;
+import heap.Tuple;
+import iterator.ColumnarFileScan;
 import iterator.CondExpr;
 import iterator.FldSpec;
 import iterator.RelSpec;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Util {
@@ -95,6 +100,44 @@ public class Util {
         break;
     }
     return column;
+  }
+
+
+  public static List<RID> getRIDListHeapFile(List<String> valueConstraint, String columnFileName){
+
+    List<RID> ridList = new ArrayList<>();
+    try {
+
+      int colnum = Util.getColumnNumber(valueConstraint.get(0));
+      String filename = columnFileName + '.' + String.valueOf(colnum);
+      Columnarfile columnarFile = new Columnarfile(columnFileName);
+      AttrType[] types = columnarFile.getType();
+
+      AttrType[] attrs = new AttrType[1];
+      attrs[0] = types[colnum];
+
+      FldSpec[] projlist = new FldSpec[1];
+      RelSpec rel = new RelSpec(RelSpec.outer);
+      projlist[0] = new FldSpec(rel, 1);
+
+      short[] strsizes = new short[2];
+      strsizes[0] = 100;
+      strsizes[1] = 100;
+
+      CondExpr[] expr = Util.getValueContraint(valueConstraint);
+
+      ColumnarFileScan columnarFileScan = new ColumnarFileScan(columnFileName, filename, attrs, strsizes, (short) 1, 1, null, projlist, expr, false);
+      RID rid = new RID();
+      while(rid != null){
+        rid = columnarFileScan.get_next_rid();
+        ridList.add(rid);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return ridList;
+
   }
 
 }
