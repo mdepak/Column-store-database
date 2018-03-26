@@ -375,7 +375,7 @@ public class BitMapFile {
                 ValueClass colVal = Util.valueClassFactory(columnfile.getType()[columnNo - 1]);
                 colVal.setValueFromColumnTuple(tuple, 1);
                 String bitVal = Util.getBitAsString(bitMapData[index], position);
-                if(colVal.equals(value) && bitVal.equalsIgnoreCase("1"))
+                if(colVal.equals(value) && bitVal.equalsIgnoreCase("1") || (!colVal.equals(value) && bitVal.equalsIgnoreCase("0")))
                 {
                   System.out.println("Proper bit set");
                 }

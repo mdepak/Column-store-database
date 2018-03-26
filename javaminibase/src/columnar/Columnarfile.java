@@ -544,8 +544,8 @@ public class Columnarfile {
       throws IOException, HFException, HFBufMgrException, HFDiskMgrException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidTypeException, SpaceNotAvailableException, InvalidSlotNumberException, GetFileEntryException, ConstructPageException, PinPageException, BMBufMgrException, UnpinPageException, BMException {
 
     //Store the BitMap index file name in the header info heap
-    insertHeaderInfoRecord(FileType.BITMAP_FILE, columnNo, getBitMapFileName(columnNo, value),
-        value);
+    //TODO: Uncomment it later
+    //insertHeaderInfoRecord(FileType.BITMAP_FILE, columnNo, getBitMapFileName(columnNo, value),value);
 
     // Create new BitMapFile
     BitMapFile file = new BitMapFile(getBitMapFileName(columnNo, value), this, columnNo, value);

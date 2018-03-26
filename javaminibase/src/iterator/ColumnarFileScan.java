@@ -43,6 +43,8 @@ public class ColumnarFileScan extends Iterator {
   private String relname;
   int rowpos;
 
+  Iterator delSortIter;
+
 
   /**
    * corowposnstructor
@@ -93,6 +95,7 @@ public class ColumnarFileScan extends Iterator {
     this.selectedCols = selectedCols;
     this._fileaccess = fileScan;
 
+
     try {
       tuple1.setHdr(in1_len, _in1, s1_sizes);
     } catch (Exception e) {
@@ -102,6 +105,20 @@ public class ColumnarFileScan extends Iterator {
 
     try {
       f = new Heapfile(file_name);
+
+      try {
+        delSortIter = Util.openSortedScanOnDeleteHeap(Util.getDeleteFileName(columnfile));
+
+        Tuple sortTuple = delSortIter.get_next();
+        if (sortTuple != null) {
+          topDelRecord = sortTuple.getIntFld(1);
+          doDelCheck = true;
+        }
+      }
+      catch (Exception ex)
+      {
+        ex.printStackTrace();
+      }
 
     } catch (Exception e) {
       throw new FileScanException(e, "Create new heapfile failed");
@@ -113,6 +130,9 @@ public class ColumnarFileScan extends Iterator {
       throw new FileScanException(e, "openScan() failed");
     }
   }
+
+  boolean doDelCheck = false;
+  private int topDelRecord;
 
   /**
    * @return shows what input fields go where in the output tuple
@@ -134,15 +154,7 @@ public class ColumnarFileScan extends Iterator {
    * @throws WrongPermat exception for wrong FldSpec argument
    */
   public Tuple get_next()
-      throws JoinsException,
-      IOException,
-      InvalidTupleSizeException,
-      InvalidTypeException,
-      PageNotReadException,
-      PredEvalException,
-      UnknowAttrType,
-      FieldNumberOutOfBoundException,
-      WrongPermat {
+      throws Exception {
     RID rid = new RID();
     ;
 
@@ -152,6 +164,27 @@ public class ColumnarFileScan extends Iterator {
       }
 
       tuple1.setHdr(in1_len, _in1, s_sizes);
+
+
+      while(doDelCheck && topDelRecord<rowpos)
+      {
+        Tuple sortTuple = delSortIter.get_next();
+        if(sortTuple!= null) {
+          topDelRecord = sortTuple.getIntFld(1);
+        }
+        else
+        {
+          doDelCheck = false;
+          break;
+        }
+        }
+
+      if (doDelCheck && topDelRecord == rowpos) {
+        //Record is deleted.
+        rowpos++;
+        continue;
+      }
+
       if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true) {
         //Projection.Project(tuple1, _in1, Jtuple, perm_mat, nOutFlds);
 

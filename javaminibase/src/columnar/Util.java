@@ -11,8 +11,18 @@ import global.AttrType;
 import global.Convert;
 import global.PageId;
 import global.RID;
+import global.TupleOrder;
 import heap.*;
 
+import iterator.FileScan;
+import iterator.FileScanException;
+import iterator.FldSpec;
+import iterator.InvalidRelation;
+import iterator.Iterator;
+import iterator.RelSpec;
+import iterator.Sort;
+import iterator.SortException;
+import iterator.TupleUtilsException;
 import java.io.IOException;
 
 public class Util {
@@ -249,4 +259,42 @@ public class Util {
         }
         return currPosition;
     }
+
+
+  public static String getDeleteFileName(String relationName) {
+    return relationName + ".del";
+  }
+
+
+  public static Iterator openSortedScanOnDeleteHeap(String fileName)
+      throws InvalidRelation, TupleUtilsException, FileScanException, IOException, HFDiskMgrException, HFBufMgrException, HFException, InvalidTupleSizeException, InvalidSlotNumberException, SortException, SortException {
+
+    AttrType[] attrType = new AttrType[1];
+    attrType[0] = new AttrType(AttrType.attrInteger);
+
+    short[] attrSize = new short[0];
+    //attrSize[0] = 10;
+    //attrSize[1] = 10;
+
+    TupleOrder[] order = new TupleOrder[2];
+    order[0] = new TupleOrder(TupleOrder.Ascending);
+    order[1] = new TupleOrder(TupleOrder.Descending);
+
+    // create an iterator by open a file scan
+    FldSpec[] projlist = new FldSpec[1];
+    RelSpec rel = new RelSpec(RelSpec.outer);
+    projlist[0] = new FldSpec(rel, 1);
+
+    FileScan fscan = null;
+
+    Heapfile file = new Heapfile(fileName);
+
+
+    fscan = new FileScan(fileName, attrType, attrSize, (short) 1, 1, projlist, null);
+
+    Sort sort;
+    sort = new Sort(attrType, (short) 1, attrSize, fscan, 1, order[0], 10,file.getRecCnt() );
+
+    return sort;
+  }
 }

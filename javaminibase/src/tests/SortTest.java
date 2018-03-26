@@ -7,6 +7,8 @@ import global.RID;
 import global.SystemDefs;
 import global.TupleOrder;
 import heap.Heapfile;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
 import heap.Tuple;
 import iterator.CondExpr;
 import iterator.FileScan;
@@ -126,6 +128,18 @@ class SORTDriver extends TestDriver
     System.out.println("------------------------ TEST 1 --------------------------");
 
     boolean status = OK;
+
+    Tuple tuple = new Tuple();
+    AttrType[] type = new AttrType[1];
+    type[0] = new AttrType(AttrType.attrInteger);
+    try {
+      tuple.setHdr((short) 1, type, new short[0]);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    int recordLength = tuple.getLength();
+    System.out.println(recordLength);
 
     AttrType[] attrType = new AttrType[2];
     attrType[0] = new AttrType(AttrType.attrString);
