@@ -241,7 +241,7 @@ public class Columnarfile {
   /**
    * Delete all relevant files from the database.
    */
-  void deleteColumnarFile() {
+  public void deleteColumnarFile() {
 
   }
 
@@ -595,7 +595,7 @@ public class Columnarfile {
   /**
    * add the tuple to a heapfile tracking the deleted tuples from the columnar file
    */
-  boolean markTupleDeleted(TID tid)
+  public boolean markTupleDeleted(TID tid)
       throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, InvalidTypeException, FieldNumberOutOfBoundException, SpaceNotAvailableException, InvalidSlotNumberException {
 
     Heapfile deleteFile = new Heapfile(getDeleteFileName());
@@ -614,7 +614,7 @@ public class Columnarfile {
   /**
    * merge all deleted tuples from the file as well as all from all index files.
    */
-  boolean purgeAllDeletedTuples()
+  public boolean purgeAllDeletedTuples()
       throws Exception {
 
     Heapfile deleteFile = new Heapfile(getDeleteFileName());

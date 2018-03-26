@@ -208,6 +208,55 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     return _pass;
   }
 
+  public static void runDeleteOnColumnar(String columnDBName, String columnFileName,
+                                         List<String> valueConstraint, int numBuf, boolean purge) throws InvalidTupleSizeException, HFBufMgrException, InvalidSlotNumberException, IOException, SpaceNotAvailableException, InvalidTypeException, FieldNumberOutOfBoundException, HFException, HFDiskMgrException {
+
+
+    try {
+
+      if(valueConstraint.isEmpty()){
+        //Delete entire columnar file ??
+        Columnarfile columnarfile = new Columnarfile(columnFileName);
+        columnarfile.deleteColumnarFile();
+        // Display error
+      }
+      else {
+
+        int colnum = Util.getColumnNumber(valueConstraint.get(0)) - 1;
+        String filename = columnFileName + '.' + String.valueOf(colnum);
+        Columnarfile columnarFile = new Columnarfile(columnFileName);
+
+        CondExpr[] expr = Util.getValueContraint(valueConstraint);
+        int column = tests.Util.getColumnNumber(valueConstraint.get(0));
+
+        List<RID> deleteRID = Util.getRIDListHeapFile(valueConstraint, columnFileName); // get rid list by applying value constraint on designated column
+        List<Integer> positionList = new ArrayList<Integer>();
+
+        for(int i = 0; i<deleteRID.size();i++){
+          int position = columnar.Util.getPositionFromRID(deleteRID.get(i),columnarFile.getColumnFiles()[column] );
+          positionList.add(position);
+        }
+
+        for (int i : positionList) {
+          int numColumns = columnarFile.getNumColumns();
+          RID[] records = new RID[numColumns];
+          Heapfile[] columnHeapFiles = columnarFile.getColumnFiles();
+          for (int j = 0; j < numColumns; j++) {
+            records[j] = columnar.Util.getRIDFromPosition(positionList.get(i), columnHeapFiles[j]);
+          }
+          TID tid = new TID(numColumns, i, records);
+          columnarFile.markTupleDeleted(tid);
+        }
+        if (purge) {
+          columnarFile.purgeAllDeletedTuples();
+        }
+      }
+    }catch (Exception e) {
+      System.out.println("Exception in performing delete on columnar database");
+      e.printStackTrace();
+    }
+  }
+
 
   public static void runQueryOnColumnar(String columnDBName, String columnFileName,
                                         List<String> columnNames, List<String> valueConstraint, int numBuf, String accessType) {
@@ -424,7 +473,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   }
 
   @Override
-  protected boolean runAllTests() {
+  protected boolean runAllTests(){
 
 
     //test1();
@@ -471,31 +520,47 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             break;
         }
     operation = input[0];
-    if(operation.contains("delete"))
-    {
-      columnDBName = input[1];
-      columnFileName = input[2];
-      String colCons = input[3];
-      if(colCons != "NA") {
-        String opCons = input[4];
-        String valCons = input[5];
-
-        valueConstraint.add(colCons);
-        valueConstraint.add(opCons);
-        valueConstraint.add(valCons);
-
-        //SET THE NUMBUF AND ACCESSTYPE
-        numBuf = Integer.parseInt((input[6].contains("NA")) ? "0" : input[6]);
-        purge = Boolean.valueOf(input[7]);
-
-      }
-      else
+      if(operation.contains("delete"))
       {
-        numBuf =Integer.parseInt((input[5].contains("NA")) ? "0": input[5]);;
-        purge = Boolean.valueOf(input[6]);
-      }
+        //delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE
+        columnDBName = input[1];
+        columnFileName = input[2];
+        String colCons = input[3];
+        if(colCons != "NA") {
+          String opCons = input[4];
+          String valCons = input[5];
 
-    }
+          valueConstraint.add(colCons);
+          valueConstraint.add(opCons);
+          valueConstraint.add(valCons);
+
+          //SET THE NUMBUF AND ACCESSTYPE
+          numBuf = Integer.parseInt((input[6].contains("NA")) ? "0" : input[6]);
+          purge = Boolean.valueOf(input[7]);
+          try {
+            runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
+          }catch (Exception e)
+          {
+
+            e.printStackTrace();
+          }
+        }
+        else
+        {
+          colCons = null;
+          valueConstraint.add(colCons);
+          numBuf =Integer.parseInt((input[5].contains("NA")) ? "0": input[5]);;
+          purge = Boolean.valueOf(input[6]);
+          try {
+            runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
+          }catch (Exception e)
+          {
+
+            e.printStackTrace();
+          }
+        }
+
+      }
     else if(operation.contains("query"))
     {
       // COLUMN DB NAME
