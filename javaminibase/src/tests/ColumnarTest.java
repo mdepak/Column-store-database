@@ -279,8 +279,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         AttrType[] attrType = new AttrType[1];
         attrType[0] = new AttrType(AttrType.attrInteger);
 
-        short[] attrSize = new short[1];
+        short[] attrSize = new short[2];
         attrSize[0] = 100;
+        attrSize[1] = 100;
 
         ColumnIndexScan colScan;
         CondExpr[] expr = Util.getValueContraint(valueConstraint);
@@ -298,12 +299,25 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
         try {
           colScan = new ColumnIndexScan(indexType, columnFileName, relName, indName, attrType, attrSize, 1, desiredColumnNumbers, expr, indexOnly);
+          Columnarfile columnarFile = new Columnarfile(columnFileName);
+          AttrType[] types = columnarFile.getType();
           Tuple tuple;
           while(true){
             tuple = colScan.get_next();
             if(tuple == null) break;
             tuple.initHeaders();
-            System.out.println(tuple.getIntFld(1));
+            for(int i=0; i<tuple.noOfFlds(); i++){
+              if(types[selectCols[i]-1].attrType == AttrType.attrString){
+                System.out.println(tuple.getStrFld(i+1));
+              }
+              if(types[selectCols[i]-1].attrType == AttrType.attrInteger){
+                System.out.println(tuple.getIntFld(i+1));
+              }
+              if(types[selectCols[i]-1].attrType == AttrType.attrReal){
+                System.out.println(tuple.getFloFld(i+1));
+              }
+            }
+            System.out.println("");
           }
         }
         catch (Exception e) {

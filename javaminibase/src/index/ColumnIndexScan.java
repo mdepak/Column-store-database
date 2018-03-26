@@ -293,14 +293,13 @@ public class ColumnIndexScan extends Iterator {
                         Heapfile heapfile = cf.getColumnFiles()[indexNumber-1];
                         Tuple tupleTemp = Util.getTupleFromPosition(position, heapfile);
                         tupleTemp.initHeaders();
-                        if(attrType[indexNumber].toString() == "attrString") {
-                            tuple.setStrFld(i+1, tupleTemp.getStrFld(_fldNum));
-                        }else if(attrType[indexNumber].toString() == "attrInteger") {
-                            tuple.setIntFld(i+1, tupleTemp.getIntFld(_fldNum));
-                        }else if(attrType[indexNumber].toString() == "attrReal") {
-                            tuple.setFloFld(i+1, tupleTemp.getFloFld(_fldNum));
+                        if(attrType[indexNumber-1].attrType == AttrType.attrString) {
+                            tuple.setStrFld(i+1, tupleTemp.getStrFld(1));
+                        }else if(attrType[indexNumber-1].attrType == AttrType.attrInteger) {
+                            tuple.setIntFld(i+1, tupleTemp.getIntFld(1));
+                        }else if(attrType[indexNumber-1].attrType == AttrType.attrReal) {
+                            tuple.setFloFld(i+1, tupleTemp.getFloFld(1));
                         }
-//                        System.out.println(tuple.getStrFld(1));
                     }
                     return tuple;
                 }
