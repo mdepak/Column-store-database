@@ -276,15 +276,15 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         CondExpr[] expr = Util.getValueContraint(valueConstraint);
         IndexType indexType = new IndexType(IndexType.B_Index);
 
-        int select[] = new int[columnNames.size()];
+        int desiredColumnNumbers[] = new int[columnNames.size()];
         for(int i=0; i<columnNames.size(); i++){
-          select[i] = Util.getColumnNumber(columnNames.get(i));
+          desiredColumnNumbers[i] = Util.getColumnNumber(columnNames.get(i));
         }
 
-        boolean indexOnly = select.length == 1 && !valueConstraint.isEmpty() && select[0] == Util.getColumnNumber(valueConstraint.get(0));
+        boolean indexOnly = desiredColumnNumbers.length == 1 && !valueConstraint.isEmpty() && desiredColumnNumbers[0] == Util.getColumnNumber(valueConstraint.get(0));
 
         try {
-          colScan = new ColumnIndexScan(indexType, columnFileName, "sampledata.3", "BTreesampledata3", attrType, attrSize, 1, select, expr, indexOnly);
+          colScan = new ColumnIndexScan(indexType, columnFileName, "sampledata.3", "BTreesampledata3", attrType, attrSize, 1, desiredColumnNumbers, expr, indexOnly);
           Tuple tuple;
           while(true){
             tuple = colScan.get_next();

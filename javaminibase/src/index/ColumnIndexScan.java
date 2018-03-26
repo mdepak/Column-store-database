@@ -290,11 +290,11 @@ public class ColumnIndexScan extends Iterator {
                         Tuple tupleTemp = Util.getTupleFromPosition(position, heapfile);
                         tupleTemp.initHeaders();
                         if(attrType[indexNumber].toString() == "attrString") {
-                            tuple.setStrFld(i+1, tupleTemp.getStrFld(1));
+                            tuple.setStrFld(i+1, tupleTemp.getStrFld(_fldNum));
                         }else if(attrType[indexNumber].toString() == "attrInteger") {
-                            tuple.setIntFld(i+1, tupleTemp.getIntFld(1));
+                            tuple.setIntFld(i+1, tupleTemp.getIntFld(_fldNum));
                         }else if(attrType[indexNumber].toString() == "attrReal") {
-                            tuple.setFloFld(i+1, tupleTemp.getFloFld(1));
+                            tuple.setFloFld(i+1, tupleTemp.getFloFld(_fldNum));
                         }
 //                        System.out.println(tuple.getStrFld(1));
                     }
