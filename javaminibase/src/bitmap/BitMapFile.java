@@ -17,6 +17,7 @@ import columnar.Columnarfile;
 import columnar.Util;
 import columnar.ValueClass;
 import diskmgr.Page;
+import global.AttrType;
 import global.PageId;
 import global.RID;
 import global.SystemDefs;
@@ -29,10 +30,12 @@ import heap.HFPage;
 import heap.Heapfile;
 import heap.InvalidSlotNumberException;
 import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
 import heap.Scan;
 import heap.SpaceNotAvailableException;
 import heap.Tuple;
 import java.io.IOException;
+import java.util.Arrays;
 
 
 public class BitMapFile {
@@ -52,11 +55,12 @@ public class BitMapFile {
     headerPageId = get_file_entry(filename);
     headerPage = new BitMapHeaderPage(headerPageId);
     dbname = new String(filename);
+    _firstDirPageId = headerPage.getFirstDirPage();
   }
 
   public BitMapFile(String filename, Columnarfile columnfile,
       int columnNo, ValueClass value)
-      throws IOException, HFDiskMgrException, HFBufMgrException, HFException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTupleSizeException, ConstructPageException, GetFileEntryException, FieldNumberOutOfBoundException, BMBufMgrException, BMException, PinPageException, UnpinPageException {
+      throws IOException, HFDiskMgrException, HFBufMgrException, HFException, SpaceNotAvailableException, InvalidSlotNumberException, InvalidTupleSizeException, ConstructPageException, GetFileEntryException, FieldNumberOutOfBoundException, BMBufMgrException, BMException, PinPageException, UnpinPageException, AddFileEntryException {
     headerPageId = get_file_entry(filename);
     this.columnNo = columnNo;
     this.columnfile = columnfile;
@@ -69,6 +73,9 @@ public class BitMapFile {
       headerPage.setColumnNo(columnNo);
       headerPage.setPrevPage(new PageId(INVALID_PAGE));
       headerPage.setNextPage(new PageId(INVALID_PAGE));
+
+      //add the bitmap header page to the file entry
+      add_file_entry(filename, headerPageId);
 
       //Create and init the first directory page
       HFPage firstDirPage = new HFPage();
@@ -332,6 +339,143 @@ public class BitMapFile {
 
   }
 
+  public void performQuery(String _columnfile, int[] selectedCols)
+      throws HFBufMgrException, BMException, IOException, InvalidTupleSizeException, FieldNumberOutOfBoundException, InvalidSlotNumberException, HFDiskMgrException, HFException, InvalidTypeException {
+    PageId currentDirPageId = new PageId(_firstDirPageId.pid);
+
+    HFPage currentDirPage = new HFPage();
+    BMPage currentDataPage = new BMPage();
+    RID currentDataPageRid = new RID();
+    PageId nextDirPageId = new PageId();
+
+    //Scan scan = new Scan(file);
+    RID rid = new RID();
+
+    Tuple temp = null;
+
+    //temp = scan.getNext(rid);
+
+
+    //Main ROW POSITION
+    int rowPosition = 0;
+
+    pinPage(currentDirPageId, currentDirPage, false/*read disk*/);
+
+    Tuple atuple = new Tuple();
+
+    Columnarfile cf = new Columnarfile(_columnfile);
+    AttrType[] attrType = cf.getType();
+    int numOfOutputColumns = selectedCols.length;
+    AttrType[] reqAttrType = new AttrType[numOfOutputColumns];
+
+    short[] str_sizes = new short[numOfOutputColumns];
+
+    //TODO: Check this is proper str sizes
+    short[] s_sizes = cf.getStrSizes();
+    int j = 0;
+    for(int i=0; i<numOfOutputColumns; i++) {
+      reqAttrType[i] = attrType[selectedCols[i] - 1];
+      if(reqAttrType[i].attrType == AttrType.attrString) {
+        str_sizes[j] = s_sizes[selectedCols[i] - 1];
+        j++;
+      }
+    }
+
+    short[] strSizes = Arrays.copyOfRange(str_sizes, 0, j);
+
+    while (currentDirPageId.pid != INVALID_PAGE) {// Start While01
+
+      for (currentDataPageRid = currentDirPage.firstRecord();
+          currentDataPageRid != null;
+          currentDataPageRid = currentDirPage.nextRecord(currentDataPageRid)) {
+        atuple = currentDirPage.getRecord(currentDataPageRid);
+        DataPageInfo dpinfo = new DataPageInfo(atuple);
+        try {
+          pinPage(dpinfo.getPageId(), currentDataPage, false/*Rddisk*/);
+
+          byte[] bitMapData = currentDataPage.getBMPageArray();
+
+          int recordCount = currentDataPage.getRecordCnt();
+          for(int index = 0; index<bitMapData.length && recordCount>0; index++)
+          {
+            for(int position = 0; position<8 && recordCount>0; position++)
+            {
+              //Tuple tuple = new Tuple(temp.getTupleByteArray());
+              //tuple.tupleCopy(temp);
+              //ValueClass colVal = Util.valueClassFactory(columnfile.getType()[columnNo - 1]);
+              //colVal.setValueFromColumnTuple(tuple, 1);
+              String bitVal = Util.getBitAsString(bitMapData[index], position);
+
+              if(bitVal.equalsIgnoreCase("1") )
+              {
+                //Postion of the row matching the condition
+                //System.out.println("Position of the record matching condition");
+
+                //Actual fetching of data
+                Tuple tuple = new Tuple();
+                tuple.setHdr((short) numOfOutputColumns, reqAttrType, strSizes);
+
+                for(int i=0; i<numOfOutputColumns; i++){
+                  int indexNumber = selectedCols[i];
+                  Heapfile heapfile = cf.getColumnFiles()[indexNumber-1];
+                  Tuple tupleTemp = Util.getTupleFromPosition(rowPosition, heapfile);
+                  tupleTemp.initHeaders();
+
+                  if(attrType[indexNumber-1].attrType == AttrType.attrString) {
+                    tuple.setStrFld(i+1, tupleTemp.getStrFld(1));
+                  }else if(attrType[indexNumber-1].attrType == AttrType.attrInteger) {
+                    tuple.setIntFld(i+1, tupleTemp.getIntFld(1));
+                  }else if(attrType[indexNumber-1].attrType == AttrType.attrReal) {
+                    tuple.setFloFld(i+1, tupleTemp.getFloFld(1));
+                  }
+                }
+
+                if(tuple != null) {
+                  tuple.initHeaders();
+                  for (int i = 0; i < tuple.noOfFlds(); i++) {
+                    if (attrType[selectedCols[i] - 1].attrType == AttrType.attrString) {
+                      System.out.println(tuple.getStrFld(i + 1));
+                    }
+                    if (attrType[selectedCols[i] - 1].attrType == AttrType.attrInteger) {
+                      System.out.println(tuple.getIntFld(i + 1));
+                    }
+                    if (attrType[selectedCols[i] - 1].attrType == AttrType.attrReal) {
+                      System.out.println(tuple.getFloFld(i + 1));
+                    }
+                  }
+                  System.out.println("");
+                }
+              }
+              rowPosition++;
+              recordCount--;
+              //temp = scan.getNext(rid);
+            }
+          }
+          //Util.printBitsInByte(bitMapData);
+
+          unpinPage(currentDataPage.getCurPage(), false/*undirty*/);
+        } catch (Exception e) {
+          throw e;
+        }
+      }
+
+      nextDirPageId = currentDirPage.getNextPage();
+      try {
+        unpinPage(currentDirPageId, false /*undirty*/);
+      } catch (Exception e) {
+        throw new BMException(e, "heapfile,_find,unpinpage failed");
+      }
+
+      currentDirPageId.pid = nextDirPageId.pid;
+      if (currentDirPageId.pid != INVALID_PAGE) {
+        pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
+        if (currentDirPage == null) {
+          throw new BMException(null, "pinPage return null page");
+        }
+      }
+    } // end of While01
+    // checked all dir pages and all data pages; user record not found:(
+  }
 
   public void printBitMap(Heapfile file)
       throws IOException, PinPageException, UnpinPageException, BMException, InvalidSlotNumberException, InvalidTupleSizeException, HFBufMgrException, FieldNumberOutOfBoundException {

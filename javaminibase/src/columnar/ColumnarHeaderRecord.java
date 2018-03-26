@@ -91,7 +91,7 @@ public class ColumnarHeaderRecord {
 
     if(attrType.attrType ==AttrType.attrString) {
       strSizes = new short[2];
-      strSizes[0] = 30;
+      strSizes[0] = 100;
       strSizes[1] = (short) maxValSize;
     }
     else

@@ -15,7 +15,7 @@ public class StringValue extends ValueClass {
 
   }
 
-  StringValue(String val)
+  public StringValue(String val)
   {
     this.val = val;
   }

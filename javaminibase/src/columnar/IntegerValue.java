@@ -15,7 +15,7 @@ public class IntegerValue extends ValueClass {
 
   }
 
-  IntegerValue(Integer val)
+  public IntegerValue(Integer val)
   {
     this.val = val;
   }
