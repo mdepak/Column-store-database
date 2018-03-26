@@ -237,8 +237,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         short[] strSize = new short[numOfColumns];
         int j = 0;
         for(int i=0; i<numOfColumns; i++) {
-          if(attrTypes[i].attrType == AttrType.attrString) {
-            strSizes[j] = (short)100;
+          if(types[i].attrType == AttrType.attrString) {
+            strSize[j] = (short)100;
             j++;
           }
         }
@@ -287,7 +287,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         int j = 0;
         for(int i=0; i<numOfColumns; i++) {
           if(attrTypes[i].attrType == AttrType.attrString) {
-            strSizes[j] = (short)100;
+            strSize[j] = (short)100;
             j++;
           }
         }
@@ -343,6 +343,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           int columnNumber = Util.getColumnNumber(valueConstraint.get(0)) - 1;
           String filename = columnFileName + '.' + String.valueOf(columnNumber);
           Columnarfile columnarFile = new Columnarfile(columnFileName);
+          int numOfColumns = columnarFile.getNumColumns();
           AttrType[] types = columnarFile.getType();
 
           AttrType[] attrs = new AttrType[1];
@@ -355,8 +356,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           short[] strSize = new short[numOfColumns];
           int j = 0;
           for(int i=0; i<numOfColumns; i++) {
-            if(attrTypes[i].attrType == AttrType.attrString) {
-              strSizes[j] = (short)100;
+            if(types[i].attrType == AttrType.attrString) {
+              strSize[j] = (short)100;
               j++;
             }
           }
