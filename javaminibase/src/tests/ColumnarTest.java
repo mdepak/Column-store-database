@@ -10,15 +10,7 @@ import global.GlobalConst;
 import global.IndexType;
 import global.SystemDefs;
 import global.TID;
-import heap.FieldNumberOutOfBoundException;
-import heap.HFBufMgrException;
-import heap.HFDiskMgrException;
-import heap.HFException;
-import heap.InvalidSlotNumberException;
-import heap.InvalidTupleSizeException;
-import heap.InvalidTypeException;
-import heap.SpaceNotAvailableException;
-import heap.Tuple;
+import heap.*;
 import index.ColumnIndexScan;
 import iterator.ColumnarFileScan;
 import java.io.BufferedReader;
@@ -35,6 +27,7 @@ import iterator.WrongPermat;
 import java.io.IOException;
 import java.lang.Exception;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.io.*;
 import java.util.Random;
@@ -226,23 +219,30 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         }
 
 
-      if(accessType.equals("COLUMNSCAN")){
-
-        int colnum = Util.getColumnNumber(valueConstraint.get(0));
-        String filename = columnFileName + '.' + String.valueOf(colnum);
+      if(accessType.equals("COLUMNSCAN")) {
         Columnarfile columnarFile = new Columnarfile(columnFileName);
+        int numOfColumns = columnarFile.getNumColumns();
         AttrType[] types = columnarFile.getType();
 
         AttrType[] attrs = new AttrType[1];
-        attrs[0] = types[colnum];
+        int columnNumber = Util.getColumnNumber(valueConstraint.get(0));
+        attrs[0] = types[columnNumber];
 
         FldSpec[] projlist = new FldSpec[1];
         RelSpec rel = new RelSpec(RelSpec.outer);
         projlist[0] = new FldSpec(rel, 1);
 
-        short[] strsizes = new short[2];
-        strsizes[0] = 100;
-        strsizes[1] = 100;
+        String filename = columnFileName + '.' + String.valueOf(columnNumber);
+
+        short[] strSize = new short[numOfColumns];
+        int j = 0;
+        for(int i=0; i<numOfColumns; i++) {
+          if(attrTypes[i].attrType == AttrType.attrString) {
+            strSizes[j] = (short)100;
+            j++;
+          }
+        }
+        short[] strSizes = Arrays.copyOfRange(strSize, 0, j);
 
         CondExpr[] expr = Util.getValueContraint(valueConstraint);
           int selectedCols[] = new int[columnNames.size()];
@@ -250,7 +250,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
               selectedCols[i] = Util.getColumnNumber(columnNames.get(i));
           }
         try {
-          ColumnarFileScan columnarFileScan = new ColumnarFileScan(columnFileName, filename, attrs, strsizes, (short) 1, 1, selectedCols,projlist, expr, false);
+          ColumnarFileScan columnarFileScan = new ColumnarFileScan(columnFileName, filename, attrs, strSizes, (short) 1, 1, selectedCols,projlist, expr, false);
           Tuple tuple;
           while(true){
             tuple = columnarFileScan.get_next();
@@ -274,15 +274,29 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         }
       }
 
-      else if(accessType.equals("BTREE")){
+      else if(accessType.equals("BTREE")) {
+        Columnarfile cf = new Columnarfile(columnFileName);
+        int numOfColumns = cf.getNumColumns();
+        AttrType[] attrTypes = cf.getType();
 
-        AttrType[] attrType = new AttrType[1];
-        attrType[0] = new AttrType(AttrType.attrInteger);
+        AttrType[] ValueConstraintAttrType = new AttrType[1];
+        int columnNumber = Util.getColumnNumber(valueConstraint.get(0)) - 1;
+        ValueConstraintAttrType[0] = attrTypes[columnNumber];
 
-        short[] attrSize = new short[2];
-        attrSize[0] = 100;
-        attrSize[1] = 100;
-
+        short[] strSize = new short[numOfColumns];
+        int j = 0;
+        for(int i=0; i<numOfColumns; i++) {
+          if(attrTypes[i].attrType == AttrType.attrString) {
+            strSizes[j] = (short)100;
+            j++;
+          }
+        }
+        short[] strSizes = Arrays.copyOfRange(strSize, 0, j);
+        /*
+        short[] strSizes = new short[2];
+        strSizes[0] = 100;
+        strSizes[1] = 100;
+        */
         ColumnIndexScan colScan;
         CondExpr[] expr = Util.getValueContraint(valueConstraint);
         IndexType indexType = new IndexType(IndexType.B_Index);
@@ -298,7 +312,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         boolean indexOnly = desiredColumnNumbers.length == 1 && !valueConstraint.isEmpty() && desiredColumnNumbers[0] == indexColumnNumber;
 
         try {
-          colScan = new ColumnIndexScan(indexType, columnFileName, relName, indName, attrType, attrSize, 1, desiredColumnNumbers, expr, indexOnly);
+          colScan = new ColumnIndexScan(indexType, columnFileName, relName, indName, ValueConstraintAttrType, strSizes, 1, desiredColumnNumbers, expr, indexOnly);
           Columnarfile columnarFile = new Columnarfile(columnFileName);
           AttrType[] types = columnarFile.getType();
           Tuple tuple;
@@ -324,23 +338,29 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           e.printStackTrace();
         }
       }
-      else if(accessType.equals("FILESCAN")){
 
-          int colnum = Util.getColumnNumber(valueConstraint.get(0)) - 1;
-          String filename = columnFileName + '.' + String.valueOf(colnum);
+      else if(accessType.equals("FILESCAN")) {
+          int columnNumber = Util.getColumnNumber(valueConstraint.get(0)) - 1;
+          String filename = columnFileName + '.' + String.valueOf(columnNumber);
           Columnarfile columnarFile = new Columnarfile(columnFileName);
           AttrType[] types = columnarFile.getType();
 
           AttrType[] attrs = new AttrType[1];
-          attrs[0] = types[colnum];
+          attrs[0] = types[columnNumber];
 
           FldSpec[] projlist = new FldSpec[1];
           RelSpec rel = new RelSpec(RelSpec.outer);
           projlist[0] = new FldSpec(rel, 1);
 
-          short[] strsizes = new short[2];
-          strsizes[0] = 100;
-          strsizes[1] = 100;
+          short[] strSize = new short[numOfColumns];
+          int j = 0;
+          for(int i=0; i<numOfColumns; i++) {
+            if(attrTypes[i].attrType == AttrType.attrString) {
+              strSizes[j] = (short)100;
+              j++;
+            }
+          }
+          short[] strSizes = Arrays.copyOfRange(strSize, 0, j);
 
           CondExpr[] expr = Util.getValueContraint(valueConstraint);
 
@@ -351,7 +371,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           }
 
           try {
-              ColumnarFileScan columnarFileScan = new ColumnarFileScan(columnFileName, filename, attrs, strsizes, (short) 1, 1, selectedCols, projlist, expr, true);
+              ColumnarFileScan columnarFileScan = new ColumnarFileScan(columnFileName, filename, attrs, strSizes, (short) 1, 1, selectedCols, projlist, expr, true);
               Tuple tuple;
               while(true){
                   tuple = columnarFileScan.get_next();
