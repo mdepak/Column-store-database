@@ -272,8 +272,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           select[i] = Util.getColumnNumber(columnNames.get(i));
         }
 
-
         boolean indexOnly = select.length == 1 && !valueConstraint.isEmpty() && select[0] == Util.getColumnNumber(valueConstraint.get(0));
+
         try {
           colScan = new ColumnIndexScan(indexType, columnFileName, "sampledata.3", "BTreesampledata3", attrType, attrSize, 1, select, expr, indexOnly);
           Tuple tuple;

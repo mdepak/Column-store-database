@@ -261,65 +261,44 @@ public class ColumnIndexScan extends Iterator {
                     }
                     return Jtuple;
                 } else {
-                    Columnarfile cf = new Columnarfile(_colFileName);
-                    Heapfile hf = new Heapfile(_relName);
-
                     // not index_only, need to return the whole tuple
                     rid = ((LeafData) nextentry.data).getData();
                     int position = getPositionFromRID(rid, hf);
                     int numOfOutputColumns = _outputColumnsIndexes.length;
-/*                    RID[] outputRIDs = new RID[numOfOutputColumns];
-                    Tuple outputTuple = new Tuple();
-                    AttrType[] attrTypes = cf.getType();
-                    Scan[] scans = selectiveTupleScan(cf, _outputColumnsIndexes);
-                    ValueClass[] values = new ValueClass[numOfOutputColumns];
-                    AttrType[] attrType = new AttrType[numOfOutputColumns];
-                    short[] s_sizes2 = new short[numOfOutputColumns];
 
-                    int columns = cf.getNumColumns();
+                    Columnarfile cf = new Columnarfile(_colFileName);
+                    Heapfile hf = new Heapfile(_relName);
+                    AttrType[] attrType = cf.getType();
+                    AttrType[] reqAttrType = new AttrType[numOfOutputColumns];
+                    short[] s_sizes = new short[numOfOutputColumns];
                     int j = 0;
-                    for (int i = 0; i < numOfOutputColumns; i++) {
-                        attrType[i] = _types[_outputColumnsIndexes[i]];
-                        //TODO: Fix the compilation error and uncomment
-                        if(attrType.toString == "attrString") {
-                            s_sizes2[j] = _s_sizes[i];
+                    for(int i=0; i<numOfOutputColumns; i++) {
+                        reqAttrType[i] = attrType[_outputColumnsIndexes[i] - 1];
+                        if(reqAttrType[i].toString() == "attrString") {
+                            s_sizes[j] = _s_sizes[_outputColumnsIndexes[i] - 1];
                             j++;
                         }
                     }
-                    //TODO: Fix the compilation error and uncomment
-                    short[] s_sizes = new short[0];
-                    short[] s_sizes = Arrays.copyOf(s_sizes2, 0, j-1);
-                    try {
-                        outputTuple.setHdr((short) numOfOutputColumns, attrType, s_sizes);
-                    } catch (Exception e) {
-                        System.out.println("set tuple header exception in getNext function");
-                    }
+                    short[] strSizes = Arrays.copyOfRange(s_sizes, 0, j);
 
-                    for (int i = 0; i < numOfOutputColumns; i++) {
-                        int indexNumber = _outputColumnsIndexes[i];
-                        //TODO: Fix the compilation error and uncomment
-                        //outputRIDs[i] = getRIDFromPosition(position, indexNumber);
-                        Scan scan = scans[indexNumber];
-                        outputTuple = scan.getNext(outputRIDs[i]);
-                        if (outputTuple == null) {
-                            return null;
-                        }
-                        outputTuple.initHeaders();
-                        ValueClass value = Util.valueClassFactory(attrTypes[indexNumber]);
-                        value.setValueFromColumnTuple(outputTuple, i + 1);
-                        System.out.println(value.getValue());
-                    }
-                    return outputTuple;
-                    */
+                    Tuple tuple= null;
+                    tuple.setHdr((short) numOfOutputColumns, reqAttrType, strSizes);
 
                     for(int i=0; i<numOfOutputColumns; i++){
                         int indexNumber = _outputColumnsIndexes[i];
                         Heapfile heapfile = cf.getColumnFiles()[indexNumber-1];
-                        Tuple tuple = Util.getTupleFromPosition(position, heapfile);
-                        tuple.initHeaders();
-                        //
-                        System.out.println(tuple.getStrFld(1));
+                        Tuple tupleTemp = Util.getTupleFromPosition(position, heapfile);
+                        tupleTemp.initHeaders();
+                        if(attrType[indexNumber].toString() == "attrString") {
+                            tuple.setStrFld(i+1, tupleTemp.getStrFld(1));
+                        }else if(attrType[indexNumber].toString() == "attrInteger") {
+                            tuple.setIntFld(i+1, tupleTemp.getIntFld(1));
+                        }else if(attrType[indexNumber].toString() == "attrReal") {
+                            tuple.setFloFld(i+1, tupleTemp.getFloFld(1));
+                        }
+//                        System.out.println(tuple.getStrFld(1));
                     }
+                    return tuple;
                 }
                 try {
                     nextentry = indScan.get_next();
@@ -357,24 +336,6 @@ public class ColumnIndexScan extends Iterator {
             closeFlag = true;
         }
     }
-
-    public Scan[] selectiveTupleScan(Columnarfile cf, int[] outputColumnIndexes) {
-        int columns = cf.getNumColumns();
-        Heapfile[] columnFiles = cf.getColumnFiles();
-        Scan[] scans = new Scan[outputColumnIndexes.length];
-        int outputColumnsLength = outputColumnIndexes.length;
-        boolean found = false;
-
-        for (int idx = 0; idx<outputColumnsLength; idx++) {
-            try {
-                scans[idx] = new Scan(columnFiles[outputColumnIndexes[idx] - 1]);
-            } catch (Exception e) {
-                System.out.println("Selective Tuple Scan : scan exception");
-            }
-        }
-        return scans;
-    }
-
 
     public int getPositionFromRID(RID rid, Heapfile hf) throws HFBufMgrException, IOException, InvalidSlotNumberException, InvalidTupleSizeException {
         boolean flag = true;
