@@ -546,7 +546,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           "\n[2]  Query (query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE)");
       System.out.println(
           "\n[3]  Delete Query (delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE)");
-      System.out.println("\n[4]  Quit!");
+      System.out.println("\n[4]  Exit!");
       System.out.println("\nNote: for any value not being specified please mention NA");
       System.out.print("Hi, Please mention the operation in the given format:");
       BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
