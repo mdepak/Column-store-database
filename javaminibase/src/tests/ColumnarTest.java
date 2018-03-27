@@ -240,14 +240,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           }
         }
         for(int i = 0; i<positionList.size();i++){
-        //for (int i : positionList) {
-//          int numColumns = columnarFile.getNumColumns();
-//          RID[] records = new RID[numColumns];
-//          Heapfile[] columnHeapFiles = columnarFile.getColumnFiles();
-//          for (int j = 0; j < numColumns; j++) {
-//            records[j] = columnar.Util.getRIDFromPosition(positionList.get(i), columnHeapFiles[j]);
-//          }
-//          TID tid = new TID(numColumns, i, records);
           columnarFile.markTupleDeleted(positionList.get(i));
         }
         if (purge) {

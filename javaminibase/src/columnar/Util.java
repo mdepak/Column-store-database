@@ -242,7 +242,7 @@ public class Util {
 
         int currPosition = 0;
         PageId nextDirPageId = new PageId(0);
-
+        DataPageInfo dpinfo = new DataPageInfo();
         while (currentDirPageId.pid != hf.INVALID_PAGE && flag) {
             hf.pinPage(currentDirPageId, currentDirPage, false);
             RID recid = new RID();
@@ -251,10 +251,10 @@ public class Util {
                  recid != null;  // rid==NULL means no more record
                  recid = currentDirPage.nextRecord(recid)) {
                 atuple = currentDirPage.getRecord(recid);
-                DataPageInfo dpinfo = new DataPageInfo(atuple);
+                dpinfo = new DataPageInfo(atuple);
 
                 if (rid.pageNo.pid == dpinfo.getPageId().pid) {
-                    currPosition += rid.slotNo+1;
+                    //currPosition += rid.slotNo+1;
                     flag = false;
                     break;
                 } else {
@@ -271,7 +271,20 @@ public class Util {
                 currentDirPageId.pid = nextDirPageId.pid;
             }
         }
-        return currPosition;
+
+        HFPage currentDataPage = new HFPage();
+        PageId currentDataPageId = new PageId(dpinfo.getPageId().pid);
+        hf.pinPage(currentDataPageId, currentDataPage, false/*Rdisk*/);
+
+        RID record = new RID();
+        for (record = currentDataPage.firstRecord();
+             !record.equals(rid);  // rid==NULL means no more record
+             record = currentDataPage.nextRecord(record)) {
+            currPosition+=1;
+        }
+        hf.unpinPage(currentDataPageId, false);
+
+        return currPosition+1; //of first record
     }
 
 

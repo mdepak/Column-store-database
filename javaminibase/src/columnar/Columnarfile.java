@@ -644,6 +644,7 @@ public class Columnarfile {
     ArrayList<TID> tidArrayList = new ArrayList<TID>();
     Scan scan = new Scan(deleteFile);
     RID rid = new RID();
+    ArrayList<Integer> uniquePositions = new ArrayList<Integer>();
 
     Tuple temp = null;
 
@@ -654,23 +655,25 @@ public class Columnarfile {
     }
     //Open all the heap files and then scan the records position and jump to the desired position
     // find the RID corresponding to a given position and then delete the record by the RID
-    while(temp != null){
-      Tuple t = new Tuple(temp.getTupleByteArray());
-      t.tupleCopy(temp);
-      int position = t.getIntFld(1);
-      RID[] records = new RID[numColumns];
-      for (int j = 0; j < numColumns; j++) {
-        records[j] = columnar.Util.getRIDFromPosition(position-1, columnFiles[j]);
+    try {
+      while (temp != null) {
+        Tuple t = new Tuple(temp.getTupleByteArray());
+        t.tupleCopy(temp);
+        int position = t.getIntFld(1);
+        if (!uniquePositions.contains(position)) {
+          uniquePositions.add(position);
+          RID[] records = new RID[numColumns];
+          for (int j = 0; j < numColumns; j++) {
+            records[j] = columnar.Util.getRIDFromPosition(position - 1, columnFiles[j]);
+          }
+          TID tid = new TID(numColumns, position, records);
+          tidArrayList.add(tid);
+        }
+        temp = scan.getNext(rid);
       }
-      TID tid = new TID(numColumns, position, records);
-      tidArrayList.add(tid);
-      //Once the data record is deleted, delete the position attribute from the deletion info heap file
-      //TODO: Check delete record while scan object is reading does not cause any problem
-      //deleteFile.deleteRecord(rid);
-
-      temp = scan.getNext(rid);
+    }catch (Exception e) {
+      e.printStackTrace();
     }
-
     for(TID tid : tidArrayList){
       for(int j=0;j<numColumns;j++){
         columnFiles[j].deleteRecord(tid.getRID(j));
