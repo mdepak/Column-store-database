@@ -617,7 +617,7 @@ public class Columnarfile {
   /**
    * add the tuple to a heapfile tracking the deleted tuples from the columnar file
    */
-  public boolean markTupleDeleted(TID tid)
+  public boolean markTupleDeleted(int position)
       throws IOException, HFException, HFBufMgrException, HFDiskMgrException, InvalidTupleSizeException, InvalidTypeException, FieldNumberOutOfBoundException, SpaceNotAvailableException, InvalidSlotNumberException {
 
     Heapfile deleteFile = new Heapfile(getDeleteFileName());
@@ -627,7 +627,7 @@ public class Columnarfile {
     type[0] = new AttrType(AttrType.attrInteger);
 
     tuple.setHdr((short) 1, type, new short[0]);
-    tuple.setIntFld(1, tid.getPosition());
+    tuple.setIntFld(1, position);
     deleteFile.insertRecord(tuple.getTupleByteArray());
 
     return true;
@@ -640,10 +640,8 @@ public class Columnarfile {
       throws Exception {
 
     Heapfile deleteFile = new Heapfile(getDeleteFileName());
-
-
-    //Open all the heap files and then scan the records position and jump to the desired position
-    // find the RID corresponding to a given position and then delete the record by the RID
+    int numColumns = this.getNumColumns();
+    ArrayList<TID> tidArrayList = new ArrayList<TID>();
     Scan scan = new Scan(deleteFile);
     RID rid = new RID();
 
@@ -654,30 +652,52 @@ public class Columnarfile {
     } catch (Exception e) {
       e.printStackTrace();
     }
-
-    while (temp != null) {
-      // Copy to another variable so that the fields of the tuple are initialized.
-
+    //Open all the heap files and then scan the records position and jump to the desired position
+    // find the RID corresponding to a given position and then delete the record by the RID
+    while(temp != null){
       Tuple t = new Tuple(temp.getTupleByteArray());
       t.tupleCopy(temp);
       int position = t.getIntFld(1);
-      // find rids corresponding to all the columar files and then delete the file
-      for (int i = 0; i < numColumns; i++) {
-        RID ridd = Util.getRIDFromPosition(position,columnFiles[i]);
-        columnFiles[i].deleteRecord(ridd);
-        //Update Btree Index file if exists
-        //updateBtreeIndexIfExists(i + 1, columnTuple, resultRIDs[i]);
-
-        //Update BitMap index file if exits
-        //updateBitMapIndexIfExists(i + 1, columnTuple, position);
+      RID[] records = new RID[numColumns];
+      for (int j = 0; j < numColumns; j++) {
+        records[j] = columnar.Util.getRIDFromPosition(position-1, columnFiles[j]);
       }
+      TID tid = new TID(numColumns, position, records);
+      tidArrayList.add(tid);
       //Once the data record is deleted, delete the position attribute from the deletion info heap file
       //TODO: Check delete record while scan object is reading does not cause any problem
-      deleteFile.deleteRecord(rid);
+      //deleteFile.deleteRecord(rid);
 
       temp = scan.getNext(rid);
     }
 
-    return false;
+    for(TID tid : tidArrayList){
+      for(int j=0;j<numColumns;j++){
+        columnFiles[j].deleteRecord(tid.getRID(j));
+      }
+    }
+    scan = new Scan(deleteFile);
+    rid = new RID();
+    temp = null;
+    boolean done = false;
+
+    while (!done) {
+      try {
+        temp = scan.getNext(rid);
+        if (temp == null || deleteFile.getRecCnt()==1) {
+          done = true;
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      try {
+        deleteFile.deleteRecord(rid);
+      } catch (Exception e) {
+        System.err.println("*** Error deleting position from delete heap file ");
+        e.printStackTrace();
+        break;
+      }
+    }
+      return true;
   }
 }

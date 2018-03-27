@@ -223,7 +223,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       }
       else {
 
-        int colnum = Util.getColumnNumber(valueConstraint.get(0)) - 1;
+        int colnum = Util.getColumnNumber(valueConstraint.get(0));
         String filename = columnFileName + '.' + String.valueOf(colnum);
         Columnarfile columnarFile = new Columnarfile(columnFileName);
 
@@ -234,19 +234,21 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         List<Integer> positionList = new ArrayList<Integer>();
 
         for(int i = 0; i<deleteRID.size();i++){
-          int position = columnar.Util.getPositionFromRID(deleteRID.get(i),columnarFile.getColumnFiles()[column] );
-          positionList.add(position);
-        }
-
-        for (int i : positionList) {
-          int numColumns = columnarFile.getNumColumns();
-          RID[] records = new RID[numColumns];
-          Heapfile[] columnHeapFiles = columnarFile.getColumnFiles();
-          for (int j = 0; j < numColumns; j++) {
-            records[j] = columnar.Util.getRIDFromPosition(positionList.get(i), columnHeapFiles[j]);
+            if(deleteRID.get(i)!= null){
+              int position = columnar.Util.getPositionFromRID(deleteRID.get(i), columnarFile.getColumnFiles()[colnum-1]);
+              positionList.add(position);
           }
-          TID tid = new TID(numColumns, i, records);
-          columnarFile.markTupleDeleted(tid);
+        }
+        for(int i = 0; i<positionList.size();i++){
+        //for (int i : positionList) {
+//          int numColumns = columnarFile.getNumColumns();
+//          RID[] records = new RID[numColumns];
+//          Heapfile[] columnHeapFiles = columnarFile.getColumnFiles();
+//          for (int j = 0; j < numColumns; j++) {
+//            records[j] = columnar.Util.getRIDFromPosition(positionList.get(i), columnHeapFiles[j]);
+//          }
+//          TID tid = new TID(numColumns, i, records);
+          columnarFile.markTupleDeleted(positionList.get(i));
         }
         if (purge) {
           columnarFile.purgeAllDeletedTuples();
