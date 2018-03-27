@@ -142,16 +142,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   }
 
   public boolean setupDatabase() {
-    System.out.print("\n" + "Running columnar tests...." + "\n");
-    System.out.println("Setting up the database");
-
-    try {
-      SystemDefs sysdef = new SystemDefs(dbpath, 8193, 100, "Clock");
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      Runtime.getRuntime().exit(1);
-    }
 
     // Kill anything that might be hanging around
     String newdbpath;
@@ -190,8 +180,25 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       System.err.println("" + e);
     }
 
-    //Run the tests. Return type different from C++
-    boolean _pass = runAllTests();
+
+    boolean _pass;
+    do{
+
+      System.out.print("\n" + "Running columnar tests...." + "\n");
+      System.out.println("Setting up the database");
+      try {
+        SystemDefs sysdef = new SystemDefs(dbpath, 8193, 100, "Clock");
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        Runtime.getRuntime().exit(1);
+      }
+
+      //Run the tests. Return type different from C++
+      _pass = runAllTests();
+
+    }while(_pass != true);
+
 
     //Clean up again
     try {
@@ -529,369 +536,359 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     int noOfCols = 0;
     String[] input = new String[10];
     boolean purge = false;
-    do {
-
-      PCounter.initialize();
-      System.out.println("-------------------------- MENU ------------------");
-      System.out.println(
-          "\n\n[0]   Batch Insert (batchinsert DATAFILENAME COLUMNDBNAME COLUMNARFILENAME NUMCOLUMNS)");
-      System.out.println("\n[1]  Index (index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE)");
-      System.out.println(
-          "\n[2]  Query (query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE)");
-      System.out.println(
-          "\n[3]  Delete Query (delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE)");
-      System.out.println("\n[4]  Exit!");
-      System.out.println("\nNote: for any value not being specified please mention NA");
-      System.out.print("Hi, Please mention the operation in the given format:");
-      BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-      List<String> valueConstraint = new ArrayList<String>();
-      List<String> columnNames = new ArrayList<String>();
-      try {
-      choice = in.readLine();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    input = choice.split("\\s+");
-
-        if(input[0].contains("quit"))
-        {
-         continue;
-        }
-        if(input[0].contains("exit"))
-        {
-            break;
-        }
-    operation = input[0];
-      if(operation.contains("delete")) {
-        //delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE
-        columnDBName = input[1];
-        columnFileName = input[2];
-        String colCons = input[3];
-        if (colCons != "NA") {
-          String opCons = input[4];
-          String valCons = input[5];
-
-          valueConstraint.add(colCons);
-          valueConstraint.add(opCons);
-          valueConstraint.add(valCons);
-
-          //SET THE NUMBUF AND ACCESSTYPE
-          numBuf = Integer.parseInt((input[6].contains("NA")) ? "0" : input[6]);
-          purge = Boolean.valueOf(input[7]);
-          try {
-            runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
-          } catch (Exception e) {
-
-            e.printStackTrace();
-          }
-        } else {
-          colCons = null;
-          valueConstraint.add(colCons);
-          numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
-          ;
-          purge = Boolean.valueOf(input[6]);
-          try {
-            runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
-          } catch (Exception e) {
-
-            e.printStackTrace();
-          }
-        }
-      }
-    else if(operation.contains("query"))
-    {
-      // COLUMN DB NAME
-      columnDBName = input[1];
-      //COLUMN FILE NAME
-      columnFileName = input[2];
-      //LIST OF COLUMNS
-      columns = input[3];
-      columns = columns.replaceAll("\\[", "").replaceAll("\\]","");
-      String[] colArray = columns.split(",");
-      if(colArray.length > 0 && colArray != null) {
-        for (String col : colArray) {
-          columnNames.add(col);
-        }
-        //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
-        String colCons = input[4];
-        //valueConstraint.add(colCons);
-        if (colCons.contains("NA")) {
-          colCons = null;
-          valueConstraint.add(colCons);
-          numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
-          ;
-          accessType = (input[6].contains("NA")) ? null : input[6];
-          try {
-            runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                accessType);
-          } catch (Exception ex) {
-            ex.printStackTrace();
-          }
-        } else {
-          String opCons = input[5];
-          String valCons = input[6];
-
-          valueConstraint.add(colCons);
-          valueConstraint.add(opCons);
-          valueConstraint.add(valCons);
-
-          //SET THE NUMBUF AND ACCESSTYPE
-          numBuf = Integer.parseInt((input[7].contains("NA")) ? "0" : input[7]);
-          accessType = (input[8].contains("NA")) ? null : input[8];
-          try {
-            runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                accessType);
-          } catch (Exception ex) {
-            ex.printStackTrace();
-          }
-        }
-      }
-
-      } else if (operation.contains("batchinsert")) {
-        datafileName = input[1];
-        columnDBName = input[2];
-        columnFileName = input[3];
-        noOfCols = Integer.parseInt(input[4]);
-        try {
-          batchInsertQuery(datafileName, columnDBName, columnFileName, noOfCols);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-
-      } else if (operation.contains("index")) {
-        columnDBName = input[1];
-        columnFileName = input[2];
-        String colName = input[3];
-        indexType = input[4];
-        createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
-      }
-
-      System.out.println(
-          "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
-
-    } while (!input[0].contains("exit"));
-
-    return true;
-  }
-
-  @Override
-  protected boolean test1() {
-    // Test for the insertion of records in columnar file
-    List<SailorDetails> sailors;
-    sailors = new ArrayList<>();
-    int[] selectedCols = new int[]{0, 0, 0};
-    System.out.println("Test 1 - for insertion of records into columnar file");
-
-    sailors.add(new SailorDetails(53, "Bob Holloway", 9, 53.6));
-    sailors.add(new SailorDetails(54, "Susan Horowitz", 1, 34.2));
-    sailors.add(new SailorDetails(57, "Yannis Ioannidis", 8, 40.2));
-    sailors.add(new SailorDetails(59, "Deborah Joseph", 10, 39.8));
-    sailors.add(new SailorDetails(61, "Landwebber", 8, 56.7));
-    sailors.add(new SailorDetails(63, "James Larus", 9, 30.3));
-    sailors.add(new SailorDetails(64, "Barton Miller", 5, 43.7));
-    sailors.add(new SailorDetails(67, "David Parter", 1, 99.9));
-    sailors.add(new SailorDetails(69, "Raghu Ramakrishnan", 9, 37.1));
-    sailors.add(new SailorDetails(71, "Guri Sohi", 10, 42.1));
-    sailors.add(new SailorDetails(73, "Prasoon Tiwari", 8, 39.2));
-    sailors.add(new SailorDetails(39, "Anne Condon", 3, 30.3));
-    sailors.add(new SailorDetails(53, "Bob Holloway", 9, 53.6));
-
-    boolean status = true;
-
-    // creating the sailors relation
-    AttrType[] Stypes = new AttrType[4];
-    Stypes[0] = new AttrType(AttrType.attrInteger);
-    Stypes[1] = new AttrType(AttrType.attrString);
-    Stypes[2] = new AttrType(AttrType.attrInteger);
-    Stypes[3] = new AttrType(AttrType.attrReal);
-
-    //SOS
-    short[] Ssizes = new short[1];
-    Ssizes[0] = 30; //first elt. is 30
-
-    Tuple t = new Tuple();
-    try {
-      t.setHdr((short) 4, Stypes, Ssizes);
-    } catch (Exception e) {
-      System.err.println("*** error in Tuple.setHdr() ***");
-      status = FAIL;
-      e.printStackTrace();
-    }
-
-    int size = t.size();
 
     PCounter.initialize();
-
-    // inserting the tuple into file "sailors"
-    TID tid;
-    Columnarfile f = null;
+    System.out.println("-------------------------- MENU ------------------");
+    System.out.println(
+        "\n\n[0]   Batch Insert (batchinsert DATAFILENAME COLUMNDBNAME COLUMNARFILENAME NUMCOLUMNS)");
+    System.out.println("\n[1]  Index (index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE)");
+    System.out.println(
+        "\n[2]  Query (query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE)");
+    System.out.println(
+        "\n[3]  Delete Query (delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE)");
+    System.out.println("\n[4]  Exit!");
+    System.out.println("\nNote: for any value not being specified please mention NA");
+    System.out.print("Hi, Please mention the operation in the given format:");
+    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+    List<String> valueConstraint = new ArrayList<String>();
+    List<String> columnNames = new ArrayList<String>();
     try {
-      f = new Columnarfile("sailors", 4, Stypes);
-    } catch (Exception e) {
-      System.err.println("*** error in ColumnarFile constructor ***");
-      status = FAIL;
-      e.printStackTrace();
+    choice = in.readLine();
+  } catch (IOException e) {
+    e.printStackTrace();
+  }
+  input = choice.split("\\s+");
+
+  operation = input[0];
+    if(operation.contains("delete")) {
+      //delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE
+      columnDBName = input[1];
+      columnFileName = input[2];
+      String colCons = input[3];
+      if (colCons != "NA") {
+        String opCons = input[4];
+        String valCons = input[5];
+
+        valueConstraint.add(colCons);
+        valueConstraint.add(opCons);
+        valueConstraint.add(valCons);
+
+        //SET THE NUMBUF AND ACCESSTYPE
+        numBuf = Integer.parseInt((input[6].contains("NA")) ? "0" : input[6]);
+        purge = Boolean.valueOf(input[7]);
+        try {
+          runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
+        } catch (Exception e) {
+
+          e.printStackTrace();
+        }
+      } else {
+        colCons = null;
+        valueConstraint.add(colCons);
+        numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
+        ;
+        purge = Boolean.valueOf(input[6]);
+        try {
+          runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
+        } catch (Exception e) {
+
+          e.printStackTrace();
+        }
+      }
+    }
+  else if(operation.contains("query"))
+  {
+    // COLUMN DB NAME
+    columnDBName = input[1];
+    //COLUMN FILE NAME
+    columnFileName = input[2];
+    //LIST OF COLUMNS
+    columns = input[3];
+    columns = columns.replaceAll("\\[", "").replaceAll("\\]","");
+    String[] colArray = columns.split(",");
+    if(colArray.length > 0 && colArray != null) {
+      for (String col : colArray) {
+        columnNames.add(col);
+      }
+      //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
+      String colCons = input[4];
+      //valueConstraint.add(colCons);
+      if (colCons.contains("NA")) {
+        colCons = null;
+        valueConstraint.add(colCons);
+        numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
+        ;
+        accessType = (input[6].contains("NA")) ? null : input[6];
+        try {
+          runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+              accessType);
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
+      } else {
+        String opCons = input[5];
+        String valCons = input[6];
+
+        valueConstraint.add(colCons);
+        valueConstraint.add(opCons);
+        valueConstraint.add(valCons);
+
+        //SET THE NUMBUF AND ACCESSTYPE
+        numBuf = Integer.parseInt((input[7].contains("NA")) ? "0" : input[7]);
+        accessType = (input[8].contains("NA")) ? null : input[8];
+        try {
+          runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+              accessType);
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
+      }
     }
 
-    t = new Tuple(size);
-    try {
-      t.setHdr((short) 4, Stypes, Ssizes);
-    } catch (Exception e) {
-      System.err.println("*** error in Tuple.setHdr() ***");
-      status = FAIL;
-      e.printStackTrace();
-    }
-
-    for (int i = 0; i < sailors.size(); i++) {
+    } else if (operation.contains("batchinsert")) {
+      datafileName = input[1];
+      columnDBName = input[2];
+      columnFileName = input[3];
+      noOfCols = Integer.parseInt(input[4]);
       try {
-        t.setIntFld(1, ((SailorDetails) sailors.get(i)).sid);
-        t.setStrFld(2, ((SailorDetails) sailors.get(i)).sname);
-        t.setIntFld(3, ((SailorDetails) sailors.get(i)).rating);
-        t.setFloFld(4, (float) ((SailorDetails) sailors.get(i)).age);
+        batchInsertQuery(datafileName, columnDBName, columnFileName, noOfCols);
       } catch (Exception e) {
-        System.err.println("*** ColumnarFile error in Tuple.setStrFld() ***");
-        status = FAIL;
         e.printStackTrace();
       }
 
-      try {
-        tid = f.insertTuple(t.returnTupleByteArray());
-        Tuple resultantTuple = f.getTuple(tid);
-
-        int sid = resultantTuple.getIntFld(1);
-        String sname = resultantTuple.getStrFld(2);
-        int rating = resultantTuple.getIntFld(3);
-        double age = Double.parseDouble(new Float(resultantTuple.getFloFld(4)).toString());
-
-        SailorDetails retrievedRecord = new SailorDetails(sid, sname, rating, age);
-        if (!sailors.get(i).equals(retrievedRecord)) {
-          System.err.println(
-              "*** error in ColumnarFile.insertTuple() - retrieved data is not proper based on tuple ID ***");
-          status = FAIL;
-        }
-
-        t.setFloFld(4, (float) ((sailors.get(i).age) + 1));
-
-        f.updateTuple(tid, t);
-
-        Tuple updatedTuple = f.getTuple(tid);
-
-        int sidUp = updatedTuple.getIntFld(1);
-        String snameUp = updatedTuple.getStrFld(2);
-        int ratingUp = updatedTuple.getIntFld(3);
-        double ageUp = Double.parseDouble(new Float(updatedTuple.getFloFld(4)).toString());
-
-        SailorDetails updatedRecord = new SailorDetails(sidUp, snameUp, ratingUp, ageUp - 1);
-        if (!sailors.get(i).equals(updatedRecord)) {
-          System.err.println(
-              "*** error in ColumnarFile.insertTuple() - retrieved data is not proper based on tuple ID ***");
-          status = FAIL;
-        }
-
-
-      } catch (Exception e) {
-        System.err.println("*** error in ColumnarFile.insertRecord() ***");
-        status = FAIL;
-        e.printStackTrace();
-      }
+    } else if (operation.contains("index")) {
+      columnDBName = input[1];
+      columnFileName = input[2];
+      String colName = input[3];
+      indexType = input[4];
+      createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
     }
 
     System.out.println(
         "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
 
-    //TupleScan test
-
-    TupleScan tupleScan = new TupleScan(f);
-    TID tid1 = new TID(4);
-    Tuple nextTuple = new Tuple();
-    while (nextTuple != null) {
-      nextTuple = tupleScan.getNext(tid1);
-    }
-    // ColumnarScan
-
-    ColumnarFileScan fscan = null;
-
-    CondExpr[] expr = new CondExpr[2];
-    expr[0] = new CondExpr();
-    expr[0].op = new AttrOperator(AttrOperator.aopEQ);
-    expr[0].type1 = new AttrType(AttrType.attrSymbol);
-    expr[0].type2 = new AttrType(AttrType.attrInteger);
-    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-    expr[0].operand2.integer = 64;
-    expr[0].next = null;
-    expr[1] = null;
-
-    FldSpec[] projlist = new FldSpec[1];
-    RelSpec rel = new RelSpec(RelSpec.outer);
-    projlist[0] = new FldSpec(rel, 1);
-
-    AttrType[] attrTypes = new AttrType[1];
-    attrTypes[0] = new AttrType(AttrType.attrInteger);
-
-    short[] strsizes = new short[1];
-    strsizes[0] = 100;
-
-    try {
-      //fscan = new ColumnarFileScan("test1.in", attrTypes, strsizes, (short) 1, 1, selectedCols, projlist, expr, false);
-      Tuple tuple = null;
-      while (true) {
-        tuple = fscan.get_next();
-        if (tuple == null) {
-          break;
-        }
-        tuple.initHeaders();
-        System.out.println(tuple.getIntFld(1));
-      }
-    } catch (Exception e) {
-      status = FAIL;
-      e.printStackTrace();
-    }
-
-    try {
-      f.createBTreeIndex(1);
-    } catch (Exception ex) {
-      status = FAIL;
-      ex.printStackTrace();
-    }
-
-    try {
-      f.createBitMapIndex(3);
-    } catch (Exception ex) {
-      status = FAIL;
-      ex.printStackTrace();
-    }
-
-    try {
-      // Reopen te file again
-      f = new Columnarfile("sailors");
-      //Insert data after creating index - to test for index updating
-      for (int i = 0; i < sailors.size(); i++) {
-        t.setIntFld(1, ((SailorDetails) sailors.get(i)).sid);
-        t.setStrFld(2, ((SailorDetails) sailors.get(i)).sname);
-        t.setIntFld(3, ((SailorDetails) sailors.get(i)).rating);
-        t.setFloFld(4, (float) ((SailorDetails) sailors.get(i)).age);
-
-        tid = f.insertTuple(t.returnTupleByteArray());
-      }
-    } catch (Exception e) {
-      System.err.println("*** ColumnarFile error in Tuple.setStrFld() ***");
-      status = FAIL;
-      e.printStackTrace();
-    }
-
-    if (status != OK) {
-      //bail out
-      System.err.println("*** Error creating relation for sailors");
-      Runtime.getRuntime().exit(1);
-    }
-
-    if (status) {
-      System.out.println("Test 1 successfully completed.");
-    } else {
-      System.out.println("There is some error in test !!!");
-    }
-    return status;
+    return input[0].equalsIgnoreCase("exit");
   }
+
+//  @Override
+//  @Deprecated
+//  protected boolean test1() {
+//    // Test for the insertion of records in columnar file
+//    List<SailorDetails> sailors;
+//    sailors = new ArrayList<>();
+//    int[] selectedCols = new int[]{0, 0, 0};
+//    System.out.println("Test 1 - for insertion of records into columnar file");
+//
+//    sailors.add(new SailorDetails(53, "Bob Holloway", 9, 53.6));
+//    sailors.add(new SailorDetails(54, "Susan Horowitz", 1, 34.2));
+//    sailors.add(new SailorDetails(57, "Yannis Ioannidis", 8, 40.2));
+//    sailors.add(new SailorDetails(59, "Deborah Joseph", 10, 39.8));
+//    sailors.add(new SailorDetails(61, "Landwebber", 8, 56.7));
+//    sailors.add(new SailorDetails(63, "James Larus", 9, 30.3));
+//    sailors.add(new SailorDetails(64, "Barton Miller", 5, 43.7));
+//    sailors.add(new SailorDetails(67, "David Parter", 1, 99.9));
+//    sailors.add(new SailorDetails(69, "Raghu Ramakrishnan", 9, 37.1));
+//    sailors.add(new SailorDetails(71, "Guri Sohi", 10, 42.1));
+//    sailors.add(new SailorDetails(73, "Prasoon Tiwari", 8, 39.2));
+//    sailors.add(new SailorDetails(39, "Anne Condon", 3, 30.3));
+//    sailors.add(new SailorDetails(53, "Bob Holloway", 9, 53.6));
+//
+//    boolean status = true;
+//
+//    // creating the sailors relation
+//    AttrType[] Stypes = new AttrType[4];
+//    Stypes[0] = new AttrType(AttrType.attrInteger);
+//    Stypes[1] = new AttrType(AttrType.attrString);
+//    Stypes[2] = new AttrType(AttrType.attrInteger);
+//    Stypes[3] = new AttrType(AttrType.attrReal);
+//
+//    //SOS
+//    short[] Ssizes = new short[1];
+//    Ssizes[0] = 30; //first elt. is 30
+//
+//    Tuple t = new Tuple();
+//    try {
+//      t.setHdr((short) 4, Stypes, Ssizes);
+//    } catch (Exception e) {
+//      System.err.println("*** error in Tuple.setHdr() ***");
+//      status = FAIL;
+//      e.printStackTrace();
+//    }
+//
+//    int size = t.size();
+//
+//    PCounter.initialize();
+//
+//    // inserting the tuple into file "sailors"
+//    TID tid;
+//    Columnarfile f = null;
+//    try {
+//      f = new Columnarfile("sailors", 4, Stypes);
+//    } catch (Exception e) {
+//      System.err.println("*** error in ColumnarFile constructor ***");
+//      status = FAIL;
+//      e.printStackTrace();
+//    }
+//
+//    t = new Tuple(size);
+//    try {
+//      t.setHdr((short) 4, Stypes, Ssizes);
+//    } catch (Exception e) {
+//      System.err.println("*** error in Tuple.setHdr() ***");
+//      status = FAIL;
+//      e.printStackTrace();
+//    }
+//
+//    for (int i = 0; i < sailors.size(); i++) {
+//      try {
+//        t.setIntFld(1, ((SailorDetails) sailors.get(i)).sid);
+//        t.setStrFld(2, ((SailorDetails) sailors.get(i)).sname);
+//        t.setIntFld(3, ((SailorDetails) sailors.get(i)).rating);
+//        t.setFloFld(4, (float) ((SailorDetails) sailors.get(i)).age);
+//      } catch (Exception e) {
+//        System.err.println("*** ColumnarFile error in Tuple.setStrFld() ***");
+//        status = FAIL;
+//        e.printStackTrace();
+//      }
+//
+//      try {
+//        tid = f.insertTuple(t.returnTupleByteArray());
+//        Tuple resultantTuple = f.getTuple(tid);
+//
+//        int sid = resultantTuple.getIntFld(1);
+//        String sname = resultantTuple.getStrFld(2);
+//        int rating = resultantTuple.getIntFld(3);
+//        double age = Double.parseDouble(new Float(resultantTuple.getFloFld(4)).toString());
+//
+//        SailorDetails retrievedRecord = new SailorDetails(sid, sname, rating, age);
+//        if (!sailors.get(i).equals(retrievedRecord)) {
+//          System.err.println(
+//              "*** error in ColumnarFile.insertTuple() - retrieved data is not proper based on tuple ID ***");
+//          status = FAIL;
+//        }
+//
+//        t.setFloFld(4, (float) ((sailors.get(i).age) + 1));
+//
+//        f.updateTuple(tid, t);
+//
+//        Tuple updatedTuple = f.getTuple(tid);
+//
+//        int sidUp = updatedTuple.getIntFld(1);
+//        String snameUp = updatedTuple.getStrFld(2);
+//        int ratingUp = updatedTuple.getIntFld(3);
+//        double ageUp = Double.parseDouble(new Float(updatedTuple.getFloFld(4)).toString());
+//
+//        SailorDetails updatedRecord = new SailorDetails(sidUp, snameUp, ratingUp, ageUp - 1);
+//        if (!sailors.get(i).equals(updatedRecord)) {
+//          System.err.println(
+//              "*** error in ColumnarFile.insertTuple() - retrieved data is not proper based on tuple ID ***");
+//          status = FAIL;
+//        }
+//
+//
+//      } catch (Exception e) {
+//        System.err.println("*** error in ColumnarFile.insertRecord() ***");
+//        status = FAIL;
+//        e.printStackTrace();
+//      }
+//    }
+//
+//    System.out.println(
+//        "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
+//
+//    //TupleScan test
+//
+//    TupleScan tupleScan = new TupleScan(f);
+//    TID tid1 = new TID(4);
+//    Tuple nextTuple = new Tuple();
+//    while (nextTuple != null) {
+//      nextTuple = tupleScan.getNext(tid1);
+//    }
+//    // ColumnarScan
+//
+//    ColumnarFileScan fscan = null;
+//
+//    CondExpr[] expr = new CondExpr[2];
+//    expr[0] = new CondExpr();
+//    expr[0].op = new AttrOperator(AttrOperator.aopEQ);
+//    expr[0].type1 = new AttrType(AttrType.attrSymbol);
+//    expr[0].type2 = new AttrType(AttrType.attrInteger);
+//    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+//    expr[0].operand2.integer = 64;
+//    expr[0].next = null;
+//    expr[1] = null;
+//
+//    FldSpec[] projlist = new FldSpec[1];
+//    RelSpec rel = new RelSpec(RelSpec.outer);
+//    projlist[0] = new FldSpec(rel, 1);
+//
+//    AttrType[] attrTypes = new AttrType[1];
+//    attrTypes[0] = new AttrType(AttrType.attrInteger);
+//
+//    short[] strsizes = new short[1];
+//    strsizes[0] = 100;
+//
+//    try {
+//      //fscan = new ColumnarFileScan("test1.in", attrTypes, strsizes, (short) 1, 1, selectedCols, projlist, expr, false);
+//      Tuple tuple = null;
+//      while (true) {
+//        tuple = fscan.get_next();
+//        if (tuple == null) {
+//          break;
+//        }
+//        tuple.initHeaders();
+//        System.out.println(tuple.getIntFld(1));
+//      }
+//    } catch (Exception e) {
+//      status = FAIL;
+//      e.printStackTrace();
+//    }
+//
+//    try {
+//      f.createBTreeIndex(1);
+//    } catch (Exception ex) {
+//      status = FAIL;
+//      ex.printStackTrace();
+//    }
+//
+//    try {
+//      f.createBitMapIndex(3);
+//    } catch (Exception ex) {
+//      status = FAIL;
+//      ex.printStackTrace();
+//    }
+//
+//    try {
+//      // Reopen te file again
+//      f = new Columnarfile("sailors");
+//      //Insert data after creating index - to test for index updating
+//      for (int i = 0; i < sailors.size(); i++) {
+//        t.setIntFld(1, ((SailorDetails) sailors.get(i)).sid);
+//        t.setStrFld(2, ((SailorDetails) sailors.get(i)).sname);
+//        t.setIntFld(3, ((SailorDetails) sailors.get(i)).rating);
+//        t.setFloFld(4, (float) ((SailorDetails) sailors.get(i)).age);
+//
+//        tid = f.insertTuple(t.returnTupleByteArray());
+//      }
+//    } catch (Exception e) {
+//      System.err.println("*** ColumnarFile error in Tuple.setStrFld() ***");
+//      status = FAIL;
+//      e.printStackTrace();
+//    }
+//
+//    if (status != OK) {
+//      //bail out
+//      System.err.println("*** Error creating relation for sailors");
+//      Runtime.getRuntime().exit(1);
+//    }
+//
+//    if (status) {
+//      System.out.println("Test 1 successfully completed.");
+//    } else {
+//      System.out.println("There is some error in test !!!");
+//    }
+//    return status;
+//  }
 
   protected void batchInsertQuery(String dataFileName, String columnDBName, String columnarFileName,
       int numOfColumns) throws Exception {
