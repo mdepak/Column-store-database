@@ -153,6 +153,8 @@ public class Util {
             record = currentDataPage.nextRecord(record);
             curcount--;
         }
+
+        hf.unpinPage(currentDataPageId,false/*Rdisk*/);
         return record;
     }
 
@@ -211,14 +213,15 @@ public class Util {
       nextTuple = currentDataPage.getRecord(recid);
       curcount--;
     }
-
-     /* Scan sc = new Scan(hf);
-    RID cur = new RID();
-    Tuple nextTuple = new Tuple();
-    while (nextTuple != null && curcount >= 0) {
-      nextTuple = sc.getNext(cur);
-      curcount--;
-    }*/
+    try {
+      //TODO: Remove the try catch block
+      hf.unpinPage(currentDataPageId, false/*Rdisk*/);
+    }
+    catch (Exception ex)
+    {
+      System.out.println("Exception in getTupleFromPosition() - unpin");
+      ex.printStackTrace();
+    }
     return nextTuple;
   }
 
