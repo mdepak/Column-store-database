@@ -233,6 +233,8 @@ public class BitMapFile {
 
     //TODO: Check if this is required.
     unpinPage(headerPage.getPageId(), true);
+
+    scan.closescan();
   }
 
   /**
@@ -555,6 +557,8 @@ public class BitMapFile {
       }
     } // end of While01
     // checked all dir pages and all data pages; user record not found:(
+
+    scan.closescan();
   }
 
   BitMapHeaderPage getHeaderPage() {
@@ -633,6 +637,7 @@ public class BitMapFile {
 
     } // end of While01
     // checked all dir pages and all data pages; user record not found:(
+
 
     return false;
   }
