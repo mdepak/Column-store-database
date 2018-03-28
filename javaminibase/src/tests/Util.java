@@ -1,18 +1,48 @@
 package tests;
 
 import columnar.Columnarfile;
+import diskmgr.PCounter;
 import global.AttrOperator;
 import global.AttrType;
 import global.RID;
+import global.SystemDefs;
 import heap.Tuple;
 import iterator.ColumnarFileScan;
 import iterator.CondExpr;
 import iterator.FldSpec;
 import iterator.RelSpec;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Util {
+
+
+  public static String getDatabasePath(String databaseName)
+  {
+    String dbpath = "/tmp/" + databaseName + System.getProperty("user.name") + ".minibase-db";
+    return dbpath;
+  }
+
+  private static  boolean isDatabseExists(String columnDBName)
+  {
+    File file = new File(getDatabasePath(columnDBName));
+    return file.exists();
+  }
+
+  public static  void createDatabaseIfNotExists(String columnDBName, int bufferSize)
+  {
+    int diskPages = 8193;
+
+    if(isDatabseExists(columnDBName))
+    {
+      diskPages = 0;
+    }
+    SystemDefs sysdef = new SystemDefs(getDatabasePath(columnDBName), diskPages, bufferSize, "Clock");
+    PCounter.initialize();
+  }
+
+
 
   public static CondExpr[] getValueContraint(List<String> valueContraint){
     if(valueContraint.isEmpty())
@@ -114,7 +144,7 @@ public class Util {
       AttrType[] types = columnarFile.getType();
 
       AttrType[] attrs = new AttrType[1];
-      attrs[0] = types[colnum];
+      attrs[0] = types[colnum-1];
 
       FldSpec[] projlist = new FldSpec[1];
       RelSpec rel = new RelSpec(RelSpec.outer);

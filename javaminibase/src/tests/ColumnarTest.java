@@ -186,14 +186,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
       System.out.print("\n" + "Running columnar tests...." + "\n");
       System.out.println("Setting up the database");
-      try {
-        SystemDefs sysdef = new SystemDefs(dbpath, 8193, 100, "Clock");
-
-      } catch (Exception e) {
-        e.printStackTrace();
-        Runtime.getRuntime().exit(1);
-      }
-
       //Run the tests. Return type different from C++
       _pass = runAllTests();
 
@@ -560,7 +552,13 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   input = choice.split("\\s+");
 
   operation = input[0];
+
+    columnDBName = input[1];
+
     if(operation.contains("delete")) {
+
+
+
       //delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE
       columnDBName = input[1];
       columnFileName = input[2];
@@ -576,6 +574,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         //SET THE NUMBUF AND ACCESSTYPE
         numBuf = Integer.parseInt((input[6].contains("NA")) ? "0" : input[6]);
         purge = Boolean.valueOf(input[7]);
+
+        // SETUP Database
+        Util.createDatabaseIfNotExists(columnDBName, numBuf);
+
         try {
           runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
         } catch (Exception e) {
@@ -619,7 +621,13 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
         ;
         accessType = (input[6].contains("NA")) ? null : input[6];
+
+        // SETUP Database
+        Util.createDatabaseIfNotExists(columnDBName, numBuf);
+
         try {
+
+
           runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
               accessType);
         } catch (Exception ex) {
@@ -650,6 +658,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columnDBName = input[2];
       columnFileName = input[3];
       noOfCols = Integer.parseInt(input[4]);
+
+      // SETUP Database
+      Util.createDatabaseIfNotExists(columnDBName, 100);
+
       try {
         batchInsertQuery(datafileName, columnDBName, columnFileName, noOfCols);
       } catch (Exception e) {
@@ -661,7 +673,19 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columnFileName = input[2];
       String colName = input[3];
       indexType = input[4];
+
+      Util.createDatabaseIfNotExists(columnDBName, 100);
+
       createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
+    }
+
+    try {
+      SystemDefs.JavabaseBM.flushAllPages();
+    }
+    catch (Exception ex)
+    {
+      System.out.println("ColumnarTest() flush pages...");
+      ex.printStackTrace();
     }
 
     System.out.println(
@@ -944,7 +968,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     int size = t.size();
 
-    PCounter.initialize();
+    //PCounter.initialize();
 
     // inserting the tuple into the Columnar file
     TID tid;
@@ -985,11 +1009,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       } catch (Exception e) {
         System.err.println("*** error in ColumnarFile.insertRecord() ***");
         e.printStackTrace();
+        throw e;
       }
     }
 
-    System.out.println(
-        "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
+    //System.out.println("DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
   }
 
 

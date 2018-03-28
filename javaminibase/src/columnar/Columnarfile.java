@@ -21,6 +21,10 @@ import btree.LeafInsertRecException;
 import btree.NodeNotMatchException;
 import btree.PinPageException;
 import btree.UnpinPageException;
+import bufmgr.HashEntryNotFoundException;
+import bufmgr.InvalidFrameNumberException;
+import bufmgr.PageUnpinnedException;
+import bufmgr.ReplacerException;
 import global.AttrType;
 import global.PageId;
 import global.RID;
@@ -233,6 +237,8 @@ public class Columnarfile {
     }
 
     numColumns = columnarDataFiles.size();
+    //numColumns = 4;
+
     type = new AttrType[numColumns];
 
     List<Integer> strAttrSizes = new ArrayList();
@@ -248,6 +254,21 @@ public class Columnarfile {
     for (int idx = 0; idx < strAttrSizes.size(); idx++) {
       strSizes[idx] = (short) (int) strAttrSizes.get(idx);
     }
+
+    /*type = new AttrType[4];
+    type[0] = new AttrType(AttrType.attrString);
+    type[1] = new AttrType(AttrType.attrString);
+    type[2] = new AttrType(AttrType.attrInteger);
+    type[3] = new AttrType(AttrType.attrInteger);
+
+
+    strSizes = new short[2];
+
+    strSizes[0] = 25;
+    strSizes[1] = 25;
+  */
+
+    scan.closescan();
   }
 
   /**
@@ -324,6 +345,13 @@ public class Columnarfile {
         //TODO: Check whether the functionality will work
         BitMapFile file = new BitMapFile(getBitMapFileName(column, valueClass));
         file.insert(position);
+        try {
+          file.close();
+        }
+        catch (Exception ex)
+        {
+          ex.printStackTrace();
+        }
       }
     }
   }
@@ -529,6 +557,11 @@ public class Columnarfile {
 
       temp = scan.getNext(rid);
     }
+
+    btf.close();
+
+    scan.closescan();
+
     return true;
   }
 
@@ -610,6 +643,8 @@ public class Columnarfile {
       }
       temp = scan.getNext(rid);
     }
+
+    scan.closescan();
 
     return false;
   }
@@ -701,6 +736,7 @@ public class Columnarfile {
         break;
       }
     }
+    scan.closescan();
       return true;
   }
 }

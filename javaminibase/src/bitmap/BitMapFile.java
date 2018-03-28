@@ -327,7 +327,7 @@ public class BitMapFile {
 
 
 
-  void close()
+  public void close()
       throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
     if (headerPage != null) {
       SystemDefs.JavabaseBM.unpinPage(headerPageId, true);

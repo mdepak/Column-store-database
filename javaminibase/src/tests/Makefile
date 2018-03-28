@@ -60,7 +60,7 @@ SortTest:SortTest.java
 	$(JAVAC) TestDriver.java SortTest.java
 
 sorttest: SortTest
-	$(JAVA) -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8001 tests.SortTest
+	$(JAVA) tests.SortTest
 
 # test sortMerge
 
