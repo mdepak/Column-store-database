@@ -162,6 +162,7 @@ public class Util {
         rid = columnarFileScan.get_next_rid();
         ridList.add(rid);
       }
+      columnarFileScan.close();
     } catch (Exception e) {
       e.printStackTrace();
     }
