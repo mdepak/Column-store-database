@@ -306,7 +306,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             if (tuple == null) {
               break;
             }
-            columnarFileScan.close();
+
             tuple.initHeaders();
             for (int i = 0; i < tuple.noOfFlds(); i++) {
               if (types[selectCols[i] - 1].attrType == AttrType.attrString) {
@@ -321,6 +321,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             }
             System.out.println("");
           }
+          columnarFileScan.close();
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -373,7 +374,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             if (tuple == null) {
               break;
             }
-            colScan.close();
             tuple.initHeaders();
             for(int i=0; i<tuple.noOfFlds(); i++){
               if(types[selectCols[i]-1].attrType == AttrType.attrString){
@@ -388,6 +388,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             }
             System.out.println("");
           }
+          colScan.close();
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -434,10 +435,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             if (tuple == null) {
               break;
             }
-            columnarFileScan.close();
+
             tuple.initHeaders();
             System.out.println(tuple.getIntFld(1));
           }
+          columnarFileScan.close();
         } catch (Exception e) {
           e.printStackTrace();
         }
