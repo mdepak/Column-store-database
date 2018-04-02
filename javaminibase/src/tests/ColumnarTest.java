@@ -647,7 +647,12 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         valueConstraint.add(valCons);
 
         //SET THE NUMBUF AND ACCESSTYPE
-        numBuf = Integer.parseInt((input[7].contains("NA")) ? "0" : input[7]);
+        numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
+
+
+        // SETUP Database
+        Util.createDatabaseIfNotExists(columnDBName, numBuf);
+
         accessType = (input[8].contains("NA")) ? null : input[8];
         try {
           runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
