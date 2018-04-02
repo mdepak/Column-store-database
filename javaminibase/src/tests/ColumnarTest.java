@@ -306,7 +306,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             if (tuple == null) {
               break;
             }
-
             tuple.initHeaders();
             for (int i = 0; i < tuple.noOfFlds(); i++) {
               if (types[selectCols[i] - 1].attrType == AttrType.attrString) {
@@ -435,7 +434,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             if (tuple == null) {
               break;
             }
-
             tuple.initHeaders();
             System.out.println(tuple.getIntFld(1));
           }
