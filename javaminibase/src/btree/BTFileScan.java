@@ -63,7 +63,7 @@ public class BTFileScan extends IndexFileScan
 
       while (entry == null) {
         nextpage = leafPage.getNextPage();
-        SystemDefs.JavabaseBM.unpinPage(leafPage.getCurPage(), true);
+        SystemDefs.JavabaseBM.unpinPage(leafPage.getCurPage(), false);
         if (nextpage.pid == INVALID_PAGE) {
           leafPage = null;
           return null;
