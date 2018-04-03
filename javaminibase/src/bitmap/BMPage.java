@@ -1,9 +1,14 @@
 package bitmap;
 
+import columnar.Util;
 import diskmgr.Page;
 import global.Convert;
 import global.GlobalConst;
 import global.PageId;
+import global.RID;
+import heap.InvalidSlotNumberException;
+import heap.Tuple;
+
 import java.util.BitSet;
 
 import java.io.IOException;
@@ -350,5 +355,42 @@ public class BMPage extends Page
             oldByte = (byte) (oldByte & ~(1 << (7-posBit)));
         }
         data[posByte] = oldByte;
+    }
+
+    /**
+     * copies out record with RID rid into record pointer. <br> Status getRecord(RID rid, char
+     * *recPtr, int& recLen)
+     *
+     * @param rid the record ID
+     * @return a tuple contains the record
+     * @throws InvalidSlotNumberException Invalid slot number
+     * @throws IOException I/O errors
+     * @see Tuple
+     */
+    public boolean getRecord(RID rid)
+            throws IOException,
+            InvalidSlotNumberException {
+        PageId pageNo = new PageId();
+        pageNo.pid = rid.pageNo.pid;
+        curPage.pid = Convert.getIntValue(CUR_PAGE, data);
+        int slotNo = rid.slotNo;
+
+        // length of record being returned
+        recordCnt = getRecordCnt();
+        if ((slotNo >= 0) && (slotNo < recordCnt)
+                && (pageNo.pid == curPage.pid)) {
+            int bytePos = slotNo / 8;
+            int bitPos = slotNo % 8;
+            String bitVal = Util.getBitAsString(getBMPageArray()[bytePos], bitPos);
+            if(bitVal.equalsIgnoreCase("1")){
+                return true;
+            }else {
+                return false;
+            }
+        } else {
+            throw new InvalidSlotNumberException(null, "HEAPFILE: INVALID_SLOTNO");
+        }
+
+
     }
 }
