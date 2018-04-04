@@ -4,6 +4,7 @@ import bitmap.BMException;
 import bitmap.BitMapFile;
 import btree.ConstructPageException;
 import btree.GetFileEntryException;
+import columnar.BitmapIterator;
 import columnar.ColumnarHeaderRecord;
 import columnar.Columnarfile;
 import columnar.IntegerValue;
@@ -444,32 +445,18 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       } else if (accessType.equals("BITMAP")) {
         Columnarfile file = new Columnarfile(columnFileName);
         int bitMapIndexCol = Util.getColumnNumber(valueConstraint.get(0));
-        // int bitMapIndexCol = Integer.parseInt(valueConstraint.get(0));
-        List<ColumnarHeaderRecord> list = file.getBitMapIndicesInfo(bitMapIndexCol);
+        CondExpr[] condExprs = Util.getValueContraint(valueConstraint);
 
-        AttrType[] types = file.getType();
-        ValueClass value = null;
+        BitmapIterator bitmapIterator = new BitmapIterator(columnFileName, bitMapIndexCol,selectCols, condExprs,false);
 
-        AttrType bitMapType = types[bitMapIndexCol - 1];
+        Tuple tuple = bitmapIterator.get_next();
 
-        switch (bitMapType.attrType) {
-          case AttrType.attrInteger:
-            value = new IntegerValue(Integer.parseInt(valueConstraint.get(2)));
-            break;
-          case AttrType.attrString:
-            value = new StringValue(valueConstraint.get(2));
-            break;
+        while(tuple !=null)
+        {
+
+          tuple = bitmapIterator.get_next();
+
         }
-
-        String bitMapFileName = "";
-        for (ColumnarHeaderRecord headerRecord : list) {
-          if (value.equals(headerRecord.getValueClass())) {
-            bitMapFileName = headerRecord.getFileName();
-          }
-        }
-
-        performBitMapQuery(columnFileName, bitMapFileName, selectCols);
-
       }
 
 
@@ -479,12 +466,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     }
   }
 
-  private static void performBitMapQuery(String columnName, String bitMapFileName,
-      int[] selectedCols)
-      throws HFDiskMgrException, HFException, IOException, ConstructPageException, GetFileEntryException, HFBufMgrException, InvalidTupleSizeException, InvalidTypeException, FieldNumberOutOfBoundException, InvalidSlotNumberException, BMException {
-    BitMapFile file = new BitMapFile(bitMapFileName);
-    file.performQuery(columnName, selectedCols);
-  }
 
 
   private static void createIndexOnColumnarFile(String columnarDatabase, String columnarFile,
