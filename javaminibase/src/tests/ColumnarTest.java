@@ -537,8 +537,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
   operation = input[0];
 
-    columnDBName = input[1];
-
     if(operation.contains("delete")) {
 
 
