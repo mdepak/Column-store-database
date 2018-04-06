@@ -1,16 +1,10 @@
 package columnar;
 
-import heap.Tuple;
-import iterator.CondExpr;
-
 public class ColumnarBitmapScan {
 
 
-
   //TODO: add parameters to match reqs
-  ColumnarBitmapScan(String columnarFile, int outputColumnsIndexes[],
-      CondExpr selects[],
-      final boolean indexOnly) {
+  public ColumnarBitmapScan(String bitmapFile) {
 
     //Open the appropriate bitmap file and scan the bit map file by following the directory structure of the bitmap file
 
@@ -24,12 +18,13 @@ public class ColumnarBitmapScan {
  3) On calling next, maintain a pointer in the byte array and return the data by constructing the tupele
  4) When the pointer of the byte array reaches the end of data, fetch the next BM Page from the disk and keep it in memory
   */
-  Tuple get_next() {
+  public Boolean get_next(int position) {
+
+    //Return 'null' in case of end of bit map file
 
     // Return the tuple.
 
-
-    return null;
+    return false;
   }
 
   // Unpin the dir page - used for traversing

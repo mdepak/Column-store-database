@@ -324,4 +324,27 @@ public class Util {
 
     return sort;
   }
+
+
+
+
+  public static Tuple getRowTupleFromPosition(int rowPosition, Columnarfile cf, int[] selectedCols, AttrType[] reqAttrType, short[] strSizes)
+      throws IOException, FieldNumberOutOfBoundException, InvalidSlotNumberException, HFBufMgrException, InvalidTupleSizeException, InvalidTypeException {
+
+    Tuple tuple = new Tuple();
+    tuple.setHdr((short) selectedCols.length, reqAttrType, strSizes);
+
+    for (int i = 0; i < selectedCols.length; i++) {
+      int indexNumber = selectedCols[i];
+      Heapfile heapfile = cf.getColumnFiles()[indexNumber - 1];
+      Tuple columnTuple = Util.getTupleFromPosition(rowPosition, heapfile);
+      columnTuple.initHeaders();
+
+      ValueClass valueClass = valueClassFactory(reqAttrType[i]);
+      valueClass.setValueFromColumnTuple(columnTuple, 1);
+      valueClass.setValueinRowTuple(tuple, i+1);
+    }
+
+    return tuple;
+  }
 }
