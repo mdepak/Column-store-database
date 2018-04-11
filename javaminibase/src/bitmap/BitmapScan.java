@@ -81,7 +81,7 @@ public class BitmapScan implements GlobalConst {
      * @param rid Record ID of the record
      * @return the Tuple of the retrieved record.
      */
-    public boolean getNext(RID rid)
+    public Boolean getNext(RID rid)
             throws InvalidTupleSizeException,
             IOException {
         boolean bit = false;

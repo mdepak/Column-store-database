@@ -14,6 +14,7 @@ import global.RID;
 import global.TupleOrder;
 import heap.*;
 
+import iterator.CondExpr;
 import iterator.FileScan;
 import iterator.FileScanException;
 import iterator.FldSpec;
@@ -24,6 +25,8 @@ import iterator.Sort;
 import iterator.SortException;
 import iterator.TupleUtilsException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Util {
 
@@ -346,5 +349,58 @@ public class Util {
     }
 
     return tuple;
+  }
+
+  private static Boolean evaluateOR(List<Boolean> booleanList)
+  {
+    Boolean result = false;
+    for (Boolean value : booleanList)
+    {
+      result = result || value;
+    }
+
+    return  result;
+  }
+
+  public static List<BitmapCondExprScans> getBitmapScanForCondExpr(CondExpr[] condExprs, Columnarfile columnarfile)
+  {
+    List<BitmapCondExprScans> condExprScans = new ArrayList<>();
+
+    for(int i = 0; i< condExprs.length; i++)
+    {
+      //TODO: Iterate over each condExpr and and find the appropriate scan objects for those conditions
+    }
+
+    return condExprScans;
+  }
+
+
+
+
+  /**
+   * Method for evaluating the condition expression for the bitmap
+   * @param condExpr
+   * @param bitmapCondExprValuesList
+   * @return
+   */
+  public static Boolean evaluateBitmapCondExpr(CondExpr[] condExpr, List<BitmapCondExprValues> bitmapCondExprValuesList)
+  {
+    //TODO: passing condition expression is not required - revise later
+    Boolean op_res = true;
+
+    for(int i = 0; i< condExpr.length && op_res; i++)
+    {
+      BitmapCondExprValues condExprValues = bitmapCondExprValuesList.get(i);
+      Boolean tempResult = false;
+      while(condExprValues!= null && !tempResult)
+      {
+        tempResult = tempResult || evaluateOR(condExprValues.getValues()); //Perform OR operations
+        condExprValues = condExprValues.getNext();
+      }
+
+      op_res = op_res && tempResult;
+    }
+
+    return op_res;
   }
 }

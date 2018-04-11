@@ -1,25 +1,23 @@
 package tests;
 
-import bitmap.BMException;
-import bitmap.BitMapFile;
-import btree.ConstructPageException;
-import btree.GetFileEntryException;
 import columnar.BitmapIterator;
-import columnar.ColumnarHeaderRecord;
 import columnar.Columnarfile;
-import columnar.IntegerValue;
-import columnar.StringValue;
-import columnar.TupleScan;
-import columnar.ValueClass;
 import diskmgr.PCounter;
-import global.AttrOperator;
 import global.AttrType;
 import global.GlobalConst;
 import global.IndexType;
 import global.RID;
 import global.SystemDefs;
 import global.TID;
-import heap.*;
+import heap.FieldNumberOutOfBoundException;
+import heap.HFBufMgrException;
+import heap.HFDiskMgrException;
+import heap.HFException;
+import heap.InvalidSlotNumberException;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
+import heap.SpaceNotAvailableException;
+import heap.Tuple;
 import index.ColumnIndexScan;
 import index.IndexException;
 import index.UnknownIndexTypeException;
@@ -181,17 +179,15 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       System.err.println("" + e);
     }
 
-
     boolean _pass;
-    do{
+    do {
 
       System.out.print("\n" + "Running columnar tests...." + "\n");
       System.out.println("Setting up the database");
       //Run the tests. Return type different from C++
       _pass = runAllTests();
 
-    }while(_pass != true);
-
+    } while (_pass != true);
 
     //Clean up again
     try {
@@ -210,18 +206,17 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   }
 
   public static void runDeleteOnColumnar(String columnDBName, String columnFileName,
-                                         List<String> valueConstraint, int numBuf, boolean purge) throws InvalidTupleSizeException, HFBufMgrException, InvalidSlotNumberException, IOException, SpaceNotAvailableException, InvalidTypeException, FieldNumberOutOfBoundException, HFException, HFDiskMgrException {
-
+      List<String> valueConstraint, int numBuf, boolean purge)
+      throws InvalidTupleSizeException, HFBufMgrException, InvalidSlotNumberException, IOException, SpaceNotAvailableException, InvalidTypeException, FieldNumberOutOfBoundException, HFException, HFDiskMgrException {
 
     try {
 
-      if(valueConstraint.isEmpty()){
+      if (valueConstraint.isEmpty()) {
         //Delete entire columnar file ??
         Columnarfile columnarfile = new Columnarfile(columnFileName);
         columnarfile.deleteColumnarFile();
         // Display error
-      }
-      else {
+      } else {
 
         int colnum = Util.getColumnNumber(valueConstraint.get(0));
         String filename = columnFileName + '.' + String.valueOf(colnum);
@@ -230,23 +225,25 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         CondExpr[] expr = Util.getValueContraint(valueConstraint);
         int column = tests.Util.getColumnNumber(valueConstraint.get(0));
 
-        List<RID> deleteRID = Util.getRIDListHeapFile(valueConstraint, columnFileName); // get rid list by applying value constraint on designated column
+        List<RID> deleteRID = Util.getRIDListHeapFile(valueConstraint,
+            columnFileName); // get rid list by applying value constraint on designated column
         List<Integer> positionList = new ArrayList<Integer>();
 
-        for(int i = 0; i<deleteRID.size();i++){
-            if(deleteRID.get(i)!= null){
-              int position = columnar.Util.getPositionFromRID(deleteRID.get(i), columnarFile.getColumnFiles()[colnum-1]);
-              positionList.add(position);
+        for (int i = 0; i < deleteRID.size(); i++) {
+          if (deleteRID.get(i) != null) {
+            int position = columnar.Util
+                .getPositionFromRID(deleteRID.get(i), columnarFile.getColumnFiles()[colnum - 1]);
+            positionList.add(position);
           }
         }
-        for(int i = 0; i<positionList.size();i++){
+        for (int i = 0; i < positionList.size(); i++) {
           columnarFile.markTupleDeleted(positionList.get(i));
         }
         if (purge) {
           columnarFile.purgeAllDeletedTuples();
         }
       }
-    }catch (Exception e) {
+    } catch (Exception e) {
       System.out.println("Exception in performing delete on columnar database");
       e.printStackTrace();
     }
@@ -262,7 +259,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       for (int i = 0; i < columnNames.size(); i++) {
         selectCols[i] = Util.getColumnNumber(columnNames.get(i));
       }
-
 
       if (accessType.equals("COLUMNSCAN")) {
 
@@ -284,9 +280,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
         short[] strSize = new short[numOfColumns];
         int j = 0;
-        for(int i=0; i<numOfColumns; i++) {
-          if(types[i].attrType == AttrType.attrString) {
-            strSize[j] = (short)100;
+        for (int i = 0; i < numOfColumns; i++) {
+          if (types[i].attrType == AttrType.attrString) {
+            strSize[j] = (short) 100;
             j++;
           }
         }
@@ -325,8 +321,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         } catch (Exception e) {
           e.printStackTrace();
         }
-      }
-      else if(accessType.equals("BTREE")) {
+      } else if (accessType.equals("BTREE")) {
         Columnarfile cf = new Columnarfile(columnFileName);
         int numOfColumns = cf.getNumColumns();
         AttrType[] attrTypes = cf.getType();
@@ -337,9 +332,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
         short[] strSize = new short[numOfColumns];
         int j = 0;
-        for(int i=0; i<numOfColumns; i++) {
-          if(attrTypes[i].attrType == AttrType.attrString) {
-            strSize[j] = (short)100;
+        for (int i = 0; i < numOfColumns; i++) {
+          if (attrTypes[i].attrType == AttrType.attrString) {
+            strSize[j] = (short) 100;
             j++;
           }
         }
@@ -365,7 +360,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             && desiredColumnNumbers[0] == indexColumnNumber;
 
         try {
-          colScan = new ColumnIndexScan(indexType, columnFileName, relName, indName, ValueConstraintAttrType, strSizes, 1, desiredColumnNumbers, expr, indexOnly);
+          colScan = new ColumnIndexScan(indexType, columnFileName, relName, indName,
+              ValueConstraintAttrType, strSizes, 1, desiredColumnNumbers, expr, indexOnly);
           Columnarfile columnarFile = new Columnarfile(columnFileName);
           AttrType[] types = columnarFile.getType();
           Tuple tuple;
@@ -375,15 +371,15 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
               break;
             }
             tuple.initHeaders();
-            for(int i=0; i<tuple.noOfFlds(); i++){
-              if(types[selectCols[i]-1].attrType == AttrType.attrString){
-                System.out.println(tuple.getStrFld(i+1));
+            for (int i = 0; i < tuple.noOfFlds(); i++) {
+              if (types[selectCols[i] - 1].attrType == AttrType.attrString) {
+                System.out.println(tuple.getStrFld(i + 1));
               }
-              if(types[selectCols[i]-1].attrType == AttrType.attrInteger){
-                System.out.println(tuple.getIntFld(i+1));
+              if (types[selectCols[i] - 1].attrType == AttrType.attrInteger) {
+                System.out.println(tuple.getIntFld(i + 1));
               }
-              if(types[selectCols[i]-1].attrType == AttrType.attrReal){
-                System.out.println(tuple.getFloFld(i+1));
+              if (types[selectCols[i] - 1].attrType == AttrType.attrReal) {
+                System.out.println(tuple.getFloFld(i + 1));
               }
             }
             System.out.println("");
@@ -406,7 +402,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         FldSpec[] projlist = new FldSpec[1];
         RelSpec rel = new RelSpec(RelSpec.outer);
         projlist[0] = new FldSpec(rel, 1);
-
 
         short[] strSize = new short[numOfColumns];
         int j = 0;
@@ -447,15 +442,16 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         int bitMapIndexCol = Util.getColumnNumber(valueConstraint.get(0));
         CondExpr[] condExprs = Util.getValueContraint(valueConstraint);
 
-        BitmapIterator bitmapIterator = new BitmapIterator(columnFileName, bitMapIndexCol,selectCols, condExprs,false);
+        BitmapIterator bitmapIterator = new BitmapIterator(columnFileName, bitMapIndexCol,
+            selectCols, condExprs, false);
 
-        Tuple tuple = bitmapIterator.get_next();
+        //TODO: Fix it after completing and writing proper method
+        //Tuple tuple = bitmapIterator.get_next();
+        Tuple tuple = null;
 
-        while(tuple !=null)
-        {
-
-          tuple = bitmapIterator.get_next();
-
+        while (tuple != null) {
+          //TODO: Fix it
+          // tuple = bitmapIterator.get_next();
         }
       }
 
@@ -465,7 +461,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       e.printStackTrace();
     }
   }
-
 
 
   private static void createIndexOnColumnarFile(String columnarDatabase, String columnarFile,
@@ -495,7 +490,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   }
 
   @Override
-  protected boolean runAllTests(){
+  protected boolean runAllTests() {
 
     //test1();
 
@@ -529,19 +524,15 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     List<String> valueConstraint = new ArrayList<String>();
     List<String> columnNames = new ArrayList<String>();
     try {
-    choice = in.readLine();
-  } catch (IOException e) {
-    e.printStackTrace();
-  }
-  input = choice.split("\\s+");
+      choice = in.readLine();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    input = choice.split("\\s+");
 
-  operation = input[0];
+    operation = input[0];
 
-    columnDBName = input[1];
-
-    if(operation.contains("delete")) {
-
-
+    if (operation.contains("delete")) {
 
       //delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE
       columnDBName = input[1];
@@ -581,66 +572,62 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           e.printStackTrace();
         }
       }
-    }
-  else if(operation.contains("query"))
-  {
-    // COLUMN DB NAME
-    columnDBName = input[1];
-    //COLUMN FILE NAME
-    columnFileName = input[2];
-    //LIST OF COLUMNS
-    columns = input[3];
-    columns = columns.replaceAll("\\[", "").replaceAll("\\]","");
-    String[] colArray = columns.split(",");
-    if(colArray.length > 0 && colArray != null) {
-      for (String col : colArray) {
-        columnNames.add(col);
-      }
-      //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
-      String colCons = input[4];
-      //valueConstraint.add(colCons);
-      if (colCons.contains("NA")) {
-        colCons = null;
-        valueConstraint.add(colCons);
-        numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
-        ;
-        accessType = (input[6].contains("NA")) ? null : input[6];
-
-        // SETUP Database
-        Util.createDatabaseIfNotExists(columnDBName, numBuf);
-
-        try {
-
-
-          runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-              accessType);
-        } catch (Exception ex) {
-          ex.printStackTrace();
+    } else if (operation.contains("query")) {
+      // COLUMN DB NAME
+      columnDBName = input[1];
+      //COLUMN FILE NAME
+      columnFileName = input[2];
+      //LIST OF COLUMNS
+      columns = input[3];
+      columns = columns.replaceAll("\\[", "").replaceAll("\\]", "");
+      String[] colArray = columns.split(",");
+      if (colArray.length > 0 && colArray != null) {
+        for (String col : colArray) {
+          columnNames.add(col);
         }
-      } else {
-        String opCons = input[5];
-        String valCons = input[6];
+        //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
+        String colCons = input[4];
+        //valueConstraint.add(colCons);
+        if (colCons.contains("NA")) {
+          colCons = null;
+          valueConstraint.add(colCons);
+          numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
+          ;
+          accessType = (input[6].contains("NA")) ? null : input[6];
 
-        valueConstraint.add(colCons);
-        valueConstraint.add(opCons);
-        valueConstraint.add(valCons);
+          // SETUP Database
+          Util.createDatabaseIfNotExists(columnDBName, numBuf);
 
-        //SET THE NUMBUF AND ACCESSTYPE
-        numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
+          try {
 
+            runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+                accessType);
+          } catch (Exception ex) {
+            ex.printStackTrace();
+          }
+        } else {
+          String opCons = input[5];
+          String valCons = input[6];
 
-        // SETUP Database
-        Util.createDatabaseIfNotExists(columnDBName, numBuf);
+          valueConstraint.add(colCons);
+          valueConstraint.add(opCons);
+          valueConstraint.add(valCons);
 
-        accessType = (input[8].contains("NA")) ? null : input[8];
-        try {
-          runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-              accessType);
-        } catch (Exception ex) {
-          ex.printStackTrace();
+          //SET THE NUMBUF AND ACCESSTYPE
+          numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
+
+          // SETUP Database
+          Util.createDatabaseIfNotExists(columnDBName, numBuf);
+
+          accessType = (input[8].contains("NA")) ? null : input[8];
+          try {
+            runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+                accessType);
+          } catch (Exception ex) {
+            ex.printStackTrace();
+          }
         }
       }
-    }
 
     } else if (operation.contains("batchinsert")) {
       datafileName = input[1];
@@ -670,9 +657,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     try {
       SystemDefs.JavabaseBM.flushAllPages();
-    }
-    catch (Exception ex)
-    {
+    } catch (Exception ex) {
       System.out.println("ColumnarTest() flush pages...");
       ex.printStackTrace();
     }

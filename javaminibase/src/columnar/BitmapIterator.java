@@ -95,7 +95,7 @@ public class BitmapIterator {
   }
 
 
-  public Tuple get_next()
+  public Boolean get_next()
       throws InvalidTupleSizeException, IOException, InvalidTypeException, FieldNumberOutOfBoundException, HFBufMgrException, InvalidSlotNumberException {
 
     RID rid = new RID();
@@ -109,12 +109,11 @@ public class BitmapIterator {
 
       //TODO: Instead of checking only one condition check multiple conditions - write a ProjEval kind of for BitMap
       // for combining multiple bitmap file results
-      if (bit) {
+      /*if (bit) {
         //Construct the tuple and return the data
-        return Util
-            .getRowTupleFromPosition(position++, columnarfile, projCols, reqAttrType, strSizes);
-
-      }
+       // return Util.getRowTupleFromPosition(position++, columnarfile, projCols, reqAttrType, strSizes);
+        return bit;
+      }*/
       position++;
     }
   }
