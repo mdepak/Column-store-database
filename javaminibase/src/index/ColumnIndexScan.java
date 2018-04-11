@@ -263,6 +263,11 @@ public class ColumnIndexScan extends Iterator {
                 } else {
                     // not index_only, need to return the whole tuple
                     rid = ((LeafData) nextentry.data).getData();
+                    if(nextentry.key instanceof  IntegerKey)
+                        System.out.println("Record Match found Key " + ((IntegerKey) nextentry.key).getKey().intValue());
+                    else
+                        System.out.println("Record Match found Key " + ((StringKey) nextentry.key).getKey().toString());
+                    System.out.println("Record Match found at Position " + (rid.position+1));
                     int numOfOutputColumns = _outputColumnsIndexes.length;
 
                     Columnarfile cf = new Columnarfile(_colFileName);
