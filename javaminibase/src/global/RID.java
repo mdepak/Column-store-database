@@ -13,6 +13,8 @@ public class RID {
    */
   public int slotNo;
 
+  public int position;
+
   /**
    * public PageId pageNo
    */
@@ -30,6 +32,12 @@ public class RID {
   public RID(PageId pageno, int slotno) {
     pageNo = pageno;
     slotNo = slotno;
+  }
+
+  public RID(PageId pageno, int slotno, int pos) {
+    pageNo = pageno;
+    slotNo = slotno;
+    position = pos;
   }
 
   /**

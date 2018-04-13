@@ -541,6 +541,7 @@ public class Columnarfile {
     Tuple temp = null;
 
     ValueClass valueClass = Util.valueClassFactory(type[column - 1]);
+    int pos = 0;
     try {
       temp = scan.getNext(rid);
     } catch (Exception e) {
@@ -550,10 +551,12 @@ public class Columnarfile {
     while (temp != null) {
       // Copy to another variable so that the fields of the tuple are initialized.
 
+      rid.position = pos++;
       Tuple t = new Tuple(temp.getTupleByteArray());
       t.tupleCopy(temp);
       KeyClass key = valueClass.getKeyClassFromColumnTuple(t, 1);
       btf.insert(key, rid);
+      //System.out.println(key +" " +pos);
 
       temp = scan.getNext(rid);
     }
