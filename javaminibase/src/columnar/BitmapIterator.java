@@ -1,7 +1,10 @@
 package columnar;
 
 import bitmap.BitMapFile;
-import bitmap.BitmapScan;
+import bitmap.BitmapCondExprScanFiles;
+import bitmap.BitmapCondExprScans;
+import bitmap.BitmapCondExprValues;
+import bitmap.BitmapUtil;
 import btree.ConstructPageException;
 import btree.GetFileEntryException;
 import bufmgr.HashEntryNotFoundException;
@@ -9,7 +12,6 @@ import bufmgr.InvalidFrameNumberException;
 import bufmgr.PageUnpinnedException;
 import bufmgr.ReplacerException;
 import global.AttrType;
-import global.RID;
 import heap.FieldNumberOutOfBoundException;
 import heap.HFBufMgrException;
 import heap.HFDiskMgrException;
@@ -17,7 +19,6 @@ import heap.HFException;
 import heap.InvalidSlotNumberException;
 import heap.InvalidTupleSizeException;
 import heap.InvalidTypeException;
-import heap.Tuple;
 import iterator.CondExpr;
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,13 +28,18 @@ public class BitmapIterator {
 
   private Columnarfile columnarfile;
 
-  private BitmapScan bitmapScan;
-
   private AttrType[] reqAttrType;
 
   private short[] strSizes;
 
   private BitMapFile bitMapFile;
+
+
+  //TODO: Instead of this way rather try to maintain a map for file to ScanObject mapping and then choose the approprite File
+  // This approach will reduce the same bitmap file being used by multiple conditions
+  private List<BitmapCondExprScanFiles> condExprScanFiles;
+
+  private List<BitmapCondExprScans> condExprScans;
 
   private int[] projCols;
 
@@ -71,56 +77,32 @@ public class BitmapIterator {
     //Choose appropriate number of bit map files based on the condition
     // Open the BitMapScan for the bitmap files and return value when all the scans match
 
-    //TODO:Considering only 1 equality condition - extend for multiple conditions and different attributes
-    CondExpr condition = selects[0];
-    ValueClass operandValue = Util.valueClassFactory(condition.type2);
-    operandValue.setValue(condition.operand2.getOperandValue(condition.type2));
-    /*if (condition.op.attrOperator == AttrOperator.aopEQ) {
-
-    }*/
-
-    List<ColumnarHeaderRecord> list = columnarFile.getBitMapIndicesInfo(indexField);
-
-    String bitMapFileName = null; //Choose bitmap file name based on the condition
-
-    for (ColumnarHeaderRecord headerRecord : list) {
-      if (operandValue.equals(headerRecord.getValueClass())) {
-        bitMapFileName = headerRecord.getFileName();
-        break;
-      }
-    }
-
-    bitMapFile = new BitMapFile(bitMapFileName);
-    bitmapScan = new BitmapScan(bitMapFile);
+    condExprScanFiles = BitmapUtil.getBitmapScanForCondExpr(selects, columnarfile);
+    condExprScans = BitmapUtil.constructBitmapScanFromBitmapFiles(condExprScanFiles);
   }
 
 
-  public Boolean get_next()
+  public Integer get_next()
       throws InvalidTupleSizeException, IOException, InvalidTypeException, FieldNumberOutOfBoundException, HFBufMgrException, InvalidSlotNumberException {
 
-    RID rid = new RID();
-
-    Boolean bit;
+    List<BitmapCondExprValues> condExprValues;
 
     while (true) {
-      if ((bit = bitmapScan.getNext(rid)) == null) {
+
+      if ((condExprValues = BitmapUtil.getNext(condExprScans)) == null) {
         return null;
       }
+      if (BitmapUtil.evaluateBitmapCondExpr(condExprValues)) {
+        return position++;
+      }
 
-      //TODO: Instead of checking only one condition check multiple conditions - write a ProjEval kind of for BitMap
-      // for combining multiple bitmap file results
-      /*if (bit) {
-        //Construct the tuple and return the data
-       // return Util.getRowTupleFromPosition(position++, columnarfile, projCols, reqAttrType, strSizes);
-        return bit;
-      }*/
       position++;
     }
   }
 
   public void close()
       throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
-    bitmapScan.closescan();
-    bitMapFile.close();
+
+    //TODO: Write close function for the list objects and close them.
   }
 }
