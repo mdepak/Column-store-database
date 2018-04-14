@@ -100,6 +100,16 @@ public class BitmapIterator {
     }
   }
 
+  public Boolean get_next_bool() throws InvalidTupleSizeException, IOException {
+    List<BitmapCondExprValues> condExprValues;
+    condExprValues = BitmapUtil.getNext(condExprScans);
+    if (condExprValues == null) {
+      return null;
+    } else {
+      return BitmapUtil.evaluateBitmapCondExpr(condExprValues);
+    }
+  }
+
   public void close()
       throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
 

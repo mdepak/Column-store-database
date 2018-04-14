@@ -172,6 +172,48 @@ public class BitmapUtil {
 
   }
 
+
+
+  private List<BitmapPair> getBitmapPairsForCondExpr(CondExpr condExpr,  Columnarfile leftColumnarFile, Columnarfile rightColumnarFile)
+  {
+    int leftColNo = Integer.parseInt(condExpr.operand1.string);
+    List<ColumnarHeaderRecord> leftHeaderList = leftColumnarFile.getBitMapIndicesInfo(leftColNo);
+
+    int rightColNo = Integer.parseInt(condExpr.operand2.string);
+    List<ColumnarHeaderRecord> rightHeaderList = rightColumnarFile.getBitMapIndicesInfo(rightColNo);
+
+    return findBitMapPairs(leftHeaderList, rightHeaderList);
+  }
+
+
+  private List<BitmapPair> findBitMapPairs(List<ColumnarHeaderRecord> leftBitmaps, List<ColumnarHeaderRecord> rightBitmaps)
+  {
+    List<BitmapPair> bitmapPairList = new ArrayList<>();
+    for(ColumnarHeaderRecord leftBitmap : leftBitmaps)
+    {
+      for(ColumnarHeaderRecord rightBitmap : rightBitmaps)
+      {
+        if(rightBitmap.getValueClass().equals(leftBitmap.getValueClass()))
+        {
+          bitmapPairList.add(new BitmapPair(leftBitmap.getFileName(), rightBitmap.getFileName()));
+        }
+      }
+    }
+
+    return bitmapPairList;
+  }
+
+
+  public static List<BitmapJoinFilePairs> getBitmapJoinFilePairsForCondExpr(CondExpr[] condExprs, Columnarfile leftColumnarFile, Columnarfile rightColumnarFile)
+  {
+    List<BitmapJoinFilePairs> joinFilePairsList = new ArrayList();
+
+    //TODO: Construct similar structure to index
+
+    return joinFilePairsList;
+  }
+
+
   /**
    * Method for evaluating the condition expression for the bitmap
    */
@@ -192,5 +234,8 @@ public class BitmapUtil {
 
     return op_res;
   }
+
+
+
 
 }
