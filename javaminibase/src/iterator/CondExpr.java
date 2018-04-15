@@ -13,6 +13,7 @@ public class CondExpr {
   /**
    * Operator like "<"
    */
+  public int columnNo;
   public AttrOperator op;
 
   /**
@@ -36,6 +37,8 @@ public class CondExpr {
    * constructor
    */
   public CondExpr() {
+
+    columnNo = 0;
 
     operand1 = new Operand();
     operand2 = new Operand();
