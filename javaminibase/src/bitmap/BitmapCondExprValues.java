@@ -1,4 +1,4 @@
-package columnar;
+package bitmap;
 
 import java.util.List;
 
@@ -6,6 +6,9 @@ public class BitmapCondExprValues {
 
   private List<Boolean> values;
   private BitmapCondExprValues next;
+
+  public BitmapCondExprValues() {
+  }
 
   public List<Boolean> getValues() {
     return values;

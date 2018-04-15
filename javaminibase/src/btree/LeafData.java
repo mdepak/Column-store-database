@@ -22,7 +22,7 @@ public class LeafData extends DataClass {
    * @param rid the data rid
    */
   LeafData(RID rid) {
-    myRid = new RID(rid.pageNo, rid.slotNo);
+    myRid = new RID(rid.pageNo, rid.slotNo, rid.position);
   }
 
   ;
@@ -33,7 +33,7 @@ public class LeafData extends DataClass {
    * @return the reference of the copy
    */
   public RID getData() {
-    return new RID(myRid.pageNo, myRid.slotNo);
+    return new RID(myRid.pageNo, myRid.slotNo, myRid.position);
   }
 
   ;

@@ -45,7 +45,7 @@ public class StringValue extends ValueClass {
   }
 
   @Override
-  void setValue(Object val) {
+  public void setValue(Object val) {
     this.val = (String) val;
   }
 

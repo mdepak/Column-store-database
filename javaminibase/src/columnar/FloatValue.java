@@ -26,7 +26,7 @@ public class FloatValue extends ValueClass {
   }
 
   @Override
-  void setValue(Object val) {
+  public void setValue(Object val) {
     this.val = (Float) val;
   }
 

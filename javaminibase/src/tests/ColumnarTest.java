@@ -524,6 +524,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     List<String> valueConstraint = new ArrayList<String>();
     List<String> columnNames = new ArrayList<String>();
     try {
+
       choice = in.readLine();
     } catch (IOException e) {
       e.printStackTrace();
@@ -532,141 +533,141 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     operation = input[0];
 
-    if (operation.contains("delete")) {
+      if (operation.contains("delete")) {
 
-      //delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE
-      columnDBName = input[1];
-      columnFileName = input[2];
-      String colCons = input[3];
-      if (colCons != "NA") {
-        String opCons = input[4];
-        String valCons = input[5];
-
-        valueConstraint.add(colCons);
-        valueConstraint.add(opCons);
-        valueConstraint.add(valCons);
-
-        //SET THE NUMBUF AND ACCESSTYPE
-        numBuf = Integer.parseInt((input[6].contains("NA")) ? "0" : input[6]);
-        purge = Boolean.valueOf(input[7]);
-
-        // SETUP Database
-        Util.createDatabaseIfNotExists(columnDBName, numBuf);
-
-        try {
-          runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
-        } catch (Exception e) {
-
-          e.printStackTrace();
-        }
-      } else {
-        colCons = null;
-        valueConstraint.add(colCons);
-        numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
-        ;
-        purge = Boolean.valueOf(input[6]);
-        try {
-          runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
-        } catch (Exception e) {
-
-          e.printStackTrace();
-        }
-      }
-    } else if (operation.contains("query")) {
-      // COLUMN DB NAME
-      columnDBName = input[1];
-      //COLUMN FILE NAME
-      columnFileName = input[2];
-      //LIST OF COLUMNS
-      columns = input[3];
-      columns = columns.replaceAll("\\[", "").replaceAll("\\]", "");
-      String[] colArray = columns.split(",");
-      if (colArray.length > 0 && colArray != null) {
-        for (String col : colArray) {
-          columnNames.add(col);
-        }
-        //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
-        String colCons = input[4];
-        //valueConstraint.add(colCons);
-        if (colCons.contains("NA")) {
-          colCons = null;
-          valueConstraint.add(colCons);
-          numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
-          ;
-          accessType = (input[6].contains("NA")) ? null : input[6];
-
-          // SETUP Database
-          Util.createDatabaseIfNotExists(columnDBName, numBuf);
-
-          try {
-
-            runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                accessType);
-          } catch (Exception ex) {
-            ex.printStackTrace();
-          }
-        } else {
-          String opCons = input[5];
-          String valCons = input[6];
+        //delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE
+        columnDBName = input[1];
+        columnFileName = input[2];
+        String colCons = input[3];
+        if (colCons != "NA") {
+          String opCons = input[4];
+          String valCons = input[5];
 
           valueConstraint.add(colCons);
           valueConstraint.add(opCons);
           valueConstraint.add(valCons);
 
           //SET THE NUMBUF AND ACCESSTYPE
-          numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
+          numBuf = Integer.parseInt((input[6].contains("NA")) ? "0" : input[6]);
+          purge = Boolean.valueOf(input[7]);
 
           // SETUP Database
           Util.createDatabaseIfNotExists(columnDBName, numBuf);
 
-          accessType = (input[8].contains("NA")) ? null : input[8];
           try {
-            runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                accessType);
-          } catch (Exception ex) {
-            ex.printStackTrace();
+            runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
+          } catch (Exception e) {
+
+            e.printStackTrace();
+          }
+        } else {
+          colCons = null;
+          valueConstraint.add(colCons);
+          numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
+          ;
+          purge = Boolean.valueOf(input[6]);
+          try {
+            runDeleteOnColumnar(columnDBName, columnFileName, valueConstraint, numBuf, purge);
+          } catch (Exception e) {
+
+            e.printStackTrace();
           }
         }
+      } else if (operation.contains("query")) {
+        // COLUMN DB NAME
+        columnDBName = input[1];
+        //COLUMN FILE NAME
+        columnFileName = input[2];
+        //LIST OF COLUMNS
+        columns = input[3];
+        columns = columns.replaceAll("\\[", "").replaceAll("\\]", "");
+        String[] colArray = columns.split(",");
+        if (colArray.length > 0 && colArray != null) {
+          for (String col : colArray) {
+            columnNames.add(col);
+          }
+          //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
+          String colCons = input[4];
+          //valueConstraint.add(colCons);
+          if (colCons.contains("NA")) {
+            colCons = null;
+            valueConstraint.add(colCons);
+            numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
+            ;
+            accessType = (input[6].contains("NA")) ? null : input[6];
+
+            // SETUP Database
+            Util.createDatabaseIfNotExists(columnDBName, numBuf);
+
+            try {
+
+              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+                  accessType);
+            } catch (Exception ex) {
+              ex.printStackTrace();
+            }
+          } else {
+            String opCons = input[5];
+            String valCons = input[6];
+
+            valueConstraint.add(colCons);
+            valueConstraint.add(opCons);
+            valueConstraint.add(valCons);
+
+            //SET THE NUMBUF AND ACCESSTYPE
+            numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
+
+            // SETUP Database
+            Util.createDatabaseIfNotExists(columnDBName, numBuf);
+
+            accessType = (input[8].contains("NA")) ? null : input[8];
+            try {
+              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+                  accessType);
+            } catch (Exception ex) {
+              ex.printStackTrace();
+            }
+          }
+        }
+
+      } else if (operation.contains("batchinsert")) {
+        datafileName = input[1];
+        columnDBName = input[2];
+        columnFileName = input[3];
+        noOfCols = Integer.parseInt(input[4]);
+
+        // SETUP Database
+        Util.createDatabaseIfNotExists(columnDBName, 100);
+
+        try {
+          batchInsertQuery(datafileName, columnDBName, columnFileName, noOfCols);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+
+      } else if (operation.contains("index")) {
+        columnDBName = input[1];
+        columnFileName = input[2];
+        String colName = input[3];
+        indexType = input[4];
+
+        Util.createDatabaseIfNotExists(columnDBName, 100);
+
+        createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
       }
-
-    } else if (operation.contains("batchinsert")) {
-      datafileName = input[1];
-      columnDBName = input[2];
-      columnFileName = input[3];
-      noOfCols = Integer.parseInt(input[4]);
-
-      // SETUP Database
-      Util.createDatabaseIfNotExists(columnDBName, 100);
 
       try {
-        batchInsertQuery(datafileName, columnDBName, columnFileName, noOfCols);
-      } catch (Exception e) {
-        e.printStackTrace();
+        SystemDefs.JavabaseBM.flushAllPages();
+      } catch (Exception ex) {
+        System.out.println("ColumnarTest() flush pages...");
+        ex.printStackTrace();
       }
 
-    } else if (operation.contains("index")) {
-      columnDBName = input[1];
-      columnFileName = input[2];
-      String colName = input[3];
-      indexType = input[4];
+      System.out.println(
+          "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
 
-      Util.createDatabaseIfNotExists(columnDBName, 100);
-
-      createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
+      return input[0].equalsIgnoreCase("exit");
     }
-
-    try {
-      SystemDefs.JavabaseBM.flushAllPages();
-    } catch (Exception ex) {
-      System.out.println("ColumnarTest() flush pages...");
-      ex.printStackTrace();
-    }
-
-    System.out.println(
-        "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
-
-    return input[0].equalsIgnoreCase("exit");
-  }
 
 //  @Override
 //  @Deprecated
