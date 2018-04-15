@@ -26,18 +26,17 @@ public abstract class ValueClass {
 
 
   //TODO: Uncomment and implement these methods in the corresponding sub classes
-  /*
-  abstract Boolean evaluateEquals(ValueClass otherValue);
 
-  abstract Boolean evaluateGT(ValueClass otherValue);
 
-  abstract Boolean evaluateGTEquals(ValueClass otherValue);
+  public abstract Boolean evaluateEquals(ValueClass otherValue);
 
-  abstract Boolean evaluateLT(ValueClass otherValue);
+  public abstract Boolean evaluateGT(ValueClass otherValue);
 
-  abstract Boolean evaluateLTEquals(ValueClass otherValue);
+  public abstract Boolean evaluateGTEquals(ValueClass otherValue);
 
-  abstract Boolean evaluateNotEquals(ValueClass otherValue);
+  public abstract Boolean evaluateLT(ValueClass otherValue);
 
-  */
+  public abstract Boolean evaluateLTEquals(ValueClass otherValue);
+
+  public abstract Boolean evaluateNotEquals(ValueClass otherValue);
 }

@@ -76,6 +76,91 @@ public class IntegerValue extends ValueClass {
   }
 
   @Override
+  public Boolean evaluateEquals(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    IntegerValue that = (IntegerValue) otherValue;
+
+    return val != null ? val.equals(that.val) : false;
+  }
+
+  @Override
+  public Boolean evaluateGT(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    IntegerValue that = (IntegerValue) otherValue;
+
+    return val != null ? val>that.val : false;
+  }
+
+  @Override
+  public Boolean evaluateGTEquals(ValueClass otherValue) {
+
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    IntegerValue that = (IntegerValue) otherValue;
+
+    return val != null ? val>=that.val : false;
+  }
+
+  @Override
+  public Boolean evaluateLT(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    IntegerValue that = (IntegerValue) otherValue;
+
+    return val != null ? val<that.val : false;
+  }
+
+  @Override
+  public Boolean evaluateLTEquals(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    IntegerValue that = (IntegerValue) otherValue;
+
+    return val != null ? val<=that.val : false;
+  }
+
+  @Override
+  public Boolean evaluateNotEquals(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    IntegerValue that = (IntegerValue) otherValue;
+
+    return val != null ? val!=that.val : false;
+  }
+
+  @Override
   public String toString() {
     return val.toString();
   }

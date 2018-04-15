@@ -55,4 +55,34 @@ public class FloatValue extends ValueClass {
       throws IOException, FieldNumberOutOfBoundException {
       val = rowTuple.getFloFld(fieldPos);
   }
+
+  @Override
+  public Boolean evaluateEquals(ValueClass otherValue) {
+    return null;
+  }
+
+  @Override
+  public Boolean evaluateGT(ValueClass otherValue) {
+    return null;
+  }
+
+  @Override
+  public Boolean evaluateGTEquals(ValueClass otherValue) {
+    return null;
+  }
+
+  @Override
+  public Boolean evaluateLT(ValueClass otherValue) {
+    return null;
+  }
+
+  @Override
+  public Boolean evaluateLTEquals(ValueClass otherValue) {
+    return null;
+  }
+
+  @Override
+  public Boolean evaluateNotEquals(ValueClass otherValue) {
+    return null;
+  }
 }

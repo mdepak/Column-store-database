@@ -10,13 +10,10 @@ public class StringValue extends ValueClass {
 
   String val;
 
-  StringValue()
-  {
-
+  StringValue() {
   }
 
-  public StringValue(String val)
-  {
+  public StringValue(String val) {
     this.val = val;
   }
 
@@ -31,10 +28,11 @@ public class StringValue extends ValueClass {
 
     StringValue that = (StringValue) o;
 
-    return val != null ? val.equals(that.val) : that.val == null;
+    return val.equals(that.val);
   }
 
   @Override
+
   public int hashCode() {
     return val != null ? val.hashCode() : 0;
   }
@@ -73,6 +71,90 @@ public class StringValue extends ValueClass {
   void setValueFromRowTuple(Tuple rowTuple, int fieldPos)
       throws IOException, FieldNumberOutOfBoundException {
     val = rowTuple.getStrFld(fieldPos);
+  }
+
+  @Override
+  public Boolean evaluateEquals(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    StringValue that = (StringValue) otherValue;
+
+    return val.compareTo(that.val) == 0;
+  }
+
+  @Override
+  public Boolean evaluateGT(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    StringValue that = (StringValue) otherValue;
+
+    return val.compareTo(that.val) > 0;
+  }
+
+  @Override
+  public Boolean evaluateGTEquals(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    StringValue that = (StringValue) otherValue;
+
+    return val.compareTo(that.val) >= 0;
+  }
+
+  @Override
+  public Boolean evaluateLT(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    StringValue that = (StringValue) otherValue;
+
+    return val.compareTo(that.val) < 0;
+  }
+
+  @Override
+  public Boolean evaluateLTEquals(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    StringValue that = (StringValue) otherValue;
+
+    return val.compareTo(that.val) <= 0;
+  }
+
+  @Override
+  public Boolean evaluateNotEquals(ValueClass otherValue) {
+    if (this == otherValue) {
+      return true;
+    }
+    if (otherValue == null || getClass() != otherValue.getClass()) {
+      return false;
+    }
+
+    StringValue that = (StringValue) otherValue;
+
+    return val.compareTo(that.val) != 0;
   }
 
   @Override

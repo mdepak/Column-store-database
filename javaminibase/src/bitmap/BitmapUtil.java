@@ -34,7 +34,25 @@ public class BitmapUtil {
       AttrOperator operator) {
     //TODO: Add a switch case and return a function for each operator type.
     //TODO: Write a function in the Value class and call the functions appropriately.
-    return (value1, value2) -> Boolean.TRUE;
+
+    switch (operator.attrOperator) {
+      case AttrOperator.aopEQ:
+        return (ValueClass value1, ValueClass value2) -> value1.evaluateEquals(value2);
+      case AttrOperator.aopLT:
+        return (ValueClass value1, ValueClass value2) -> value1.evaluateLT(value2);
+      case AttrOperator.aopGT:
+        return (ValueClass value1, ValueClass value2) -> value1.evaluateGT(value2);
+      case AttrOperator.aopNE:
+        return (ValueClass value1, ValueClass value2) -> value1.evaluateNotEquals(value2);
+      case AttrOperator.aopLE:
+        return (ValueClass value1, ValueClass value2) -> value1.evaluateLTEquals(value2);
+      case AttrOperator.aopGE:
+        return (ValueClass value1, ValueClass value2) -> value1.evaluateGTEquals(value2);
+      case AttrOperator.aopNOT:
+        return (ValueClass value1, ValueClass value2) -> value1.evaluateNotEquals(value2);
+    }
+
+    return null;
   }
 
   private static List<String> getBitmapFileforCondExpr(CondExpr expression,
@@ -149,8 +167,7 @@ public class BitmapUtil {
 
         for (BitmapScan scan : scanFile.getScanList()) {
           Boolean val = scan.getNext(new RID());
-          if(val == null)
-          {
+          if (val == null) {
             //Null here indicates the end of the scan
             return null;
           }
@@ -173,9 +190,8 @@ public class BitmapUtil {
   }
 
 
-
-  private List<BitmapPair> getBitmapPairsForCondExpr(CondExpr condExpr,  Columnarfile leftColumnarFile, Columnarfile rightColumnarFile)
-  {
+  private List<BitmapPair> getBitmapPairsForCondExpr(CondExpr condExpr,
+      Columnarfile leftColumnarFile, Columnarfile rightColumnarFile) {
     int leftColNo = Integer.parseInt(condExpr.operand1.string);
     List<ColumnarHeaderRecord> leftHeaderList = leftColumnarFile.getBitMapIndicesInfo(leftColNo);
 
@@ -186,15 +202,12 @@ public class BitmapUtil {
   }
 
 
-  private List<BitmapPair> findBitMapPairs(List<ColumnarHeaderRecord> leftBitmaps, List<ColumnarHeaderRecord> rightBitmaps)
-  {
+  private List<BitmapPair> findBitMapPairs(List<ColumnarHeaderRecord> leftBitmaps,
+      List<ColumnarHeaderRecord> rightBitmaps) {
     List<BitmapPair> bitmapPairList = new ArrayList<>();
-    for(ColumnarHeaderRecord leftBitmap : leftBitmaps)
-    {
-      for(ColumnarHeaderRecord rightBitmap : rightBitmaps)
-      {
-        if(rightBitmap.getValueClass().equals(leftBitmap.getValueClass()))
-        {
+    for (ColumnarHeaderRecord leftBitmap : leftBitmaps) {
+      for (ColumnarHeaderRecord rightBitmap : rightBitmaps) {
+        if (rightBitmap.getValueClass().equals(leftBitmap.getValueClass())) {
           bitmapPairList.add(new BitmapPair(leftBitmap.getFileName(), rightBitmap.getFileName()));
         }
       }
@@ -204,8 +217,8 @@ public class BitmapUtil {
   }
 
 
-  public static List<BitmapJoinFilePairs> getBitmapJoinFilePairsForCondExpr(CondExpr[] condExprs, Columnarfile leftColumnarFile, Columnarfile rightColumnarFile)
-  {
+  public static List<BitmapJoinFilePairs> getBitmapJoinFilePairsForCondExpr(CondExpr[] condExprs,
+      Columnarfile leftColumnarFile, Columnarfile rightColumnarFile) {
     List<BitmapJoinFilePairs> joinFilePairsList = new ArrayList();
 
     //TODO: Construct similar structure to index
@@ -217,7 +230,8 @@ public class BitmapUtil {
   /**
    * Method for evaluating the condition expression for the bitmap
    */
-  public static Boolean evaluateBitmapCondExpr(List<BitmapCondExprValues> bitmapCondExprValuesList) {
+  public static Boolean evaluateBitmapCondExpr(
+      List<BitmapCondExprValues> bitmapCondExprValuesList) {
     //TODO: passing condition expression is not required - revise later
     Boolean op_res = true;
 
@@ -234,8 +248,6 @@ public class BitmapUtil {
 
     return op_res;
   }
-
-
 
 
 }
