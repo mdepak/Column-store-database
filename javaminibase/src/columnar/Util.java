@@ -14,7 +14,6 @@ import global.RID;
 import global.TupleOrder;
 import heap.*;
 
-import iterator.CondExpr;
 import iterator.FileScan;
 import iterator.FileScanException;
 import iterator.FldSpec;
@@ -25,8 +24,6 @@ import iterator.Sort;
 import iterator.SortException;
 import iterator.TupleUtilsException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Util {
 
@@ -116,7 +113,6 @@ public class Util {
         boolean flag = true;
 
         RID recid = new RID();
-        DataPageInfo dpinfo = new DataPageInfo();
         while (currentDirPageId.pid != hf.INVALID_PAGE && flag) {
             hf.pinPage(currentDirPageId, currentDirPage, false);
 
@@ -125,14 +121,11 @@ public class Util {
                  recid != null;  // rid==NULL means no more record
                  recid = currentDirPage.nextRecord(recid)) {
                 atuple = currentDirPage.getRecord(recid);
-                dpinfo = new DataPageInfo(atuple);
+                DataPageInfo dpinfo = new DataPageInfo(atuple);
 
-                if (curcount - dpinfo.recct >= 0) {
+                if (curcount - dpinfo.recct > 0) {
                     curcount -= dpinfo.recct;
-                } else if(curcount==0){
-                    flag = false;
-                    break;
-                }else {
+                } else {
                     flag = false;
                     break;
                 }
@@ -151,23 +144,16 @@ public class Util {
         //recid points to data page with the position
 
         HFPage currentDataPage = new HFPage();
-        PageId currentDataPageId = new PageId(dpinfo.getPageId().pid);
+        PageId currentDataPageId = new PageId(recid.pageNo.pid);
         hf.pinPage(currentDataPageId, currentDataPage, false/*Rdisk*/);
 
-        RID record = new RID();
-        for (record = currentDataPage.firstRecord();
-             record != null && curcount>0;  // rid==NULL means no more record
-             record = currentDataPage.nextRecord(record)) {
+        RID record = currentDataPage.firstRecord();
+        curcount--;
+        while( record != null && curcount>0) {
+            record = currentDataPage.nextRecord(record);
             curcount--;
         }
-//        RID record = currentDataPage.firstRecord();
-//        curcount--;
-//        while( record != null && curcount>=0) {
-//            record = currentDataPage.nextRecord(record);
-//            curcount--;
-//        }
-        hf.unpinPage(currentDataPageId, false);
-
+        hf.unpinPage(currentDataPageId,  false/*Rdisk*/);
         return record;
     }
 
@@ -226,15 +212,15 @@ public class Util {
       nextTuple = currentDataPage.getRecord(recid);
       curcount--;
     }
-    try {
-      //TODO: Remove the try catch block
-      hf.unpinPage(currentDataPageId, false/*Rdisk*/);
-    }
-    catch (Exception ex)
-    {
-      System.out.println("Exception in getTupleFromPosition() - unpin");
-      ex.printStackTrace();
-    }
+
+     /* Scan sc = new Scan(hf);
+    RID cur = new RID();
+    Tuple nextTuple = new Tuple();
+    while (nextTuple != null && curcount >= 0) {
+      nextTuple = sc.getNext(cur);
+      curcount--;
+    }*/
+    hf.unpinPage(currentDataPageId,  false/*Rdisk*/);
     return nextTuple;
   }
 
@@ -245,7 +231,7 @@ public class Util {
 
         int currPosition = 0;
         PageId nextDirPageId = new PageId(0);
-        DataPageInfo dpinfo = new DataPageInfo();
+
         while (currentDirPageId.pid != hf.INVALID_PAGE && flag) {
             hf.pinPage(currentDirPageId, currentDirPage, false);
             RID recid = new RID();
@@ -254,12 +240,11 @@ public class Util {
                  recid != null;  // rid==NULL means no more record
                  recid = currentDirPage.nextRecord(recid)) {
                 atuple = currentDirPage.getRecord(recid);
-                dpinfo = new DataPageInfo(atuple);
+                DataPageInfo dpinfo = new DataPageInfo(atuple);
 
                 if (rid.pageNo.pid == dpinfo.getPageId().pid) {
-                    //currPosition += rid.slotNo+1;
+                    currPosition += rid.slotNo;
                     flag = false;
-                    break;
                 } else {
                     currPosition += dpinfo.recct;
                 }
@@ -274,20 +259,8 @@ public class Util {
                 currentDirPageId.pid = nextDirPageId.pid;
             }
         }
-
-        HFPage currentDataPage = new HFPage();
-        PageId currentDataPageId = new PageId(dpinfo.getPageId().pid);
-        hf.pinPage(currentDataPageId, currentDataPage, false/*Rdisk*/);
-
-        RID record = new RID();
-        for (record = currentDataPage.firstRecord();
-             !record.equals(rid);  // rid==NULL means no more record
-             record = currentDataPage.nextRecord(record)) {
-            currPosition+=1;
-        }
-        hf.unpinPage(currentDataPageId, false);
-
-        return currPosition+1; //of first record
+        hf.unpinPage(currentDirPageId,  false/*Rdisk*/);
+        return currPosition;
     }
 
 
@@ -326,81 +299,5 @@ public class Util {
     sort = new Sort(attrType, (short) 1, attrSize, fscan, 1, order[0], 10,4 );
 
     return sort;
-  }
-
-
-
-
-  public static Tuple getRowTupleFromPosition(int rowPosition, Columnarfile cf, int[] selectedCols, AttrType[] reqAttrType, short[] strSizes)
-      throws IOException, FieldNumberOutOfBoundException, InvalidSlotNumberException, HFBufMgrException, InvalidTupleSizeException, InvalidTypeException {
-
-    Tuple tuple = new Tuple();
-    tuple.setHdr((short) selectedCols.length, reqAttrType, strSizes);
-
-    for (int i = 0; i < selectedCols.length; i++) {
-      int indexNumber = selectedCols[i];
-      Heapfile heapfile = cf.getColumnFiles()[indexNumber - 1];
-      Tuple columnTuple = Util.getTupleFromPosition(rowPosition, heapfile);
-      columnTuple.initHeaders();
-
-      ValueClass valueClass = valueClassFactory(reqAttrType[i]);
-      valueClass.setValueFromColumnTuple(columnTuple, 1);
-      valueClass.setValueinRowTuple(tuple, i+1);
-    }
-
-    return tuple;
-  }
-
-  private static Boolean evaluateOR(List<Boolean> booleanList)
-  {
-    Boolean result = false;
-    for (Boolean value : booleanList)
-    {
-      result = result || value;
-    }
-
-    return  result;
-  }
-
-  public static List<BitmapCondExprScans> getBitmapScanForCondExpr(CondExpr[] condExprs, Columnarfile columnarfile)
-  {
-    List<BitmapCondExprScans> condExprScans = new ArrayList<>();
-
-    for(int i = 0; i< condExprs.length; i++)
-    {
-      //TODO: Iterate over each condExpr and and find the appropriate scan objects for those conditions
-    }
-
-    return condExprScans;
-  }
-
-
-
-
-  /**
-   * Method for evaluating the condition expression for the bitmap
-   * @param condExpr
-   * @param bitmapCondExprValuesList
-   * @return
-   */
-  public static Boolean evaluateBitmapCondExpr(CondExpr[] condExpr, List<BitmapCondExprValues> bitmapCondExprValuesList)
-  {
-    //TODO: passing condition expression is not required - revise later
-    Boolean op_res = true;
-
-    for(int i = 0; i< condExpr.length && op_res; i++)
-    {
-      BitmapCondExprValues condExprValues = bitmapCondExprValuesList.get(i);
-      Boolean tempResult = false;
-      while(condExprValues!= null && !tempResult)
-      {
-        tempResult = tempResult || evaluateOR(condExprValues.getValues()); //Perform OR operations
-        condExprValues = condExprValues.getNext();
-      }
-
-      op_res = op_res && tempResult;
-    }
-
-    return op_res;
   }
 }

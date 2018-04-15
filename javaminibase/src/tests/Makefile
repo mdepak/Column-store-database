@@ -1,5 +1,5 @@
 # modify the paths appropriately
-JDKPATH = /Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk/Contents/Home
+JDKPATH = /usr/lib/jvm/java-1.8.0-openjdk-amd64
 LIBPATH = .:..
 CLASSPATH = $(LIBPATH)
 BINPATH = $(JDKPATH)/bin
@@ -60,7 +60,7 @@ SortTest:SortTest.java
 	$(JAVAC) TestDriver.java SortTest.java
 
 sorttest: SortTest
-	$(JAVA) tests.SortTest
+	$(JAVA) -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8001 tests.SortTest
 
 # test sortMerge
 
