@@ -5,40 +5,24 @@ import global.AttrType;
 import global.IndexType;
 import heap.*;
 import index.ColumnIndexScan;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.w3c.dom.Attr;
-import tests.Util;
-
-import java.io.IOException;
-
 import index.IndexException;
 import index.UnknownIndexTypeException;
+import java.io.IOException;
+import java.util.*;
+import tests.Util;
 
 public class ColumnarNestedLoopsJoins {
 
-	public ColumnarNestedLoopsJoins(
-		AttrType[] in1,
-		int len_in1,
-		short[] t1_str_sizes,
-		AttrType[] in2,
-		int len_in2,
-		short[] t2_str_sizes,
-		int amt_of_mem,
-		Iterator am1,
-		java.lang.String outerTableName,
-		java.lang.String innerTableName,
+	public List<Tuple> ColumnarNestedLoopsJoins(
+		String outerTableName,
+		String innerTableName,
 		List<String> leftFilter,
 		List<String> rightFilter,
-		List<String> outFilter,
+		List<String> outputFilter,
 		String innerAccessType,
 		String outerAccessType,
-		String outerTargetColumns,
-		String innerTargetColumns,
-		FldSpec[] proj_list,
-		int n_out_flds)
+		String targetFieldValues,
+		int numOfBuffers)
 		throws
 			FieldNumberOutOfBoundException,
 			HFException,
@@ -54,15 +38,51 @@ public class ColumnarNestedLoopsJoins {
 			UnknownIndexTypeException,
 			UnknownKeyTypeException {
 
-		//Scanner initializations for outer table
+		//columnar file constructors for both outer and inner tables
 		Columnarfile outerCf = new Columnarfile(outerTableName);
+		Columnarfile innerCf = new Columnarfile(innerTableName);
+
+		//target columns extraction
+		String outputTargetFieldValues = targetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
+		String[] outputCoulmnsInOrder = outputTargetFieldValues.split(",");
+		int numOfAttributesInResultTuple = outputCoulmnsInOrder.length;
+		int outputOuterAttributesCount = 0;
+		List<String> outputOuterAttributesList = new ArrayList<String>();
+		int outputInnerAttributesCount = 0;
+		List<String> outputInnerAttributesList = new ArrayList<String>();
+
+		//building FldSpec for joined tuple & target column extraction for both the tables
+		FldSpec[] perm_mat = new FldSpec[numOfAttributesInResultTuple];
+		for(int i=0; i<numOfAttributesInResultTuple; i++) {
+			String[] outputColumn = outputCoulmnsInOrder[i].split(".");
+			if(outputColumn[0].equals(outerTableName)) {
+				outputOuterAttributesCount++;
+				outputOuterAttributesList.add(outputColumn[1]);
+				perm_mat[i].relation = new RelSpec(0);
+				perm_mat[i].offset = outerCf.columnNumberOffsetMap.get(outerCf.attrNameColNoMapping.get(outputColumn[1]));
+			} else {
+				outputInnerAttributesCount++;
+				outputInnerAttributesList.add(outputColumn[1]);
+				perm_mat[i].relation = new RelSpec(1);
+				perm_mat[i].offset = innerCf.columnNumberOffsetMap.get(innerCf.attrNameColNoMapping.get(outputColumn[1]));
+			}
+		}
+
+		//number of target columns in each of the outer and inner table
+		String[] outerTargetCoulmns = outputOuterAttributesList.toArray(new String[0]);
+		String[] innerTargetCoulmns = outputInnerAttributesList.toArray(new String[0]);
+
+		//value constraints Index Type extraction
+		int numOfOuterValueConstraints = getNumberOfConstraints(leftFilter);
+		int numOfInnerValueConstraints = getNumberOfConstraints(rightFilter);
+		IndexType[] outerValueConstraintsIndexType = getScanTypesForValueConstraints(leftFilter, numOfOuterValueConstraints, outerAccessType, outerCf);
+		IndexType[] innerValueConstraintsIndexType = getScanTypesForValueConstraints(rightFilter, numOfInnerValueConstraints, innerAccessType, innerCf);
+
+		//Scanner initializations for outer table
 		AttrType[] outerAttrTypes = outerCf.getType();
-//		IndexType outerIndexType = new IndexType(IndexType.B_Index);
-		IndexType outerIndexType;
-		int outerIndexColumnNumber = Util.getColumnNumber(leftFilter.get(0));
+		
+		int outerIndexColumnNumber = Util.getColumnNumber(leftFilter.get(0)); //TODO: multiple indexes will be there. Discuss with Vinoth.
 		String outerRelName = outerTableName + "." + outerIndexColumnNumber;
-//		String outerIndName = "BTree" + outerTableName + outerIndexColumnNumber;
-		String outerIndName;
 		AttrType[] outerValueConstraintAttrType = new AttrType[1];
 		outerValueConstraintAttrType[0] = outerAttrTypes[outerIndexColumnNumber-1];
 		int outerNumOfColumns = outerCf.getNumColumns();
@@ -75,11 +95,11 @@ public class ColumnarNestedLoopsJoins {
 			}
 		}
 		short[] outerStrSizes = Arrays.copyOfRange(outerStrSize, 0, outerStrCount);
-		outerTargetColumns = outerTargetColumns.replaceAll("\\[", "").replaceAll("\\]","");
-		String[] outerColArray = outerTargetColumns.split(",");
+		outerTargetFieldValues = outerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
+		String[] outerTargetCoulmns = outerTargetFieldValues.split(",");
 		List<String> outerColumnNames = new ArrayList<String>();
-		if(outerColArray.length > 0 && outerColArray != null) {
-			for (String col : outerColArray) {
+		if(outerTargetCoulmns.length > 0 && outerTargetCoulmns != null) {
+			for (String col : outerTargetCoulmns) {
 				outerColumnNames.add(col);
 			}
 		}
@@ -91,17 +111,14 @@ public class ColumnarNestedLoopsJoins {
 		boolean outerIndexOnly = outerTableDesiredColumnNumbers.length == 1 && !leftFilter.isEmpty() && outerTableDesiredColumnNumbers[0] == outerIndexColumnNumber;
 		ColumnIndexScan outerColScan;
 		Tuple outerTuple;
-
+		int numOfOuterConstraints = getNumberOfConstraints(leftFilter);
+		outerValueConstraintsIndexType = new IndexType[numOfOuterConstraints];
+		
 
 		//Scanner initializations for inner table
-		Columnarfile innerCf = new Columnarfile(innerTableName);
 		AttrType[] innerAttrTypes = innerCf.getType();
-//		IndexType innerIndexType = new IndexType(IndexType.B_Index);
-		IndexType innerIndexType;
 		int innerIndexColumnNumber = Util.getColumnNumber(rightFilter.get(0));
 		String innerRelName = innerTableName + "." + innerIndexColumnNumber;
-//		String innerIndName = "BTree" + innerTableName + innerIndexColumnNumber;
-		String innerIndName;
 		AttrType[] innerValueConstraintAttrType = new AttrType[1];
 		innerValueConstraintAttrType[0] = innerAttrTypes[innerIndexColumnNumber-1];
 		int innerNumOfColumns = innerCf.getNumColumns();
@@ -114,11 +131,11 @@ public class ColumnarNestedLoopsJoins {
 			}
 		}
 		short[] innerStrSizes = Arrays.copyOfRange(innerStrSize, 0, innerStrCount);
-		innerTargetColumns = innerTargetColumns.replaceAll("\\[", "").replaceAll("\\]","");
-		String[] innerColArray = innerTargetColumns.split(",");
+		innerTargetFieldValues = innerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
+		String[] innerTargetCoulmns = innerTargetFieldValues.split(",");
 		List<String> innerColumnNames = new ArrayList<String>();
-		if(innerColArray.length > 0 && innerColArray != null) {
-			for (String col : innerColArray) {
+		if(innerTargetCoulmns.length > 0 && innerTargetCoulmns != null) {
+			for (String col : innerTargetCoulmns) {
 				innerColumnNames.add(col);
 			}
 		}
@@ -130,53 +147,101 @@ public class ColumnarNestedLoopsJoins {
 		boolean innerIndexOnly = innerTableDesiredColumnNumbers.length == 1 && !leftFilter.isEmpty() && innerTableDesiredColumnNumbers[0] == innerIndexColumnNumber;
 		ColumnIndexScan innerColScan;
 		Tuple innerTuple;
+		int numOfInnerConstraints = getNumberOfConstraints(rightFilter);
+		innerValueConstraintsIndexType = new IndexType[numOfInnerConstraints];
+
 
 		//Scan objects for both Outer and Inner tables
-		int outerAccessMethod = 2;
-		int innerAccessMethod = 2;
-		switch (outerAccessType) {
-			case "Btree":
-				outerAccessMethod = 0;
-				break;
-
-			case "Bitmap":
-				outerAccessMethod = 1;
-				break;
+		if(outerAccessType.equals("BTree")) {
+			outerColScan = getScanObject(outerTableName, outerIndexColumnNumber, outerRelName, outerValueConstraintAttrType, outerStrSizes, outerTableDesiredColumnNumbers, outerExpr, outerIndexOnly, 1, leftFilter);
+		} else if(outerAccessType.equals("Bitmap")) {
+			outerColScan = getScanObject(outerTableName, outerIndexColumnNumber, outerRelName, outerValueConstraintAttrType, outerStrSizes, outerTableDesiredColumnNumbers, outerExpr, outerIndexOnly, 2, leftFilter);
+		} else {
+			outerColScan = null;
 		}
-		outerColScan = getScanObject(outerTableName, outerIndexColumnNumber, outerRelName, outerValueConstraintAttrType, outerStrSizes, outerTableDesiredColumnNumbers, outerExpr, outerIndexOnly, outerAccessMethod, leftFilter);
-		switch (innerAccessType) {
-			case "Btree":
-				innerAccessMethod = 0;
-				break;
-
-			case "Bitmap":
-				innerAccessMethod = 1;
-				break;
+		if(innerAccessType.equals("BTree")) {
+			innerColScan = getScanObject(innerTableName, innerIndexColumnNumber, innerRelName, innerValueConstraintAttrType, innerStrSizes, innerTableDesiredColumnNumbers, innerExpr, innerIndexOnly, 1, rightFilter);
+		} else if(innerAccessType.equals("Bitmap")) {
+			innerColScan = getScanObject(innerTableName, innerIndexColumnNumber, innerRelName, innerValueConstraintAttrType, innerStrSizes, innerTableDesiredColumnNumbers, innerExpr, innerIndexOnly, 2, rightFilter);
+		} else {
+			innerColScan = null;
 		}
-		innerColScan = getScanObject(innerTableName, innerIndexColumnNumber, innerRelName, innerValueConstraintAttrType, innerStrSizes, innerTableDesiredColumnNumbers, innerExpr, innerIndexOnly, innerAccessMethod, rightFilter);
 
 		//One joined result Tuple
-		Tuple resultTuple = new Tuple();
+		Tuple joinedTuple = new Tuple();
+		//All joined tuples
+		List<Tuple> resultTuples = new ArrayList<Tuple>();
 
 		while(true) {
 			outerTuple = outerColScan.get_next();
 			if(outerTuple == null) {
 				break;
 			}
-			resultTuple = null;
+			joinedTuple = null;
 			while(true) {
 				innerTuple = innerColScan.get_next();
 				if(innerTuple == null) {
 					break;
 				}
-				if(PredEval.Eval(outerExpr, outerTuple, null, outerAttrTypes, null) && PredEval.Eval(innerExpr, innerTuple, null, innerAttrTypes, null)) {
-					CondExpr[] joinExpr = Util.getValueContraint(outFilter);
-					if(PredEval.Eval(joinExpr, outerTuple, innerTuple, outerAttrTypes, innerAttrTypes)) {
-//								Projection.Join(outerTuple, outerAttrTypes, innerTuple, innerAttrTypes, resultTuple, );
-					}
+				CondExpr[] joinExpr = Util.getValueContraint(outputFilter);
+				if(PredEval.Eval(joinExpr, outerTuple, innerTuple, outerAttrTypes, innerAttrTypes)) {
+					Projection.Join(outerTuple, outerAttrTypes, innerTuple, innerAttrTypes, joinedTuple, perm_mat, numOfAttributesInResultTuple);
+					resultTuples.add(joinedTuple);
 				}
 			}
 		}
+		return resultTuples;
+	}
+
+	public int getNumberOfConstraints(List<String> filter) {
+		String[] operators = {"=", "!=", "<", ">", "<=", ">="};
+		String[] filterArray = filter.toArray(new String[0]);
+		int numOfOperators = operators.length;
+		int filterSize = filterArray.length;
+		int count = 0;
+		for(int i=0; i<numOfOperators; i++) {
+			for(int j=0; j<filterSize; j++) {
+				if(operators[i].equals(filterArray[j])) {
+					count++;
+				}
+			}
+		}
+		return count;
+	}
+
+	public IndexType[] getScanTypesForValueConstraints(List<String> filter, int numOfConstraints, String accessType, Columnarfile cf) {
+		IndexType[] valueConstraintsIndexType = new IndexType[numOfConstraints];
+		for(int i=0; i<numOfConstraints; i++) {
+			valueConstraintsIndexType[i] = new IndexType(IndexType.None);
+		}
+		if(accessType.toLowerCase().equals("btree")) {
+			getBitMapScanAttributes(cf, valueConstraintsIndexType);
+			getBTreeScanAttributes(cf, valueConstraintsIndexType);
+		}else if(accessType.toLowerCase().equals("bitmap")) {
+			getBTreeScanAttributes(cf, valueConstraintsIndexType);
+			getBitMapScanAttributes(cf, valueConstraintsIndexType);
+		}
+		return valueConstraintsIndexType;
+	}
+
+	public IndexType[] getBTreeScanAttributes(Columnarfile cf, IndexType[] valueConstraintsIndexType) {
+		Set set = cf.bTreeIndexes.entrySet();
+		java.util.Iterator itr = set.iterator();
+		while(itr.hasNext()) {
+			Map.Entry entry = (Map.Entry)itr.next();
+			valueConstraintsIndexType[(int)entry.getKey()] = new IndexType(IndexType.B_Index);
+		}
+		return valueConstraintsIndexType;
+	}
+
+	public IndexType[] getBitMapScanAttributes(Columnarfile cf, IndexType[] valueConstraintsIndexType) {
+		Set set = cf.bitmapIndexes.entrySet();
+		java.util.Iterator itr = set.iterator();
+		while(itr.hasNext()) {
+			Map.Entry entry = (Map.Entry)itr.next();
+			valueConstraintsIndexType[(int)entry.getKey()] = new IndexType(IndexType.BIT_MAP);
+		}
+		return valueConstraintsIndexType;
 	}
 
 	public ColumnIndexScan getScanObject(
@@ -198,7 +263,7 @@ public class ColumnarNestedLoopsJoins {
 		String indName;
 		String constraintValue;
 
-		if(accessMethod == 0) {
+		if(accessMethod == 1) {
 			indexType = new IndexType(IndexType.B_Index);
 			indName = "BTree" + tableName + indexColumnNumber;
 		}else {
