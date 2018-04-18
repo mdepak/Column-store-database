@@ -1,6 +1,18 @@
 package tests;
 
 import chainexception.ChainException;
+import heap.FieldNumberOutOfBoundException;
+import heap.HFBufMgrException;
+import heap.HFDiskMgrException;
+import heap.HFException;
+import heap.InvalidSlotNumberException;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
+import index.IndexException;
+import index.UnknownIndexTypeException;
+import iterator.PredEvalException;
+import iterator.UnknowAttrType;
+import iterator.UnknownKeyTypeException;
 import java.io.IOException;
 
 //    Major Changes:
@@ -117,7 +129,20 @@ public class TestDriver {
    *
    * @return a boolean value indicates whether ALL the tests have passed
    */
-  public boolean runTests() {
+  public boolean runTests()throws
+      FieldNumberOutOfBoundException,
+      HFException,
+      HFBufMgrException,
+      HFDiskMgrException,
+      IndexException,
+      InvalidSlotNumberException,
+      InvalidTupleSizeException,
+      InvalidTypeException,
+      IOException,
+      PredEvalException,
+      UnknowAttrType,
+      UnknownIndexTypeException,
+      UnknownKeyTypeException {
 
     System.out.println("\n" + "Running " + testName() + " tests...." + "\n");
 
@@ -174,7 +199,20 @@ public class TestDriver {
     return _pass;
   }
 
-  protected boolean runAllTests() {
+  protected boolean runAllTests() throws
+      FieldNumberOutOfBoundException,
+      HFException,
+      HFBufMgrException,
+      HFDiskMgrException,
+      IndexException,
+      InvalidSlotNumberException,
+      InvalidTupleSizeException,
+      InvalidTypeException,
+      IOException,
+      PredEvalException,
+      UnknowAttrType,
+      UnknownIndexTypeException,
+      UnknownKeyTypeException {
 
     boolean _passAll = OK;
 

@@ -22,9 +22,12 @@ import index.ColumnIndexScan;
 import index.IndexException;
 import index.UnknownIndexTypeException;
 import iterator.ColumnarFileScan;
+import iterator.ColumnarNestedLoopsJoins;
 import iterator.CondExpr;
 import iterator.FldSpec;
+import iterator.PredEvalException;
 import iterator.RelSpec;
+import iterator.UnknowAttrType;
 import iterator.UnknownKeyTypeException;
 import java.io.BufferedReader;
 import java.io.File;
@@ -140,7 +143,21 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     super("columnartest");
   }
 
-  public boolean setupDatabase() {
+  public boolean setupDatabase()
+      throws
+      FieldNumberOutOfBoundException,
+      HFException,
+      HFBufMgrException,
+      HFDiskMgrException,
+      IndexException,
+      InvalidSlotNumberException,
+      InvalidTupleSizeException,
+      InvalidTypeException,
+      IOException,
+      PredEvalException,
+      UnknowAttrType,
+      UnknownIndexTypeException,
+      UnknownKeyTypeException {
 
     // Kill anything that might be hanging around
     String newdbpath;
@@ -207,7 +224,12 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
   public static void runDeleteOnColumnar(String columnDBName, String columnFileName,
       List<String> valueConstraint, int numBuf, boolean purge)
-      throws InvalidTupleSizeException, HFBufMgrException, InvalidSlotNumberException, IOException, SpaceNotAvailableException, InvalidTypeException, FieldNumberOutOfBoundException, HFException, HFDiskMgrException {
+      throws InvalidTupleSizeException, HFBufMgrException, InvalidSlotNumberException, IOException, SpaceNotAvailableException, InvalidTypeException, FieldNumberOutOfBoundException, HFException, HFDiskMgrException,
+      IndexException,
+      PredEvalException,
+      UnknowAttrType,
+      UnknownIndexTypeException,
+      UnknownKeyTypeException {
 
     try {
 
@@ -490,7 +512,20 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   }
 
   @Override
-  protected boolean runAllTests() {
+  protected boolean runAllTests() throws
+      FieldNumberOutOfBoundException,
+      HFException,
+      HFBufMgrException,
+      HFDiskMgrException,
+      IndexException,
+      InvalidSlotNumberException,
+      InvalidTupleSizeException,
+      InvalidTypeException,
+      IOException,
+      PredEvalException,
+      UnknowAttrType,
+      UnknownIndexTypeException,
+      UnknownKeyTypeException {
 
     //test1();
 
@@ -517,6 +552,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         "\n[2]  Query (query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE)");
     System.out.println(
         "\n[3]  Delete Query (delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE)");
+    System.out.println(
+        "\n[4]  NestedLoopJoin Query (nlj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST JOINCONST OUTERACCTYPE INNERACCTYPE [OUTERTARGETCOLUMNS] [INNERTARGETCOLUMNS] NUMBUF)");
     System.out.println("\n[4]  Exit!");
     System.out.println("\nNote: for any value not being specified please mention NA");
     System.out.print("Hi, Please mention the operation in the given format:");
@@ -654,6 +691,22 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         Util.createDatabaseIfNotExists(columnDBName, 100);
 
         createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
+      } else if (operation.contains("nlj")) {
+        columnDBName = input[1];
+        String outerFile = input[2];
+        String innerFile = input[3];
+        String outerConst = input[4];
+        outerConst = outerConst.replaceAll("\\[", "").replaceAll("\\]","");
+        List<String> outerConstArray = new ArrayList<String>(Arrays.asList(outerConst.split(",")));
+        String innerConst = input[5];
+        String joinConst = input[6];
+        String outerAccessType = input[7];
+        String innerAccessType = input[8];
+        String outerTargetColumns = input[9];
+        String innerTargetColumns = input[10];
+        numBuf = Integer.parseInt((input[11].contains("NA")) ? "100" : input[11]);
+//        ColumnarNestedLoopsJoins nljObj = new ColumnarNestedLoopsJoins(null, 0, null, null, 0,
+//            null, numBuf, null, outerFile, innerFile, outerConstArray, innerConst, joinConst, innerAccessType, outerAccessType, outerTargetColumns, innerTargetColumns, null, null);
       }
 
       try {
