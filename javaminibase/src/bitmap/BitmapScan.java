@@ -91,7 +91,7 @@ public class BitmapScan implements GlobalConst {
         }
 
         if (datapage == null) {
-            return false;
+            return null;
         }
 
         rid.pageNo.pid = userrid.pageNo.pid;

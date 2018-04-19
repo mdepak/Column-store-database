@@ -216,15 +216,35 @@ public class BitmapUtil {
     return bitmapPairList;
   }
 
+    public List<BitmapJoinFilePairs> getBitmapJoinFilePairsForCondExpr(CondExpr[] condExprs, Columnarfile leftColumnarFile, Columnarfile rightColumnarFile) {
+        //TODO: Construct similar structure to index
+        List<BitmapJoinFilePairs> joinFilePairsList = new ArrayList();
 
-  public static List<BitmapJoinFilePairs> getBitmapJoinFilePairsForCondExpr(CondExpr[] condExprs,
-      Columnarfile leftColumnarFile, Columnarfile rightColumnarFile) {
-    List<BitmapJoinFilePairs> joinFilePairsList = new ArrayList();
+        for (int i = 0; i < condExprs.length; i++) {
+            CondExpr expression = condExprs[i];
+            BitmapJoinFilePairs joinFilePair = new BitmapJoinFilePairs();
 
-    //TODO: Construct similar structure to index
+            joinFilePairsList.add(joinFilePair);
 
-    return joinFilePairsList;
-  }
+            //Current object in the list
+            BitmapJoinFilePairs currObj = joinFilePair;
+            while (expression != null) {
+
+                List<BitmapPair> bmPairList = getBitmapPairsForCondExpr(expression, leftColumnarFile, rightColumnarFile);
+
+                // Set the opened bm files to the list
+                currObj.setFilePairsList(bmPairList);
+
+                expression = expression.next;
+                if (expression != null) {
+                    currObj.next = new BitmapJoinFilePairs();
+                    currObj = currObj.next;
+                }
+            }
+        }
+
+        return joinFilePairsList;
+    }
 
 
   /**
