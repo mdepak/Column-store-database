@@ -38,7 +38,7 @@ public class ColumnarNestedLoopsJoins {
 			UnknownIndexTypeException,
 			UnknownKeyTypeException {
 
-		//columnar file constructors for both outer and inner tables
+		//columnar file object for outer and inner tables
 		Columnarfile outerCf = new Columnarfile(outerTableName);
 		Columnarfile innerCf = new Columnarfile(innerTableName);
 
@@ -69,103 +69,85 @@ public class ColumnarNestedLoopsJoins {
 		}
 
 		//number of target columns in each of the outer and inner table
-		String[] outerTargetCoulmns = outputOuterAttributesList.toArray(new String[0]);
-		String[] innerTargetCoulmns = outputInnerAttributesList.toArray(new String[0]);
+		String[] outerTargetColumns = outputOuterAttributesList.toArray(new String[0]);
+		String[] innerTargetColumns = outputInnerAttributesList.toArray(new String[0]);
 
-		//value constraints Index Type extraction
+		//value constraints extraction
 		int numOfOuterValueConstraints = getNumberOfConstraints(leftFilter);
 		int numOfInnerValueConstraints = getNumberOfConstraints(rightFilter);
 		IndexType[] outerValueConstraintsIndexType = getScanTypesForValueConstraints(leftFilter, numOfOuterValueConstraints, outerAccessType, outerCf);
 		IndexType[] innerValueConstraintsIndexType = getScanTypesForValueConstraints(rightFilter, numOfInnerValueConstraints, innerAccessType, innerCf);
+		CondExpr[] outerExpr = Util.getValueContraint(leftFilter);
+		CondExpr[] innerExpr = Util.getValueContraint(rightFilter);
+		int[] outerValueConstraintsColumnNumbers = getValueConstraintsColumnNumber(leftFilter, outerCf);
+		int[] innerValueConstraintsColumnNumbers = getValueConstraintsColumnNumber(rightFilter, innerCf);
 
 		//Scanner initializations for outer table
 		AttrType[] outerAttrTypes = outerCf.getType();
-		
-		int outerIndexColumnNumber = Util.getColumnNumber(leftFilter.get(0)); //TODO: multiple indexes will be there. Discuss with Vinoth.
-		String outerRelName = outerTableName + "." + outerIndexColumnNumber;
-		AttrType[] outerValueConstraintAttrType = new AttrType[1];
-		outerValueConstraintAttrType[0] = outerAttrTypes[outerIndexColumnNumber-1];
-		int outerNumOfColumns = outerCf.getNumColumns();
-		short[] outerStrSize = new short[outerNumOfColumns];
-		int outerStrCount = 0;
-		for(int i=0; i<outerNumOfColumns; i++) {
-			if(outerAttrTypes[i].attrType == AttrType.attrString) {
-				outerStrSize[outerStrCount] = (short)100;
-				outerStrCount++;
-			}
-		}
-		short[] outerStrSizes = Arrays.copyOfRange(outerStrSize, 0, outerStrCount);
-		outerTargetFieldValues = outerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
-		String[] outerTargetCoulmns = outerTargetFieldValues.split(",");
-		List<String> outerColumnNames = new ArrayList<String>();
-		if(outerTargetCoulmns.length > 0 && outerTargetCoulmns != null) {
-			for (String col : outerTargetCoulmns) {
-				outerColumnNames.add(col);
-			}
-		}
-		int outerTableDesiredColumnNumbers[] = new int[outerColumnNames.size()];
-		for (int i = 0; i < outerColumnNames.size(); i++) {
-			outerTableDesiredColumnNumbers[i] = Util.getColumnNumber(outerColumnNames.get(i));
-		}
-		CondExpr[] outerExpr = Util.getValueContraint(leftFilter);
-		boolean outerIndexOnly = outerTableDesiredColumnNumbers.length == 1 && !leftFilter.isEmpty() && outerTableDesiredColumnNumbers[0] == outerIndexColumnNumber;
-		ColumnIndexScan outerColScan;
+		short[] outerStrSizes = outerCf.getStrSizes();
+//		int outerIndexColumnNumber = Util.getColumnNumber(leftFilter.get(0)); //TODO: multiple indexes will be there. Discuss with Vinoth.
+//		String outerRelName = outerTableName + "." + outerIndexColumnNumber;
+//		AttrType[] outerValueConstraintAttrType = new AttrType[1];
+//		outerValueConstraintAttrType[0] = outerAttrTypes[outerIndexColumnNumber-1];
+//		int outerNumOfColumns = outerCf.getNumColumns();
+//		short[] outerStrSize = new short[outerNumOfColumns];
+//		int outerStrCount = 0;
+//		for(int i=0; i<outerNumOfColumns; i++) {
+//			if(outerAttrTypes[i].attrType == AttrType.attrString) {
+//				outerStrSize[outerStrCount] = (short)100;
+//				outerStrCount++;
+//			}
+//		}
+//		short[] outerStrSizes = Arrays.copyOfRange(outerStrSize, 0, outerStrCount);
+//		outerTargetFieldValues = outerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
+//		String[] outerTargetColumns = outerTargetFieldValues.split(",");
+//		List<String> outerColumnNames = new ArrayList<String>();
+//		if(outerTargetColumns.length > 0 && outerTargetColumns != null) {
+//			for (String col : outerTargetColumns) {
+//				outerColumnNames.add(col);
+//			}
+//		}
+//		int outerTableDesiredColumnNumbers[] = new int[outerColumnNames.size()];
+//		for (int i = 0; i < outerColumnNames.size(); i++) {
+//			outerTableDesiredColumnNumbers[i] = Util.getColumnNumber(outerColumnNames.get(i));
+//		}
+//		boolean outerIndexOnly = outerTableDesiredColumnNumbers.length == 1 && !leftFilter.isEmpty() && outerTableDesiredColumnNumbers[0] == outerIndexColumnNumber;
+		ColumnarIndexScan outerColScan = getScanObject(outerAccessType, outerTableName, outerValueConstraintsColumnNumbers, outerValueConstraintsIndexType, outerAttrTypes, outerStrSizes, outerExpr);
 		Tuple outerTuple;
-		int numOfOuterConstraints = getNumberOfConstraints(leftFilter);
-		outerValueConstraintsIndexType = new IndexType[numOfOuterConstraints];
 		
 
 		//Scanner initializations for inner table
 		AttrType[] innerAttrTypes = innerCf.getType();
-		int innerIndexColumnNumber = Util.getColumnNumber(rightFilter.get(0));
-		String innerRelName = innerTableName + "." + innerIndexColumnNumber;
-		AttrType[] innerValueConstraintAttrType = new AttrType[1];
-		innerValueConstraintAttrType[0] = innerAttrTypes[innerIndexColumnNumber-1];
-		int innerNumOfColumns = innerCf.getNumColumns();
-		short[] innerStrSize = new short[innerNumOfColumns];
-		int innerStrCount = 0;
-		for(int i=0; i<innerNumOfColumns; i++) {
-			if(innerAttrTypes[i].attrType == AttrType.attrString) {
-				innerStrSize[innerStrCount] = (short)100;
-				innerStrCount++;
-			}
-		}
-		short[] innerStrSizes = Arrays.copyOfRange(innerStrSize, 0, innerStrCount);
-		innerTargetFieldValues = innerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
-		String[] innerTargetCoulmns = innerTargetFieldValues.split(",");
-		List<String> innerColumnNames = new ArrayList<String>();
-		if(innerTargetCoulmns.length > 0 && innerTargetCoulmns != null) {
-			for (String col : innerTargetCoulmns) {
-				innerColumnNames.add(col);
-			}
-		}
-		int innerTableDesiredColumnNumbers[] = new int[innerColumnNames.size()];
-		for (int i = 0; i < innerColumnNames.size(); i++) {
-			innerTableDesiredColumnNumbers[i] = Util.getColumnNumber(innerColumnNames.get(i));
-		}
-		CondExpr[] innerExpr = Util.getValueContraint(leftFilter);
-		boolean innerIndexOnly = innerTableDesiredColumnNumbers.length == 1 && !leftFilter.isEmpty() && innerTableDesiredColumnNumbers[0] == innerIndexColumnNumber;
-		ColumnIndexScan innerColScan;
+		short[] innerStrSizes = innerCf.getStrSizes();
+//		int innerIndexColumnNumber = Util.getColumnNumber(rightFilter.get(0));
+//		String innerRelName = innerTableName + "." + innerIndexColumnNumber;
+//		AttrType[] innerValueConstraintAttrType = new AttrType[1];
+//		innerValueConstraintAttrType[0] = innerAttrTypes[innerIndexColumnNumber-1];
+//		int innerNumOfColumns = innerCf.getNumColumns();
+//		short[] innerStrSize = new short[innerNumOfColumns];
+//		int innerStrCount = 0;
+//		for(int i=0; i<innerNumOfColumns; i++) {
+//			if(innerAttrTypes[i].attrType == AttrType.attrString) {
+//				innerStrSize[innerStrCount] = (short)100;
+//				innerStrCount++;
+//			}
+//		}
+//		short[] innerStrSizes = Arrays.copyOfRange(innerStrSize, 0, innerStrCount);
+//		innerTargetFieldValues = innerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
+//		String[] innerTargetColumns = innerTargetFieldValues.split(",");
+//		List<String> innerColumnNames = new ArrayList<String>();
+//		if(innerTargetColumns.length > 0 && innerTargetColumns != null) {
+//			for (String col : innerTargetColumns) {
+//				innerColumnNames.add(col);
+//			}
+//		}
+//		int innerTableDesiredColumnNumbers[] = new int[innerColumnNames.size()];
+//		for (int i = 0; i < innerColumnNames.size(); i++) {
+//			innerTableDesiredColumnNumbers[i] = Util.getColumnNumber(innerColumnNames.get(i));
+//		}
+//		boolean innerIndexOnly = innerTableDesiredColumnNumbers.length == 1 && !leftFilter.isEmpty() && innerTableDesiredColumnNumbers[0] == innerIndexColumnNumber;
+		ColumnarIndexScan innerColScan = getScanObject(innerAccessType, innerTableName, innerValueConstraintsColumnNumbers, innerValueConstraintsIndexType, innerAttrTypes, innerStrSizes, innerExpr);
 		Tuple innerTuple;
-		int numOfInnerConstraints = getNumberOfConstraints(rightFilter);
-		innerValueConstraintsIndexType = new IndexType[numOfInnerConstraints];
-
-
-		//Scan objects for both Outer and Inner tables
-		if(outerAccessType.equals("BTree")) {
-			outerColScan = getScanObject(outerTableName, outerIndexColumnNumber, outerRelName, outerValueConstraintAttrType, outerStrSizes, outerTableDesiredColumnNumbers, outerExpr, outerIndexOnly, 1, leftFilter);
-		} else if(outerAccessType.equals("Bitmap")) {
-			outerColScan = getScanObject(outerTableName, outerIndexColumnNumber, outerRelName, outerValueConstraintAttrType, outerStrSizes, outerTableDesiredColumnNumbers, outerExpr, outerIndexOnly, 2, leftFilter);
-		} else {
-			outerColScan = null;
-		}
-		if(innerAccessType.equals("BTree")) {
-			innerColScan = getScanObject(innerTableName, innerIndexColumnNumber, innerRelName, innerValueConstraintAttrType, innerStrSizes, innerTableDesiredColumnNumbers, innerExpr, innerIndexOnly, 1, rightFilter);
-		} else if(innerAccessType.equals("Bitmap")) {
-			innerColScan = getScanObject(innerTableName, innerIndexColumnNumber, innerRelName, innerValueConstraintAttrType, innerStrSizes, innerTableDesiredColumnNumbers, innerExpr, innerIndexOnly, 2, rightFilter);
-		} else {
-			innerColScan = null;
-		}
 
 		//One joined result Tuple
 		Tuple joinedTuple = new Tuple();
@@ -191,6 +173,24 @@ public class ColumnarNestedLoopsJoins {
 			}
 		}
 		return resultTuples;
+	}
+
+	public int[] getValueConstraintsColumnNumber(List<String>filter, Columnarfile cf) {
+		int[] columnNumbers = new int[filter.size()];
+		String[] operators = {"=", "!=", "<", ">", "<=", ">="};
+		String[] filterArray = filter.toArray(new String[0]);
+		int numOfOperators = operators.length;
+		int filterSize = filterArray.length;
+		int k = 0;
+		for(int i=0; i<filterSize; i++) {
+			for(int j=0; j<numOfOperators; j++) {
+				if(filterArray[i].equals(operators[j])) {
+					columnNumbers[k] = cf.attrNameColNoMapping.get(filterArray[i-1]);
+					k++;
+				}
+			}
+		}
+		return columnNumbers;
 	}
 
 	public int getNumberOfConstraints(List<String> filter) {
@@ -244,33 +244,39 @@ public class ColumnarNestedLoopsJoins {
 		return valueConstraintsIndexType;
 	}
 
-	public ColumnIndexScan getScanObject(
+	public ColumnarIndexScan getScanObject(
+		String accessType,
 		String tableName,
-		int indexColumnNumber,
-		String relName,
-		AttrType[] valueConstraintAttrType,
+		int[] valueConstraintsColumnNumber,
+		IndexType[] valueConstraintsIndexType,
+		AttrType[] attrType,
 		short[] strSizes,
-		int[] desiredColumnNumbers,
-		CondExpr[] expr,
-		boolean indexOnly,
-		int accessMethod,
-		List<String> filter)
+		CondExpr[] expr)
 		throws
 			IndexException,
+			IOException,
 			UnknownIndexTypeException {
 
 		IndexType indexType;
 		String indName;
 		String constraintValue;
 
-		if(accessMethod == 1) {
-			indexType = new IndexType(IndexType.B_Index);
-			indName = "BTree" + tableName + indexColumnNumber;
-		}else {
-			indexType = new IndexType(IndexType.BIT_MAP);
-			constraintValue = filter.get(2);
-			indName = "BM_" + constraintValue + "_" + tableName + "." + indexColumnNumber;
+		switch(accessType) {
+			case "BTree" :
+				indexType = new IndexType(IndexType.B_Index);
+				indName = "BTree" + tableName + indexColumnNumber;
+				break;
+
+			case "Bitmap" :
+				indexType = new IndexType(IndexType.BIT_MAP);
+				constraintValue = filter.get(2);
+				indName = "BM_" + constraintValue + "_" + tableName + "." + indexColumnNumber;
+				break;
+
+			default :
+				indexType = null;
+				indName = null;
 		}
-		return (new ColumnIndexScan(indexType, tableName, relName, indName, valueConstraintAttrType, strSizes, 1, desiredColumnNumbers, expr, indexOnly));
+		return (new ColumnarIndexScan(tableName, valueConstraintsColumnNumber, valueConstraintsIndexType, attrType, strSizes,expr));
 	}
 }
