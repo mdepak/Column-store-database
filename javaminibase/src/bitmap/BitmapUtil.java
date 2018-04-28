@@ -34,7 +34,7 @@ public class BitmapUtil {
       AttrOperator operator) {
     //TODO: Add a switch case and return a function for each operator type.
     //TODO: Write a function in the Value class and call the functions appropriately.
-    
+
     switch (operator.attrOperator) {
       case AttrOperator.aopEQ:
         return (ValueClass value1, ValueClass value2) -> value1.evaluateEquals(value2);
@@ -190,7 +190,7 @@ public class BitmapUtil {
   }
 
 
-  private List<BitmapPair> getBitmapPairsForCondExpr(CondExpr condExpr,
+  private static List<BitmapPair> getBitmapPairsForCondExpr(CondExpr condExpr,
       Columnarfile leftColumnarFile, Columnarfile rightColumnarFile) {
     int leftColNo = Integer.parseInt(condExpr.operand1.string);
     List<ColumnarHeaderRecord> leftHeaderList = leftColumnarFile.getBitMapIndicesInfo(leftColNo);
@@ -202,7 +202,7 @@ public class BitmapUtil {
   }
 
 
-  private List<BitmapPair> findBitMapPairs(List<ColumnarHeaderRecord> leftBitmaps,
+  private static List<BitmapPair> findBitMapPairs(List<ColumnarHeaderRecord> leftBitmaps,
       List<ColumnarHeaderRecord> rightBitmaps) {
     List<BitmapPair> bitmapPairList = new ArrayList<>();
     for (ColumnarHeaderRecord leftBitmap : leftBitmaps) {
@@ -216,35 +216,39 @@ public class BitmapUtil {
     return bitmapPairList;
   }
 
-    public List<BitmapJoinFilePairs> getBitmapJoinFilePairsForCondExpr(CondExpr[] condExprs, Columnarfile leftColumnarFile, Columnarfile rightColumnarFile) {
-        //TODO: Construct similar structure to index
-        List<BitmapJoinFilePairs> joinFilePairsList = new ArrayList();
 
-        for (int i = 0; i < condExprs.length; i++) {
-            CondExpr expression = condExprs[i];
-            BitmapJoinFilePairs joinFilePair = new BitmapJoinFilePairs();
+  public static List<BitmapJoinFilePairs> getBitmapJoinFilePairsForCondExpr(CondExpr[] condExprs,
+      Columnarfile leftColumnarFile, Columnarfile rightColumnarFile) {
+    //TODO: Construct similar structure to index
+    List<BitmapJoinFilePairs> joinFilePairsList = new ArrayList();
 
-            joinFilePairsList.add(joinFilePair);
+    for (int i = 0; i < condExprs.length; i++) {
+      CondExpr expression = condExprs[i];
+      BitmapJoinFilePairs joinFilePair = new BitmapJoinFilePairs();
 
-            //Current object in the list
-            BitmapJoinFilePairs currObj = joinFilePair;
-            while (expression != null) {
+      joinFilePairsList.add(joinFilePair);
 
-                List<BitmapPair> bmPairList = getBitmapPairsForCondExpr(expression, leftColumnarFile, rightColumnarFile);
+      //Current object in the list
+      BitmapJoinFilePairs currObj = joinFilePair;
+      while (expression != null) {
 
-                // Set the opened bm files to the list
-                currObj.setFilePairsList(bmPairList);
+        List<BitmapPair> bmPairList = getBitmapPairsForCondExpr(expression, leftColumnarFile,
+            rightColumnarFile);
 
-                expression = expression.next;
-                if (expression != null) {
-                    currObj.next = new BitmapJoinFilePairs();
-                    currObj = currObj.next;
-                }
-            }
+        // Set the opened bm files to the list
+        currObj.setFilePairsList(bmPairList);
+
+        expression = expression.next;
+        if (expression != null) {
+          currObj.next = new BitmapJoinFilePairs();
+          currObj = currObj.next;
         }
-
-        return joinFilePairsList;
+      }
     }
+
+    return joinFilePairsList;
+  }
+
 
 
   /**
