@@ -6,15 +6,25 @@ import global.GlobalConst;
 import global.RID;
 import global.SystemDefs;
 import global.TupleOrder;
+import heap.FieldNumberOutOfBoundException;
+import heap.HFBufMgrException;
+import heap.HFDiskMgrException;
+import heap.HFException;
 import heap.Heapfile;
+import heap.InvalidSlotNumberException;
 import heap.InvalidTupleSizeException;
 import heap.InvalidTypeException;
 import heap.Tuple;
+import index.IndexException;
+import index.UnknownIndexTypeException;
 import iterator.CondExpr;
 import iterator.FileScan;
 import iterator.FldSpec;
+import iterator.PredEvalException;
 import iterator.RelSpec;
 import iterator.Sort;
+import iterator.UnknowAttrType;
+import iterator.UnknownKeyTypeException;
 import java.io.IOException;
 import java.util.Random;
 
@@ -65,7 +75,31 @@ class SORTDriver extends TestDriver
     super("sorttest");
   }
 
-  public boolean runTests() {
+  protected boolean runAllTests() throws
+      FieldNumberOutOfBoundException,
+      HFException,
+      HFBufMgrException,
+      HFDiskMgrException,
+      IndexException,
+      InvalidSlotNumberException,
+      InvalidTupleSizeException,
+      InvalidTypeException,
+      IOException,
+      PredEvalException,
+      UnknowAttrType,
+      UnknownIndexTypeException,
+      UnknownKeyTypeException {
+
+    boolean _passAll = OK;
+
+    if (!test1()) {
+      _passAll = FAIL;
+    }
+    return _passAll;
+  }
+
+  public boolean runTests()
+      throws IOException, HFBufMgrException, InvalidTypeException, FieldNumberOutOfBoundException, HFDiskMgrException, PredEvalException, UnknownIndexTypeException, UnknowAttrType, InvalidSlotNumberException, InvalidTupleSizeException, UnknownKeyTypeException, IndexException, HFException {
 
     System.out.println("\n" + "Running " + testName() + " tests...." + "\n");
 
@@ -180,9 +214,9 @@ class SORTDriver extends TestDriver
       e.printStackTrace();
     }
 
-    for (int i = 0; i < NUM_RECORDS; i++) {
+    for (int i = 0; i < 10000; i++) {
       try {
-        t.setStrFld(1, data1[i]);
+        t.setStrFld(1, data1[i%NUM_RECORDS]);
       } catch (Exception e) {
         status = FAIL;
         e.printStackTrace();
@@ -224,7 +258,7 @@ class SORTDriver extends TestDriver
     // Sort "test1.in" 
     Sort sort = null;
     try {
-      sort = new Sort(attrType, (short) 2, attrSize, fscan, 1, order[0], REC_LEN1, SORTPGNUM);
+      sort = new Sort(attrType, (short) 2, attrSize, fscan, 1, order[0], REC_LEN1, 3);
     } catch (Exception e) {
       status = FAIL;
       e.printStackTrace();
@@ -244,12 +278,13 @@ class SORTDriver extends TestDriver
     boolean flag = true;
 
     while (t != null) {
-      if (count >= NUM_RECORDS) {
+      /*if (count >= NUM_RECORDS) {
         System.err.println("Test1 -- OOPS! too many records");
         status = FAIL;
         flag = false;
         break;
       }
+      */
 
       try {
         outval = t.getStrFld(1);
@@ -273,12 +308,12 @@ class SORTDriver extends TestDriver
         e.printStackTrace();
       }
     }
-    if (count < NUM_RECORDS) {
+    /*if (count < NUM_RECORDS) {
       System.err.println("Test1 -- OOPS! too few records");
       status = FAIL;
     } else if (flag && status) {
       System.err.println("Test1 -- Sorting OK");
-    }
+    }*/
 
     // clean up
     try {
@@ -897,7 +932,8 @@ class SORTDriver extends TestDriver
 
 public class SortTest {
 
-  public static void main(String argv[]) {
+  public static void main(String argv[])
+      throws IOException, HFBufMgrException, InvalidTypeException, FieldNumberOutOfBoundException, UnknownIndexTypeException, PredEvalException, HFException, IndexException, UnknowAttrType, InvalidTupleSizeException, InvalidSlotNumberException, UnknownKeyTypeException, HFDiskMgrException {
     boolean sortstatus;
 
     SORTDriver sortt = new SORTDriver();
