@@ -2,6 +2,10 @@ package bitmap;
 
 import btree.ConstructPageException;
 import btree.GetFileEntryException;
+import bufmgr.HashEntryNotFoundException;
+import bufmgr.InvalidFrameNumberException;
+import bufmgr.PageUnpinnedException;
+import bufmgr.ReplacerException;
 import columnar.ColumnarHeaderRecord;
 import columnar.Columnarfile;
 import columnar.Util;
@@ -13,6 +17,7 @@ import heap.HFDiskMgrException;
 import heap.HFException;
 import heap.InvalidTupleSizeException;
 import iterator.CondExpr;
+import iterator.NestedLoopException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -150,6 +155,86 @@ public class BitmapUtil {
 
   }
 
+  public static List<BitmapJoinpairNestedLoopScans> openBitmapNestedLoopJoinsForBitmapPairs(
+      List<BitmapJoinFilePairs> bitmapJoinPairs)
+      throws HFDiskMgrException, InvalidTupleSizeException, HFException, IOException, ConstructPageException, GetFileEntryException, HFBufMgrException {
+
+    List<BitmapJoinpairNestedLoopScans> condExprScansList = new ArrayList();
+
+    for (int idx = 0; idx < bitmapJoinPairs.size(); idx++) {
+
+      BitmapJoinpairNestedLoopScans condExprScans = new BitmapJoinpairNestedLoopScans();
+
+      condExprScansList.add(condExprScans);
+
+      BitmapJoinFilePairs fileJoinPairs = bitmapJoinPairs.get(idx);
+      //Current object in the list
+      BitmapJoinpairNestedLoopScans currObj = condExprScans;
+
+      while (fileJoinPairs != null) {
+        List<BitmapNestedLoopScan> scanList = new ArrayList<>();
+
+        for (BitmapPair joinPair : fileJoinPairs.getFilePairsList()) {
+          scanList.add(new BitmapNestedLoopScan(joinPair));
+        }
+
+        currObj.setNestedLoopScanList(scanList);
+
+        fileJoinPairs = fileJoinPairs.next;
+        if (fileJoinPairs != null) {
+          currObj.next = new BitmapJoinpairNestedLoopScans();
+          currObj = currObj.next;
+        }
+      }
+    }
+
+    return condExprScansList;
+
+  }
+
+
+  public static List<BitmapCondExprValues> getNextBitmapNestedLoopJoins(
+      List<BitmapJoinpairNestedLoopScans> joinPairNestedLoopScans, Boolean outerFilterVal,
+      Boolean innerFilterVal)
+      throws NestedLoopException, IOException, InvalidTupleSizeException {
+
+    List<BitmapCondExprValues> condExprValuesList = new ArrayList();
+    for (int idx = 0; idx < joinPairNestedLoopScans.size(); idx++) {
+      BitmapCondExprValues condExprValues = new BitmapCondExprValues();
+      condExprValuesList.add(condExprValues);
+
+      BitmapJoinpairNestedLoopScans scanFile = joinPairNestedLoopScans.get(idx);
+
+      //Current object in the list
+      BitmapCondExprValues currObj = condExprValues;
+
+      while (scanFile != null) {
+        List<Boolean> valueList = new ArrayList<>();
+
+        for (BitmapNestedLoopScan scan : scanFile.getNestedLoopScanList()) {
+          Boolean val = scan.getNext(outerFilterVal, innerFilterVal);
+
+          if (val == null) {
+            //Null here indicates the end of the scan
+            return null;
+          }
+
+          valueList.add(val);
+        }
+
+        currObj.setValues(valueList);
+
+        scanFile = scanFile.next;
+        if (scanFile != null) {
+          currObj.setNext(new BitmapCondExprValues());
+          currObj = currObj.getNext();
+        }
+      }
+    }
+
+    return condExprValuesList;
+  }
+
 
   public static List<BitmapCondExprValues> getNext(List<BitmapCondExprScans> condExprScansList)
       throws InvalidTupleSizeException, IOException {
@@ -250,7 +335,6 @@ public class BitmapUtil {
   }
 
 
-
   /**
    * Method for evaluating the condition expression for the bitmap
    */
@@ -273,5 +357,59 @@ public class BitmapUtil {
     return op_res;
   }
 
+  /**
+   * Close the bimap files opened for the bit map iterator
+   */
+  public static void closeBitMapFiles(List<BitmapCondExprScanFiles> scanFilesList)
+      throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
 
+    for (int idx = 0; idx < scanFilesList.size(); idx++) {
+      BitmapCondExprScanFiles scanFile = scanFilesList.get(idx);
+      while (scanFile != null) {
+        for (BitMapFile file : scanFile.getScanList()) {
+          file.close();
+        }
+        scanFile = scanFile.next;
+      }
+    }
+  }
+
+  /**
+   * Close the bitmaps scans opened for bit map iterator
+   */
+  public static void closeBitMapScans(List<BitmapCondExprScans> scanFilesList)
+      throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
+
+    for (int idx = 0; idx < scanFilesList.size(); idx++) {
+      BitmapCondExprScans scanFile = scanFilesList.get(idx);
+
+      while (scanFile != null) {
+
+        for (BitmapScan file : scanFile.getScanList()) {
+          file.closescan();
+        }
+
+        scanFile = scanFile.next;
+      }
+    }
+  }
+
+
+  public static void closeBitmapJoinPairNestedLoopScans(
+      List<BitmapJoinpairNestedLoopScans> nestedLoopScans)
+      throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
+
+    for (int idx = 0; idx < nestedLoopScans.size(); idx++) {
+      BitmapJoinpairNestedLoopScans scanFile = nestedLoopScans.get(idx);
+
+      while (scanFile != null) {
+
+        for (BitmapNestedLoopScan file : scanFile.getNestedLoopScanList()) {
+          file.close();
+        }
+
+        scanFile = scanFile.next;
+      }
+    }
+  }
 }
