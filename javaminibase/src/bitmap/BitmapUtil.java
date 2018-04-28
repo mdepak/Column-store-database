@@ -34,7 +34,7 @@ public class BitmapUtil {
       AttrOperator operator) {
     //TODO: Add a switch case and return a function for each operator type.
     //TODO: Write a function in the Value class and call the functions appropriately.
-
+    
     switch (operator.attrOperator) {
       case AttrOperator.aopEQ:
         return (ValueClass value1, ValueClass value2) -> value1.evaluateEquals(value2);
