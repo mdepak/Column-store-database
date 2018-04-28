@@ -95,8 +95,10 @@ public class ColumnarNestedLoopsJoins {
 			}
 		}
 		short[] outerStrSizes = Arrays.copyOfRange(outerStrSize, 0, outerStrCount);
-		outerTargetFieldValues = outerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
-		String[] outerTargetCoulmns = outerTargetFieldValues.split(",");
+
+		//TODO: Uncomment the next lines and fix compilation issue
+		//outerTargetFieldValues = outerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
+		//String[] outerTargetCoulmns = outerTargetFieldValues.split(",");
 		List<String> outerColumnNames = new ArrayList<String>();
 		if(outerTargetCoulmns.length > 0 && outerTargetCoulmns != null) {
 			for (String col : outerTargetCoulmns) {
@@ -131,8 +133,10 @@ public class ColumnarNestedLoopsJoins {
 			}
 		}
 		short[] innerStrSizes = Arrays.copyOfRange(innerStrSize, 0, innerStrCount);
-		innerTargetFieldValues = innerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
-		String[] innerTargetCoulmns = innerTargetFieldValues.split(",");
+
+		//TODO: Uncomment the next lines and fix compilation issue
+		//innerTargetFieldValues = innerTargetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
+		//String[] innerTargetCoulmns = innerTargetFieldValues.split(",");
 		List<String> innerColumnNames = new ArrayList<String>();
 		if(innerTargetCoulmns.length > 0 && innerTargetCoulmns != null) {
 			for (String col : innerTargetCoulmns) {

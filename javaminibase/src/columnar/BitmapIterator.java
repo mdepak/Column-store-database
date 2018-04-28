@@ -46,8 +46,8 @@ public class BitmapIterator {
   // Variable for holding the position of the tuple order - to be used for the retrieval of tuples
   private int position;
 
-  public BitmapIterator(String relationName, int indexField, int outputColumnsIndexes[],
-      CondExpr selects[], final boolean indexOnly)
+  public BitmapIterator(String relationName, int outputColumnsIndexes[],
+      CondExpr[] selects)
       throws InvalidTupleSizeException, HFException, IOException, FieldNumberOutOfBoundException, HFBufMgrException, HFDiskMgrException, GetFileEntryException, ConstructPageException {
 
     columnarfile = new Columnarfile(relationName);

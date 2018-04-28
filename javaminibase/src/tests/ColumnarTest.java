@@ -3,6 +3,7 @@ package tests;
 import columnar.BitmapIterator;
 import columnar.Columnarfile;
 import diskmgr.PCounter;
+import global.AttrOperator;
 import global.AttrType;
 import global.GlobalConst;
 import global.IndexType;
@@ -25,6 +26,7 @@ import iterator.ColumnarFileScan;
 import iterator.ColumnarNestedLoopsJoins;
 import iterator.CondExpr;
 import iterator.FldSpec;
+import iterator.Operand;
 import iterator.PredEvalException;
 import iterator.RelSpec;
 import iterator.UnknowAttrType;
@@ -462,18 +464,53 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       } else if (accessType.equals("BITMAP")) {
         Columnarfile file = new Columnarfile(columnFileName);
         int bitMapIndexCol = Util.getColumnNumber(valueConstraint.get(0));
-        CondExpr[] condExprs = Util.getValueContraint(valueConstraint);
 
-        BitmapIterator bitmapIterator = new BitmapIterator(columnFileName, bitMapIndexCol,
-            selectCols, condExprs, false);
+        //TODO: Remove hard coding of the conditional expression and get the parameters from the actual value
+
+        //CondExpr[] condExprs = Util.getValueContraint(valueConstraint);
+        CondExpr[] condExprs =  new CondExpr[2];
+        condExprs[0] = new CondExpr();
+        condExprs[0].type1 = new AttrType(AttrType.attrString);
+        Operand operand1 = new Operand();
+        operand1.string = "3";
+        condExprs[0].operand1 = operand1;
+
+        condExprs[0].type2 = new AttrType(AttrType.attrInteger);
+        Operand operand2 = new Operand();
+        operand2.integer = 1;
+        condExprs[0].operand2 = operand2;
+
+        condExprs[0].op = new AttrOperator(AttrOperator.aopEQ);
+
+
+        condExprs[1] = new CondExpr();
+        condExprs[1].type1 = new AttrType(AttrType.attrString);
+        operand1 = new Operand();
+        operand1.string = "4";
+        condExprs[1].operand1 = operand1;
+
+        condExprs[1].type2 = new AttrType(AttrType.attrInteger);
+        operand2 = new Operand();
+        operand2.integer = 5;
+        condExprs[1].operand2 = operand2;
+        
+        condExprs[1].op = new AttrOperator(AttrOperator.aopEQ);
+
+
+
+
+        BitmapIterator bitmapIterator = new BitmapIterator(columnFileName,
+            selectCols, condExprs);
 
         //TODO: Fix it after completing and writing proper method
         //Tuple tuple = bitmapIterator.get_next();
-        Tuple tuple = null;
+        Integer tuple = bitmapIterator.get_next();
 
         while (tuple != null) {
           //TODO: Fix it
-          // tuple = bitmapIterator.get_next();
+
+          System.out.println("Matching position" + tuple.toString());
+          tuple = bitmapIterator.get_next();
         }
       }
 
