@@ -184,7 +184,7 @@ public class ColumnarIndexScan extends Iterator {
                     case IndexType.BIT_MAP:
                         Columnarfile file = new Columnarfile(_colFileName);
                         int bitMapIndexCol = _selects[i].columnNo;
-                        BitmapIterator bmiter = new BitmapIterator(_relName,bitMapIndexCol ,_outputColumnsIndexes, _selects,false);
+                        BitmapIterator bmiter = new BitmapIterator(_relName,_outputColumnsIndexes, _selects);
                         Integer bitmap = bmiter.get_next();
 
                         //CondExpr[] condExprs = tests.Util.getValueContraint(valueConstraint);
