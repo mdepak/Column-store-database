@@ -10,6 +10,7 @@ import heap.InvalidTupleSizeException;
 import heap.InvalidTypeException;
 import heap.Scan;
 import heap.Tuple;
+import index.IndexException;
 import java.io.IOException;
 
 /**
@@ -137,6 +138,12 @@ public class FileScan extends Iterator {
         return Jtuple;
       }
     }
+  }
+
+  @Override
+  public int get_next_pos()
+      throws IOException, JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException, TupleUtilsException, PredEvalException, SortException, LowMemException, UnknowAttrType, UnknownKeyTypeException, Exception {
+    return 0;
   }
 
 

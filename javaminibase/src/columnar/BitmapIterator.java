@@ -9,6 +9,7 @@ import btree.ConstructPageException;
 import btree.GetFileEntryException;
 import bufmgr.HashEntryNotFoundException;
 import bufmgr.InvalidFrameNumberException;
+import bufmgr.PageNotReadException;
 import bufmgr.PageUnpinnedException;
 import bufmgr.ReplacerException;
 import global.AttrType;
@@ -19,12 +20,22 @@ import heap.HFException;
 import heap.InvalidSlotNumberException;
 import heap.InvalidTupleSizeException;
 import heap.InvalidTypeException;
+import heap.Tuple;
+import index.IndexException;
 import iterator.CondExpr;
+import iterator.Iterator;
+import iterator.JoinsException;
+import iterator.LowMemException;
+import iterator.PredEvalException;
+import iterator.SortException;
+import iterator.TupleUtilsException;
+import iterator.UnknowAttrType;
+import iterator.UnknownKeyTypeException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-public class BitmapIterator {
+public class BitmapIterator extends Iterator{
 
   private Columnarfile columnarfile;
 
@@ -83,7 +94,7 @@ public class BitmapIterator {
   }
 
 
-  public Integer get_next()
+  public int get_next_pos()
       throws InvalidTupleSizeException, IOException, InvalidTypeException, FieldNumberOutOfBoundException, HFBufMgrException, InvalidSlotNumberException {
 
     List<BitmapCondExprValues> condExprValues;
@@ -91,7 +102,7 @@ public class BitmapIterator {
     while (true) {
 
       if ((condExprValues = BitmapUtil.getNext(condExprScans)) == null) {
-        return null;
+        return -1;
       }
       if (BitmapUtil.evaluateBitmapCondExpr(condExprValues)) {
         return position++;
@@ -109,6 +120,12 @@ public class BitmapIterator {
     } else {
       return BitmapUtil.evaluateBitmapCondExpr(condExprValues);
     }
+  }
+
+  @Override
+  public Tuple get_next()
+      throws IOException, JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException, TupleUtilsException, PredEvalException, SortException, LowMemException, UnknowAttrType, UnknownKeyTypeException, Exception {
+    return null;
   }
 
   public void close()

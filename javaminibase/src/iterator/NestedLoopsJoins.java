@@ -206,6 +206,12 @@ public class NestedLoopsJoins extends Iterator {
     } while (true);
   }
 
+  @Override
+  public int get_next_pos()
+      throws IOException, JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException, TupleUtilsException, PredEvalException, SortException, LowMemException, UnknowAttrType, UnknownKeyTypeException, Exception {
+    return 0;
+  }
+
   /**
    * implement the abstract method close() from super class Iterator to finish cleaning up
    *

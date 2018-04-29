@@ -1,12 +1,16 @@
 package iterator;
 
+import bufmgr.PageNotReadException;
 import global.AttrType;
 import global.GlobalConst;
 import global.PageId;
 import global.TupleOrder;
 import heap.FieldNumberOutOfBoundException;
 import heap.Heapfile;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
 import heap.Tuple;
+import index.IndexException;
 import java.io.IOException;
 
 /**
@@ -193,7 +197,7 @@ public class Sort extends Iterator implements GlobalConst {
         break;
       }
       cur_node = new pnode();
-      cur_node.tuple = new Tuple(tuple); // tuple copy needed --  Bingjie 4/29/98 
+      cur_node.tuple = new Tuple(tuple); // tuple copy needed --  Bingjie 4/29/98
 
       pcurr_Q.enq(cur_node);
       p_elems_curr_Q++;
@@ -403,7 +407,7 @@ public class Sort extends Iterator implements GlobalConst {
       throws IOException,
       SortException,
       Exception {
-    pnode cur_node;                // needs pq_defs.java  
+    pnode cur_node;                // needs pq_defs.java
     Tuple new_tuple, old_tuple;
 
     cur_node = Q.deq();
@@ -415,7 +419,7 @@ public class Sort extends Iterator implements GlobalConst {
     // we just removed one tuple from one run, now we need to put another
     // tuple of the same run into the queue
     if (i_buf[cur_node.run_num].empty() != true) {
-      // run not exhausted 
+      // run not exhausted
       new_tuple = new Tuple(tuple_size); // need tuple.java??
 
       try {
@@ -669,7 +673,7 @@ public class Sort extends Iterator implements GlobalConst {
       Nruns = generate_runs(max_elems_in_heap, _in[_sort_fld - 1], sortFldLen);
       //      System.out.println("Generated " + Nruns + " runs");
 
-      // setup state to perform merge of runs. 
+      // setup state to perform merge of runs.
       // Open input buffers for all the input file
       setup_for_merge(tuple_size, Nruns);
     }
@@ -680,12 +684,22 @@ public class Sort extends Iterator implements GlobalConst {
     }
 
     output_tuple = delete_min();
+    int position = output_tuple.getIntFld(3);
+
     if (output_tuple != null) {
       op_buf.tupleCopy(output_tuple);
       return op_buf;
     } else {
       return null;
     }
+  }
+
+  @Override
+  public int get_next_pos()
+      throws IOException, JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException, TupleUtilsException, PredEvalException, SortException, LowMemException, UnknowAttrType, UnknownKeyTypeException, Exception {
+    Tuple tuple = get_next();
+    tuple.initHeaders();
+    return tuple.getIntFld(1);
   }
 
   /**

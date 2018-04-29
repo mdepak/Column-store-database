@@ -8,6 +8,7 @@ import btree.IntegerKey;
 import btree.KeyDataEntry;
 import btree.LeafData;
 import btree.StringKey;
+import bufmgr.PageNotReadException;
 import global.AttrType;
 import global.IndexType;
 import global.RID;
@@ -19,10 +20,15 @@ import iterator.CondExpr;
 import iterator.FldSpec;
 import iterator.InvalidRelation;
 import iterator.Iterator;
+import iterator.JoinsException;
+import iterator.LowMemException;
 import iterator.PredEval;
+import iterator.PredEvalException;
 import iterator.Projection;
+import iterator.SortException;
 import iterator.TupleUtils;
 import iterator.TupleUtilsException;
+import iterator.UnknowAttrType;
 import iterator.UnknownKeyTypeException;
 import java.io.IOException;
 
@@ -253,6 +259,12 @@ public class IndexScan extends Iterator {
     }
 
     return null;
+  }
+
+  @Override
+  public int get_next_pos()
+      throws IOException, JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException, TupleUtilsException, PredEvalException, SortException, LowMemException, UnknowAttrType, UnknownKeyTypeException, Exception {
+    return 0;
   }
 
   /**

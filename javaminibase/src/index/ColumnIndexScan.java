@@ -89,18 +89,6 @@ public class ColumnIndexScan extends Iterator {
         _s_sizes = str_sizes;
         _outputColumnsIndexes = outputColumnsIndexes;
 
-        short[] ts_sizes;
-        Jtuple = new Tuple();
-
-        tuple1 = new Tuple();
-        try {
-            tuple1.setHdr((short) 1, types, str_sizes);
-        } catch (Exception e) {
-            throw new IndexException(e, "ColumnIndexScan.java: Heapfile error");
-        }
-        t1_size = tuple1.size();
-        index_only = indexOnly;  // added by bingjie miao
-
         try {
             f = new Heapfile(relName);
         } catch (Exception e) {
@@ -313,6 +301,29 @@ public class ColumnIndexScan extends Iterator {
         return null;
     }
 
+    public int get_next_pos()
+        throws IndexException,
+        UnknownKeyTypeException,
+        IOException, InvalidTupleSizeException, FieldNumberOutOfBoundException, HFException, HFBufMgrException, HFDiskMgrException, InvalidSlotNumberException {
+        KeyDataEntry nextentry = null;
+
+        if (indFile != null) {
+            try {
+                nextentry = indScan.get_next();
+            } catch (Exception e) {
+                throw new IndexException(e, "IndexScan.java: BTree error");
+            }
+
+            RID rid = new RID();
+            while (nextentry != null) {
+                // not index_only, need to return the whole tuple
+                rid = ((LeafData) nextentry.data).getData();
+                return rid.position;
+            }
+        }
+        return -1;
+    }
+
     /**
      * Cleaning up the index scan, does not remove either the original relation or the index from the
      * database.
@@ -339,6 +350,8 @@ public class ColumnIndexScan extends Iterator {
             closeFlag = true;
         }
     }
+
+
 
     public int getPositionFromRID(RID rid, Heapfile hf) throws HFBufMgrException, IOException, InvalidSlotNumberException, InvalidTupleSizeException {
         boolean flag = true;

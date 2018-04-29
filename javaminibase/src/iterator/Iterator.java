@@ -56,6 +56,21 @@ public abstract class Iterator implements Flags {
       UnknownKeyTypeException,
       Exception;
 
+  public abstract int get_next_pos()
+      throws IOException,
+      JoinsException,
+      IndexException,
+      InvalidTupleSizeException,
+      InvalidTypeException,
+      PageNotReadException,
+      TupleUtilsException,
+      PredEvalException,
+      SortException,
+      LowMemException,
+      UnknowAttrType,
+      UnknownKeyTypeException,
+      Exception;
+
   /**
    * @throws IOException I/O errors
    * @throws JoinsException some join exception
@@ -63,10 +78,7 @@ public abstract class Iterator implements Flags {
    * @throws SortException exception Sort class
    */
   public abstract void close()
-      throws IOException,
-      JoinsException,
-      SortException,
-      IndexException;
+      throws Exception;
 
   /**
    * tries to get n_pages of buffer space

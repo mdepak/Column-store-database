@@ -203,22 +203,7 @@ public class TestDriver {
   }
 
   protected boolean runAllTests() throws
-      FieldNumberOutOfBoundException,
-      btree.ConstructPageException,
-      btree.GetFileEntryException,
-      heap.SpaceNotAvailableException,
-      HFException,
-      HFBufMgrException,
-      HFDiskMgrException,
-      IndexException,
-      InvalidSlotNumberException,
-      InvalidTupleSizeException,
-      InvalidTypeException,
-      IOException,
-      PredEvalException,
-      UnknowAttrType,
-      UnknownIndexTypeException,
-      UnknownKeyTypeException {
+      Exception {
 
     boolean _passAll = OK;
 
