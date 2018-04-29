@@ -4,9 +4,6 @@ import columnar.Columnarfile;
 import global.AttrType;
 import global.IndexType;
 import heap.*;
-import index.IndexException;
-import index.UnknownIndexTypeException;
-import java.io.IOException;
 import java.util.*;
 
 public class ColumnarNestedLoopsJoins {
@@ -23,24 +20,7 @@ public class ColumnarNestedLoopsJoins {
 		String innerAccessType,
 		String targetFieldValues,
 		int numOfBuffers)
-		throws
-            btree.ConstructPageException,
-            btree.GetFileEntryException,
-			Exception,
-			FieldNumberOutOfBoundException,
-            heap.SpaceNotAvailableException,
-			HFException,
-			HFBufMgrException,
-			HFDiskMgrException,
-			IndexException,
-			InvalidSlotNumberException,
-			InvalidTupleSizeException,
-			InvalidTypeException,
-			IOException,
-			PredEvalException,
-			UnknowAttrType,
-			UnknownIndexTypeException,
-			UnknownKeyTypeException {
+		throws Exception {
 
 		//columnar file constructors for both outer and inner tables
 		Columnarfile outerCf = new Columnarfile(outerTableName);
