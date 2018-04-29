@@ -834,7 +834,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     expr2[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 3);
     expr2[1].type2 = new AttrType(AttrType.attrInteger);
-    expr2[1].operand2.integer = 10;
+    expr2[1].operand2.integer = 8;
 
     expr2[1].next = new CondExpr();
     expr2[1].next.op = new AttrOperator(AttrOperator.aopEQ);
@@ -891,6 +891,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         }
         System.out.println("");
       }
+      columnarIndexScan.close();
     } catch (Exception e) {
       e.printStackTrace();
     }

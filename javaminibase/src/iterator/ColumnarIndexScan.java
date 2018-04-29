@@ -13,6 +13,8 @@ import heap.*;
 import index.ColumnIndexScan;
 import index.IndexException;
 import index.UnknownIndexTypeException;
+import java.util.ArrayList;
+import java.util.List;
 import tests.Util;
 
 import java.io.IOException;
@@ -27,14 +29,17 @@ public class ColumnarIndexScan extends Iterator {
     private FldSpec[] _outFlds;
     private String _colFileName;
     private Iterator[] iterators;
-    public ColumnarIndexScan(String relName, String colFileName, IndexType[] index, FldSpec[] outFlds, CondExpr[] selects) throws Exception {
+    private List<String> heapFiles;
+    public ColumnarIndexScan(String relName, IndexType[] index, FldSpec[] outFlds, CondExpr[] selects) throws Exception {
+
+        _selects = selects;
 
         try {
 
-            Columnarfile cf = new Columnarfile(colFileName);
+            heapFiles = new ArrayList<String>();
+            Columnarfile cf = new Columnarfile(relName);
             _types = cf.getType();
             _s_sizes = cf.getStrSizes();
-
             iterators = new Iterator[10];
             for (int i = 0; i < selects.length; i++) {
                 CondExpr condExpr = selects[i];
@@ -42,12 +47,13 @@ public class ColumnarIndexScan extends Iterator {
                     int colNum = condExpr.operand1.symbol.offset;
                     CondExpr[] newExpr = new CondExpr[2];
                     newExpr[0] = condExpr;
+                    newExpr[0].next = null;
                     newExpr[1] = null;
                     AttrType[] attrType = new AttrType[1];
                     attrType[0] = cf.getType()[colNum - 1];
                     short[] strsizes = new short[1];
                     strsizes[0] = (short) 100;
-                    String heapName = colFileName + "." + colNum;
+                    String heapName = relName + "." + colNum;
                     FldSpec[] _outFlds = new FldSpec[1];
                     RelSpec rel = new RelSpec(RelSpec.outer);
                     _outFlds[0] = new FldSpec(rel, 1);
@@ -55,7 +61,7 @@ public class ColumnarIndexScan extends Iterator {
                     switch (index[colNum - 1].indexType) {
                         case IndexType.B_Index:
 
-                            String indName = "BTree" + colFileName + colNum;
+                            String indName = "BTree" + relName + colNum;
                             AttrType[] type = new AttrType[1];
                             type[0] = new AttrType(AttrType.attrInteger);
                             ColumnIndexScan columnIndexScan = new ColumnIndexScan(new IndexType(IndexType.B_Index), relName, heapName, indName,
@@ -63,6 +69,7 @@ public class ColumnarIndexScan extends Iterator {
 
                             int position = 0;
                             Heapfile heapfile = new Heapfile(indName + "temp");
+                            heapFiles.add(indName + "temp");
                             while (position != -1) {
                                 Tuple tuple = new Tuple();
                                 position = columnIndexScan.get_next_pos();
@@ -85,7 +92,7 @@ public class ColumnarIndexScan extends Iterator {
                             break;
                         case IndexType.None:
                             selectedCols[0] = 1;
-                            ColumnarFileScan columnarFileScan = new ColumnarFileScan(colFileName, heapName, attrType,
+                            ColumnarFileScan columnarFileScan = new ColumnarFileScan(relName, heapName, attrType,
                                     strsizes, (short) 1, 1, selectedCols, _outFlds, newExpr, false);
                             iterators[i] = columnarFileScan;
                             break;
@@ -94,22 +101,58 @@ public class ColumnarIndexScan extends Iterator {
                 }
             }
 
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public Tuple get_next()
-        throws IOException, JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException, TupleUtilsException, PredEvalException, SortException, LowMemException, UnknowAttrType, UnknownKeyTypeException, Exception {
+    public Tuple get_next() throws Exception {
+
+        try {
+
+            while(true) {
+                int cnt = 0;
+                int prev = 0, cur = 0;
+                for (int i = 0; i < _selects.length; i++) {
+                    CondExpr condExpr = _selects[i];
+                    int min_pos = Integer.MAX_VALUE;
+                    while (condExpr != null) {
+                        int pos = iterators[cnt++].get_next_pos();
+                        if(pos < min_pos) min_pos = pos;
+                        prev = cur;
+                        cur = min_pos;
+                    }
+                    if(min_pos == -1) return null;
+                    if(prev != 0 && cur != prev) break;
+                    condExpr = condExpr.next;
+                }
+            }
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
         return null;
+    }
+
+    @Override
+    public int get_next_pos() throws  Exception {
+        return 0;
     }
 
     @Override
     public void close() throws IOException, JoinsException, SortException, IndexException {
 
-    }
+        try {
+            for (Iterator iterator : iterators) iterator.close();
 
+            for (String heapFile : heapFiles) {
+                Heapfile heapfile = new Heapfile(heapFile);
+                heapfile.deleteFile();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 }

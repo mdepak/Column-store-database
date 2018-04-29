@@ -94,7 +94,7 @@ public class BitmapIterator extends Iterator{
   }
 
 
-  public Integer get_next_pos()
+  public int get_next_pos()
       throws InvalidTupleSizeException, IOException, InvalidTypeException, FieldNumberOutOfBoundException, HFBufMgrException, InvalidSlotNumberException {
 
     List<BitmapCondExprValues> condExprValues;
@@ -102,7 +102,7 @@ public class BitmapIterator extends Iterator{
     while (true) {
 
       if ((condExprValues = BitmapUtil.getNext(condExprScans)) == null) {
-        return null;
+        return -1;
       }
       if (BitmapUtil.evaluateBitmapCondExpr(condExprValues)) {
         return position++;

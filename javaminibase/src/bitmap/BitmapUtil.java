@@ -67,7 +67,7 @@ public class BitmapUtil {
     ValueClass operandValue = Util.valueClassFactory(expression.type2);
     operandValue.setValue(expression.operand2.getOperandValue(expression.type2));
 
-    int columnNum = Integer.parseInt(expression.operand1.string);
+    int columnNum = expression.operand1.symbol.offset;
     List<ColumnarHeaderRecord> headerRecordList = columnarFile.getBitMapIndicesInfo(columnNum);
 
     BiFunction<ValueClass, ValueClass, Boolean> evalFunc = getEvaluationFunction(expression.op);
@@ -86,7 +86,7 @@ public class BitmapUtil {
       throws HFDiskMgrException, HFException, IOException, ConstructPageException, GetFileEntryException, HFBufMgrException {
     List<BitmapCondExprScanFiles> condExprScans = new ArrayList<>();
 
-    for (int i = 0; i < condExprs.length; i++) {
+    for (int i = 0; i < condExprs.length - 1; i++) {
       CondExpr expression = condExprs[i];
       BitmapCondExprScanFiles scanFiles = new BitmapCondExprScanFiles();
 

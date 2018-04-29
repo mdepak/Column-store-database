@@ -1,12 +1,16 @@
 package iterator;
 
+import bufmgr.PageNotReadException;
 import global.AttrType;
 import global.GlobalConst;
 import global.PageId;
 import global.TupleOrder;
 import heap.FieldNumberOutOfBoundException;
 import heap.Heapfile;
+import heap.InvalidTupleSizeException;
+import heap.InvalidTypeException;
 import heap.Tuple;
+import index.IndexException;
 import java.io.IOException;
 
 /**
@@ -688,6 +692,14 @@ public class Sort extends Iterator implements GlobalConst {
     } else {
       return null;
     }
+  }
+
+  @Override
+  public int get_next_pos()
+      throws IOException, JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException, TupleUtilsException, PredEvalException, SortException, LowMemException, UnknowAttrType, UnknownKeyTypeException, Exception {
+    Tuple tuple = get_next();
+    tuple.initHeaders();
+    return tuple.getIntFld(1);
   }
 
   /**
