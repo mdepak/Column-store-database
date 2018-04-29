@@ -8,6 +8,7 @@ import columnar.Util;
 import global.AttrType;
 import global.IndexType;
 import global.RID;
+import global.TupleOrder;
 import heap.*;
 import index.IndexException;
 import index.IndexUtils;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static columnar.Util.getPositionFromRID;
+import static columnar.Util.getRIDFromPosition;
 
 public class ColumnarIndexScan extends Iterator {
 
@@ -43,7 +45,16 @@ public class ColumnarIndexScan extends Iterator {
     private IndexType[] _index;
     private FldSpec[] _outFlds;
     private String _colFileName;
-
+    private Integer bitmapPos;
+    private RID[] ridAndOp;
+    private Heapfile[] position_idx;
+    private String[] heapFileNames;
+    private Sort sort;
+    private RID rid = null;
+    private RID[] BTpos = new RID[_index.length];
+    private KeyDataEntry nextentry = null;
+    private int[] positions = new int[_index.length];
+    private BitmapIterator[] bmiter;
     ColumnarIndexScan(String relName,
                       final String colFileName,
                       int[] fldNum,
@@ -55,7 +66,7 @@ public class ColumnarIndexScan extends Iterator {
                       int noOutFlds,
                       FldSpec[] outFlds,
                       CondExpr[] selects,
-                      boolean indexOnly) throws IndexException, UnknownIndexTypeException, IOException {
+                      boolean indexOnly) throws IndexException, UnknownIndexTypeException, IOException, SortException, FileScanException, TupleUtilsException, InvalidRelation, HFDiskMgrException, HFBufMgrException, HFException, ConstructPageException, GetFileEntryException, FieldNumberOutOfBoundException, InvalidTupleSizeException, InvalidSlotNumberException, InvalidTypeException, SpaceNotAvailableException {
 
         _relName = relName;
         _fldNum = fldNum;
@@ -71,132 +82,92 @@ public class ColumnarIndexScan extends Iterator {
         Jtuple = new Tuple();
         AttrType[] Jtypes = new AttrType[noOutFlds];
 
-//        try {
-//            ts_sizes = TupleUtils
-//                    .setup_op_tuple(Jtuple, Jtypes, types, noInFlds, str_sizes, outFlds, noOutFlds);
-//        } catch (TupleUtilsException e) {
-//            throw new IndexException(e,
-//                    "IndexScan.java: TupleUtilsException caught from TupleUtils.setup_op_tuple()");
-//        } catch (InvalidRelation e) {
-//            throw new IndexException(e,
-//                    "IndexScan.java: InvalidRelation caught from TupleUtils.setup_op_tuple()");
-//        }
-//
-//        tuple1 = new Tuple();
-//        try {
-//            tuple1.setHdr((short) 1, types, str_sizes);
-//        } catch (Exception e) {
-//            throw new IndexException(e, "ColumnIndexScan.java: Heapfile error");
-//        }
-//        t1_size = tuple1.size();
-//
-//
-//        try {
-//            f = new Heapfile(relName);
-//        } catch (Exception e) {
-//            throw new IndexException(e, "IndexScan.java: Heapfile not created");
-//        }
-//
-//
-//        for (int i = 0; i < index.length; i++) {
-//            switch (index[i].indexType) {
-//                // linear hashing is not yet implemented
-//                case IndexType.B_Index:
-//                    // error check the select condition
-//                    // must be of the type: value op symbol || symbol op value
-//                    // but not symbol op symbol || value op value
-//                    try {
-//
-//                        indFile[i] = new BTreeFile(indName[i]);
-//                    } catch (Exception e) {
-//                        throw new IndexException(e,
-//                                "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
-//                    }
-//                    try {
-//                        indScan[i] = (BTFileScan) IndexUtils.BTree_scan(selects, indFile[i]);
-//                    } catch (Exception e) {
-//                        throw new IndexException(e,
-//                                "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
-//                    }
-//
-//                    break;
-//
-//                case IndexType.BIT_MAP:
-//                    try {
-//                        String bitMapIndexFileName = indName[i] + ".";
-//                        if (_selects[0].type2.toString() == "attrString") {
-//                            bitMapIndexFileName += _selects[0].operand2.string;
-//                        } else if (_selects[0].type2.toString() == "attrInteger") {
-//                            bitMapIndexFileName += _selects[0].operand2.integer;
-//                        } else if (_selects[0].type2.toString() == "attrReal") {
-//                            bitMapIndexFileName += _selects[0].operand2.real;
-//                        }
-//                        if (bitMapIndexFileName.charAt(bitMapIndexFileName.length() - 1) == '.') {
-//                            throw new Exception("Attribute Type Error in Value Constraints");
-//                        } else {
-//                            bitMapFile[i] = new BitMapFile(bitMapIndexFileName); // change the files to open based on the operator
-//                        }
-//                    } catch (Exception e) {
-//                        throw new IndexException(e, "IndexScan.java: BitMapFile exceptions caught from BitMapFile constructor");
-//                    }
-//                    try {
-//                        f = new Heapfile(indName[i]);
-//                        bitMapScan = f.openScan();
-//                    } catch (Exception e) {
-//                        throw new IndexException(e,
-//                                "IndexScan.java: exception caught from Heapfile during bitmap scan.");
-//                    }
-//                    break;
-//
-//                case IndexType.None:
-//
-//                default:
-//                    throw new UnknownIndexTypeException("Only BTree and BitMap index is supported so far");
-//            }
-//        }
-
-
-    }
-
-    public Tuple get_next() throws IndexException, InvalidTupleSizeException, HFException, IOException, FieldNumberOutOfBoundException, HFBufMgrException, HFDiskMgrException, InvalidSlotNumberException, UnknownKeyTypeException, SpaceNotAvailableException, GetFileEntryException, ConstructPageException, InvalidTypeException {
-        RID rid = null;
-        RID[] heapRID = new RID[_index.length];
-        KeyDataEntry nextentry = null;
-        int[] positions = new int[_index.length];
-        Heapfile[] position_idx = new Heapfile[_index.length];
-
+       // position_idx = new Heapfile[_index.length];
+        heapFileNames = new String[_index.length];
+        String fileName = "BTree_Position";
         for (int i = 0; i < _index.length; i++) {
-            if (indFile != null) {
-                try {
-                    nextentry = indScan[i].get_next();
-                    } catch (Exception e) {
-                    throw new IndexException(e, "IndexScan.java: BTree error");
-                     }
 
-                switch (_index[i].indexType) {
-                    // linear hashing is not yet implemented
-                    case IndexType.B_Index:
-                        rid = ((LeafData) nextentry.data).getData();
-                        int position = getPositionFromRID(rid, f);
-                        tuple1.setIntFld(1,position);
-                        heapRID[i] = position_idx[i].insertRecord(tuple1.getTupleByteArray());
-                        break;
-                    case IndexType.BIT_MAP:
-                        Columnarfile file = new Columnarfile(_colFileName);
-                        int bitMapIndexCol = _selects[i].columnNo;
-                        BitmapIterator bmiter = new BitmapIterator(_relName,_outputColumnsIndexes, _selects);
-                        Integer bitmap = bmiter.get_next();
+            switch (_index[i].indexType) {
+                case IndexType.B_Index:
+                    if (indFile != null) {
+                        try {
+                            nextentry = indScan[i].get_next();
+                        } catch (Exception e) {
+                            throw new IndexException(e, "IndexScan.java: BTree error");
+                        }
+                        try {
+                            indFile[i] = new BTreeFile(indName[i]);
+                        } catch (Exception e) {
+                            throw new IndexException(e,
+                                    "IndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
+                        }
+                        try {
+                            indScan[i] = (BTFileScan) IndexUtils.BTree_scan(selects, indFile[i]);
+                        } catch (Exception e) {
+                            throw new IndexException(e,
+                                    "IndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
+                        }
+                        //position_idx[i] = new Heapfile(heapFileNames[i]);
 
-                        //CondExpr[] condExprs = tests.Util.getValueContraint(valueConstraint);
+                        // linear hashing is not yet implemented
+
+                        position_idx[i] = new Heapfile(heapFileNames[i]);
+                        while (nextentry != null) {
+                            rid = ((LeafData) nextentry.data).getData();
+                            int position = rid.position;
+                            tuple1.setIntFld(1, position);
+                            BTpos[i] = position_idx[i].insertRecord(tuple1.getTupleByteArray());
+                        }
+                    }
+                    break;
+
+                case IndexType.BIT_MAP:
+                    Columnarfile file = new Columnarfile(_colFileName);
+                    int bitMapIndexCol = _selects[i].columnNo;
+                    bmiter[i] = new BitmapIterator(_relName, _outputColumnsIndexes, _selects);
+                    // bitmapPos = bmiter[i].get_next();
+
+                    //CondExpr[] condExprs = tests.Util.getValueContraint(valueConstraint);
 
 //                        BitmapIterator bitmapIterator = new BitmapIterator(_colFileName, bitMapIndexCol,
 //                                selectCols, _selects, false);
 
-                        //TODO: Fix it after completing and writing proper method
-                        //Tuple tuple = bitmapIterator.get_next();
-                        Tuple tuple = null;
-                        break;
+                    //TODO: Fix it after completing and writing proper method
+                    //Tuple tuple = bitmapIterator.get_next();
+                    Tuple tuple = null;
+                    break;
+            }
+        }
+        TupleOrder[] order = new TupleOrder[2];
+        order[0] = new TupleOrder(TupleOrder.Ascending);
+        order[1] = new TupleOrder(TupleOrder.Descending);
+        FileScan fscan = new FileScan(colFileName, _types, _s_sizes, (short) 1, 1, _outFlds, null);
+
+        sort = new Sort(_types, (short) 1, _s_sizes, fscan, 1, order[0], 10, 4);
+    }
+
+    public Tuple get_next() throws Exception {
+        Tuple pos = new Tuple();
+        for (int i = 0; i < _index.length; i++) {
+             //sort the btree heapfile of positions and compare it with the bitmap position
+            if(BTpos != null) {
+                Tuple sortedPos = sort.get_next();
+                Integer sortedPostitionBT = sortedPos.getIntFld(1);
+                boolean flag = true;
+
+                Tuple firstPos = position_idx[0].getRecord(BTpos[0]);
+//                for(int x = 1; x < BTRid.length ; x++)
+//                {
+                if (BTpos != null) {
+                    pos = position_idx[i].getRecord(BTpos[i]);
+                    Tuple sortedBT = sort.get_next();
                 }
+
+
+            }
+                    //                }
+
+            //if flag is true construct the tuple
 
 
 
@@ -301,7 +272,7 @@ public class ColumnarIndexScan extends Iterator {
 //                    //return Jtuple;
 //               // }
 //
-            }
+
         }
         return null;
 
