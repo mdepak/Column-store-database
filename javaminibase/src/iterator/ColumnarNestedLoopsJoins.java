@@ -4,12 +4,10 @@ import columnar.Columnarfile;
 import global.AttrType;
 import global.IndexType;
 import heap.*;
-import index.ColumnIndexScan;
 import index.IndexException;
 import index.UnknownIndexTypeException;
 import java.io.IOException;
 import java.util.*;
-import tests.Util;
 
 public class ColumnarNestedLoopsJoins {
 
