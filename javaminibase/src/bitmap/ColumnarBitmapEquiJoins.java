@@ -63,6 +63,9 @@ public class ColumnarBitmapEquiJoins {
     bitmapJoinpairNestedLoopScans = BitmapUtil
         .openBitmapNestedLoopJoinsForBitmapPairs(bitmapJoinFilePairsList);
 
+
+    get_from_outer = true;
+
     //TODO: Use bitmap iterator for the filtering data based on the outer filter and the inner filter and save the results to the temp bitmap file
 
     outerBitmap = null;

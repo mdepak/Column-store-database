@@ -39,6 +39,8 @@ public class BitmapNestedLoopScan {
    outerBitmap = new BitMapFile(leftBitmapFile);
    innerBitmap = new BitMapFile(rightBitmapFile);
 
+    get_from_outer = true;
+
     outer = new BitmapScan(outerBitmap);
     inner = new BitmapScan(innerBitmap);
   }
