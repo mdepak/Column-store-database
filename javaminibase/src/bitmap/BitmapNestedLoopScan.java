@@ -98,7 +98,7 @@ public class BitmapNestedLoopScan {
       RID rid = new RID();
       while ((inner_tuple = inner.getNext(rid)) != null) {
           innerPos++;
-          if(inner_tuple)
+          //if(inner_tuple)
           {
             //Construct the tuple and return the data
 
