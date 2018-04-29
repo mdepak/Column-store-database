@@ -129,23 +129,8 @@ public class TestDriver {
    *
    * @return a boolean value indicates whether ALL the tests have passed
    */
-  public boolean runTests()throws
-      FieldNumberOutOfBoundException,
-      btree.ConstructPageException,
-      btree.GetFileEntryException,
-      heap.SpaceNotAvailableException,
-      HFException,
-      HFBufMgrException,
-      HFDiskMgrException,
-      IndexException,
-      InvalidSlotNumberException,
-      InvalidTupleSizeException,
-      InvalidTypeException,
-      IOException,
-      PredEvalException,
-      UnknowAttrType,
-      UnknownIndexTypeException,
-      UnknownKeyTypeException {
+  public boolean runTests() throws
+      Exception {
 
     System.out.println("\n" + "Running " + testName() + " tests...." + "\n");
 

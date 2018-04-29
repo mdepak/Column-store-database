@@ -33,14 +33,17 @@ public class ColumnarNestedLoopsJoins {
 		//building FldSpec for joined tuple & target column extraction for both the tables
 		FldSpec[] perm_mat = new FldSpec[numOfAttributesInResultTuple];
 		for(int i=0; i<numOfAttributesInResultTuple; i++) {
-			String[] outputColumn = outputCoulmnsInOrder[i].split(".");
+			String[] outputColumn = outputCoulmnsInOrder[i].split("\\.");
 			if(outputColumn[0].equals(outerTableName)) {
-				perm_mat[i].relation = new RelSpec(0);
-				perm_mat[i].offset = outerCf.attrNameColNoMapping.get(outputColumn[1]);
+//				perm_mat[i].relation = new RelSpec(0);
+//				perm_mat[i].offset = outerCf.attrNameColNoMapping.get(outputColumn[1]);
+				perm_mat[i] = new FldSpec(new RelSpec(0), ((int) outputColumn[1].charAt(0)) - 64);
 			} else {
-				perm_mat[i].relation = new RelSpec(1);
+//				perm_mat[i].relation = new RelSpec(1);
 //				perm_mat[i].offset = innerCf.columnNumberOffsetMap.get(innerCf.attrNameColNoMapping.get(outputColumn[1]));
-				perm_mat[i].offset = innerCf.attrNameColNoMapping.get(outputColumn[1]);
+//				perm_mat[i].offset = innerCf.attrNameColNoMapping.get(outputColumn[1]);
+//				perm_mat[i] = new FldSpec(new RelSpec(1), outerCf.attrNameColNoMapping.get(outputColumn[1]));
+				perm_mat[i] = new FldSpec(new RelSpec(1), ((int) outputColumn[1].charAt(0)) - 64);
 			}
 		}
 
@@ -95,11 +98,10 @@ public class ColumnarNestedLoopsJoins {
 	    int numOfAttributes = cf.getNumColumns();
 	    FldSpec[] fldSpec = new FldSpec[numOfAttributes];
 	    for(int i=0; i<numOfAttributes; i++) {
-            fldSpec[i].offset = i;
             if(outer) {
-                fldSpec[i].relation = new RelSpec(0);
+                fldSpec[i] = new FldSpec(new RelSpec(0), i+1);
             }else {
-                fldSpec[i].relation = new RelSpec(1);
+                fldSpec[i] = new FldSpec(new RelSpec(1), i+1);
             }
         }
 	    return fldSpec;

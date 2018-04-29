@@ -72,12 +72,6 @@ public class Columnarfile {
 
   public Map<Integer, String> bTreeIndexes = new HashMap<Integer, String>();
   public Map<Integer, List<ColumnarHeaderRecord>> bitmapIndexes = new HashMap<Integer, List<ColumnarHeaderRecord>>();
-  public Map<String, Integer> attrNameColNoMapping = new HashMap<String, Integer>();
-
-  public int getColumnNumber(String key) {
-    return ((int)attrNameColNoMapping.get(key));
-  }
-
 
   public List<ColumnarHeaderRecord> getBitMapIndicesInfo(int colNo)
   {
