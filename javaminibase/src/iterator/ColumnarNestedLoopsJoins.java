@@ -11,7 +11,9 @@ import java.util.*;
 
 public class ColumnarNestedLoopsJoins {
 
-	public List<Tuple> ColumnarNestedLoopsJoins(
+	List<Tuple> joinedTuples;
+
+	public void ColumnarNestedLoopsJoins(
 		String outerTableName,
 		String innerTableName,
         CondExpr[] outerConstraint,
@@ -103,7 +105,11 @@ public class ColumnarNestedLoopsJoins {
 				}
 			}
 		}
-		return resultTuples;
+		joinedTuples = resultTuples;
+	}
+
+	public List<Tuple> getJoinedTuples() {
+		return joinedTuples;
 	}
 
 	public FldSpec[] getFldSpec(boolean outer, Columnarfile cf) {
