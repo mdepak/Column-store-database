@@ -67,14 +67,16 @@ public class ColumnarIndexScan extends Iterator {
                             do {
                                 Tuple tuple = new Tuple();
                                 position = columnIndexScan.get_next_pos();
-                                tuple.setHdr((short) 1, type, strsizes);
-                                tuple.setIntFld(1, position+1);
-                                heapfile.insertRecord(tuple.getTupleByteArray());
-                                System.out.println(position+1);
+                                if(position != -1){
+                                    tuple.setHdr((short) 1, type, strsizes);
+                                    tuple.setIntFld(1, position+1);
+                                    heapfile.insertRecord(tuple.getTupleByteArray());
+                                    System.out.println(position+1);
+                                }
                             }while((position != -1));
 
-                            FileScan fscan = new FileScan(heapName, type, strsizes, (short) 1, 1, _outFlds, null);
-                            Sort sort = new Sort(type, (short) 1, strsizes, fscan, 1, new TupleOrder(TupleOrder.Ascending), 50, 50);
+                            FileScan fscan = new FileScan(heapfile._fileName, type, strsizes, (short) 1, 1, _outFlds, null);
+                            Sort sort = new Sort(type, (short) 1, strsizes, fscan, 1, new TupleOrder(TupleOrder.Ascending), 4, 3, true);
                             iterators[cnt] = sort;
                             cnt++;
                             break;

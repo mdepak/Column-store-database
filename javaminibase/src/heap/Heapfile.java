@@ -45,7 +45,7 @@ public class Heapfile implements Filetype, GlobalConst {
   public PageId _firstDirPageId;   // page number of header page
   int _ftype;
   private boolean _file_deleted;
-  private String _fileName;
+  public String _fileName;
   private static int tempfilecount = 0;
   private int lastInsertedPosition = 0;
 
