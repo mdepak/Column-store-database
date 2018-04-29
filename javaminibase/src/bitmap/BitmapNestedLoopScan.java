@@ -1,4 +1,4 @@
-package iterator;
+package bitmap;
 
 import bitmap.BitMapFile;
 import bitmap.BitmapScan;
@@ -14,9 +14,10 @@ import heap.HFDiskMgrException;
 import heap.HFException;
 import heap.InvalidTupleSizeException;
 import heap.Tuple;
+import iterator.NestedLoopException;
 import java.io.IOException;
 
-public class BitmapNestedScan {
+public class BitmapNestedLoopScan {
 
   BitmapScan outer;
   BitmapScan inner;
@@ -29,22 +30,22 @@ public class BitmapNestedScan {
   int outerPos, innerPos;
 
 
-  public BitmapNestedScan(String leftBitmapFile, String rightBitmapFile)
+  public BitmapNestedLoopScan(BitmapPair bitmapJoinPair)
       throws InvalidTupleSizeException, IOException, ConstructPageException, GetFileEntryException, HFException, HFBufMgrException, HFDiskMgrException
-
   {
+    String leftBitmapFile = bitmapJoinPair.getLeftBitmapFile();
+    String rightBitmapFile = bitmapJoinPair.getRightBitmapFile();
+
    outerBitmap = new BitMapFile(leftBitmapFile);
    innerBitmap = new BitMapFile(rightBitmapFile);
 
     outer = new BitmapScan(outerBitmap);
     inner = new BitmapScan(innerBitmap);
-
-
   }
 
-  Tuple getNext() throws InvalidTupleSizeException, IOException, NestedLoopException {
-    Boolean outer_tuple;
-    Boolean inner_tuple;
+  Boolean getNext(Boolean outerFilterResult, Boolean innerFilterResult) throws InvalidTupleSizeException, IOException, NestedLoopException {
+    Boolean outer_tuple = null;
+    Boolean inner_tuple = null;
 
     if (done) {
       return null;
@@ -69,7 +70,7 @@ public class BitmapNestedScan {
           inner = new BitmapScan(innerBitmap);
           innerPos = 0;
         } catch (Exception e) {
-          throw new NestedLoopException(e, "openScan failed");
+          throw new NestedLoopException(e, "Inner nested bit map  scan openScan failed");
         }
 
         while((outer_tuple = outer.getNext(new RID())) == false)
@@ -97,11 +98,9 @@ public class BitmapNestedScan {
           innerPos++;
           if(inner_tuple)
           {
-
             //Construct the tuple and return the data
 
-            return null;
-
+            return (outerFilterResult && outer_tuple) && (inner_tuple && innerFilterResult);
           }
       }
 
@@ -118,9 +117,8 @@ public class BitmapNestedScan {
   public void close()
       throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
 
-
-    //outer.closescan();
-    //inner.closescan();
+    outer.closescan();
+    inner.closescan();
     outerBitmap.close();
     innerBitmap.close();
 

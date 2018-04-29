@@ -72,8 +72,6 @@ public class Columnarfile {
 
   public Map<Integer, String> bTreeIndexes = new HashMap<Integer, String>();
   public Map<Integer, List<ColumnarHeaderRecord>> bitmapIndexes = new HashMap<Integer, List<ColumnarHeaderRecord>>();
-  public Map<Integer, Integer> columnNumberOffsetMap = new HashMap<Integer, Integer>();
-//  TODO: have to write code to push offset details in map
   public Map<String, Integer> attrNameColNoMapping = new HashMap<String, Integer>();
 
   public int getColumnNumber(String key) {

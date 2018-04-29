@@ -36,6 +36,7 @@ public class BitmapIterator {
 
 
   //TODO: Instead of this way rather try to maintain a map for file to ScanObject mapping and then choose the approprite File
+
   // This approach will reduce the same bitmap file being used by multiple conditions
   private List<BitmapCondExprScanFiles> condExprScanFiles;
 
@@ -114,5 +115,7 @@ public class BitmapIterator {
       throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
 
     //TODO: Write close function for the list objects and close them.
+    BitmapUtil.closeBitMapFiles(condExprScanFiles);
+    BitmapUtil.closeBitMapScans(condExprScans);
   }
 }
