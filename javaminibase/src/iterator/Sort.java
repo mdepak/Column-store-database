@@ -996,7 +996,6 @@ public class Sort extends Iterator implements GlobalConst {
     }
 
     output_tuple = delete_min();
-    int position = output_tuple.getIntFld(3);
 
     if (output_tuple != null) {
       op_buf.tupleCopy(output_tuple);
@@ -1007,10 +1006,9 @@ public class Sort extends Iterator implements GlobalConst {
   }
 
   @Override
-  public int get_next_pos()
-      throws IOException, JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException, TupleUtilsException, PredEvalException, SortException, LowMemException, UnknowAttrType, UnknownKeyTypeException, Exception {
+  public int get_next_pos() throws  Exception {
     Tuple tuple = get_next();
-    tuple.initHeaders();
+    if(tuple == null) return -1;
     return tuple.getIntFld(1);
   }
 

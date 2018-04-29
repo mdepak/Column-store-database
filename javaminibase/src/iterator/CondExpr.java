@@ -48,5 +48,18 @@ public class CondExpr {
 
     next = null;
   }
+
+  public CondExpr(CondExpr condExpr) {
+
+    columnNo = condExpr.columnNo;
+    op = condExpr.op;
+    type1 = condExpr.type1;
+    type2 = condExpr.type2;
+    operand1 = condExpr.operand1;
+    operand2 = condExpr.operand2;
+    next = null;
+
+  }
+
 }
 

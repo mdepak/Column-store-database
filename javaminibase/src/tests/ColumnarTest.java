@@ -805,11 +805,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     expr2[0].type2 = new AttrType(AttrType.attrSymbol);
 
     expr2[0].type2 = new AttrType(AttrType.attrInteger);
-    expr2[0].operand2.integer =  5;
+    expr2[0].operand2.integer =  8;
 
     expr2[1] = new CondExpr();
     expr2[1].op = new AttrOperator(AttrOperator.aopEQ);
-    expr2[1].next = null;
     expr2[1].type1 = new AttrType(AttrType.attrSymbol);
 
     expr2[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 3);
@@ -821,8 +820,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     expr2[1].next.next = null;
     expr2[1].next.type1 = new AttrType(AttrType.attrSymbol); // rating
     expr2[1].next.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-    expr2[1].next.type2 = new AttrType(AttrType.attrInteger);
-    expr2[1].next.operand2.string = "";
+    expr2[1].next.type2 = new AttrType(AttrType.attrString);
+    expr2[1].next.operand2.string = "Connecticut";
 
     expr2[2] = null;
 
@@ -874,6 +873,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columnarIndexScan.close();
     } catch (Exception e) {
       e.printStackTrace();
+      columnarIndexScan.close();
     }
 
   }
