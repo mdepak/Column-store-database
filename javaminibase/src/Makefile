@@ -45,7 +45,6 @@ doc:
 
 test: 
 	#cd tests; make bmtest dbtest; whoami; make hftest bttest indextest jointest sorttest sortmerge columnar
-	cd tests; make sorttest
 	cd tests; make columnar
 
 clean:
