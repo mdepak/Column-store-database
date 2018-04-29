@@ -1,6 +1,5 @@
 package tests;
 
-import global.AttrOperator;
 import global.AttrType;
 import global.GlobalConst;
 import global.RID;
@@ -17,7 +16,6 @@ import heap.InvalidTypeException;
 import heap.Tuple;
 import index.IndexException;
 import index.UnknownIndexTypeException;
-import iterator.CondExpr;
 import iterator.FileScan;
 import iterator.FldSpec;
 import iterator.PredEvalException;
@@ -75,6 +73,7 @@ class SORTDriver extends TestDriver
     super("sorttest");
   }
 
+
   protected boolean runAllTests() throws
       FieldNumberOutOfBoundException,
       HFException,
@@ -95,15 +94,17 @@ class SORTDriver extends TestDriver
     if (!test1()) {
       _passAll = FAIL;
     }
+
     return _passAll;
   }
+
 
   public boolean runTests()
       throws IOException, HFBufMgrException, InvalidTypeException, FieldNumberOutOfBoundException, HFDiskMgrException, PredEvalException, UnknownIndexTypeException, UnknowAttrType, InvalidSlotNumberException, InvalidTupleSizeException, UnknownKeyTypeException, IndexException, HFException {
 
     System.out.println("\n" + "Running " + testName() + " tests...." + "\n");
 
-    SystemDefs sysdef = new SystemDefs(dbpath, 300, NUMBUF, "Clock");
+    SystemDefs sysdef = new SystemDefs(dbpath, 8000, 100, "Clock");
 
     // Kill anything that might be hanging around
     String newdbpath;
@@ -163,18 +164,6 @@ class SORTDriver extends TestDriver
 
     boolean status = OK;
 
-    Tuple tuple = new Tuple();
-    AttrType[] type = new AttrType[1];
-    type[0] = new AttrType(AttrType.attrInteger);
-    try {
-      tuple.setHdr((short) 1, type, new short[0]);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    int recordLength = tuple.getLength();
-    System.out.println(recordLength);
-
     AttrType[] attrType = new AttrType[2];
     attrType[0] = new AttrType(AttrType.attrString);
     attrType[1] = new AttrType(AttrType.attrString);
@@ -216,7 +205,7 @@ class SORTDriver extends TestDriver
 
     for (int i = 0; i < 10000; i++) {
       try {
-        t.setStrFld(1, data1[i%NUM_RECORDS]);
+        t.setStrFld(1, data1[i % NUM_RECORDS]+ String.valueOf(i));
       } catch (Exception e) {
         status = FAIL;
         e.printStackTrace();
@@ -238,27 +227,17 @@ class SORTDriver extends TestDriver
 
     FileScan fscan = null;
 
-    CondExpr[] expr = new CondExpr[2];
-    expr[0] = new CondExpr();
-    expr[0].op = new AttrOperator(AttrOperator.aopEQ);
-    expr[0].type1 = new AttrType(AttrType.attrSymbol);
-    expr[0].type2 = new AttrType(AttrType.attrString);
-    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-    expr[0].operand2.string = "leela";
-    expr[0].next = null;
-    expr[1] = null;
-
     try {
-      fscan = new FileScan("test1.in", attrType, attrSize, (short) 2, 2, projlist, expr);
+      fscan = new FileScan("test1.in", attrType, attrSize, (short) 2, 2, projlist, null);
     } catch (Exception e) {
       status = FAIL;
       e.printStackTrace();
     }
 
-    // Sort "test1.in" 
+    // Sort "test1.in"
     Sort sort = null;
     try {
-      sort = new Sort(attrType, (short) 2, attrSize, fscan, 1, order[0], REC_LEN1, 3);
+      sort = new Sort(attrType, (short) 2, attrSize, fscan, 1, order[0], REC_LEN1, 3, true);
     } catch (Exception e) {
       status = FAIL;
       e.printStackTrace();
@@ -270,6 +249,8 @@ class SORTDriver extends TestDriver
 
     try {
       t = sort.get_next();
+      System.out.println(t.getIntFld(3));
+      System.out.println(t.getStrFld(1));
     } catch (Exception e) {
       status = FAIL;
       e.printStackTrace();
@@ -278,13 +259,6 @@ class SORTDriver extends TestDriver
     boolean flag = true;
 
     while (t != null) {
-      /*if (count >= NUM_RECORDS) {
-        System.err.println("Test1 -- OOPS! too many records");
-        status = FAIL;
-        flag = false;
-        break;
-      }
-      */
 
       try {
         outval = t.getStrFld(1);
@@ -293,27 +267,21 @@ class SORTDriver extends TestDriver
         e.printStackTrace();
       }
 
-      if (outval.compareTo(data2[count]) != 0) {
-        System.err.println("outval = " + outval + "\tdata2[count] = " + data2[count]);
 
-        System.err.println("Test1 -- OOPS! test1.out not sorted");
-        status = FAIL;
-      }
       count++;
 
       try {
         t = sort.get_next();
+        if (t != null) {
+          System.out.println(t.getIntFld(3));
+          System.out.println(t.getStrFld(1));
+        }
       } catch (Exception e) {
         status = FAIL;
         e.printStackTrace();
       }
     }
-    /*if (count < NUM_RECORDS) {
-      System.err.println("Test1 -- OOPS! too few records");
-      status = FAIL;
-    } else if (flag && status) {
-      System.err.println("Test1 -- Sorting OK");
-    }*/
+
 
     // clean up
     try {
@@ -763,7 +731,7 @@ class SORTDriver extends TestDriver
     }
     int size = t.size();
 
-    // Create unsorted data file 
+    // Create unsorted data file
     RID rid1, rid2;
     Heapfile f1 = null;
     Heapfile f2 = null;
@@ -928,6 +896,8 @@ class SORTDriver extends TestDriver
   protected String testName() {
     return "Sort";
   }
+
+
 }
 
 public class SortTest {
@@ -946,4 +916,5 @@ public class SortTest {
     }
   }
 }
+
 
