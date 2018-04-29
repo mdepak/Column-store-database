@@ -57,6 +57,151 @@ public class BitMapFile {
     dbname = new String(filename);
     _firstDirPageId = headerPage.getFirstDirPage();
   }
+  public BitMapFile(String filename, int noOfRecords, boolean val) throws GetFileEntryException, ConstructPageException, IOException, AddFileEntryException, BMBufMgrException, HFBufMgrException, UnpinPageException, FieldNumberOutOfBoundException, HFDiskMgrException, PinPageException, BMException, InvalidSlotNumberException, InvalidTupleSizeException, SpaceNotAvailableException, HFException, DeleteFileEntryException {
+    headerPageId = get_file_entry(filename);
+
+    // Bit Map file already does not exist with this name
+    if (headerPageId != null) {
+      delete_file_entry(filename);
+    }
+      headerPage = new BitMapHeaderPage();
+      headerPageId = headerPage.getPageId();
+      headerPage.setColumnNo(columnNo);
+      headerPage.setPrevPage(new PageId(INVALID_PAGE));
+      headerPage.setNextPage(new PageId(INVALID_PAGE));
+
+      //add the bitmap header page to the file entry
+      add_file_entry(filename, headerPageId);
+
+      //Create and init the first directory page
+      HFPage firstDirPage = new HFPage();
+
+      Page apage = new Page();
+      _firstDirPageId = newPage(apage, 1);
+
+      firstDirPage.init(_firstDirPageId, apage);
+      PageId pageId = new PageId(INVALID_PAGE);
+      firstDirPage.setNextPage(pageId);
+      firstDirPage.setPrevPage(pageId);
+
+      unpinPage(_firstDirPageId, true /*dirty*/);
+
+      headerPage.setFirstDirPage(_firstDirPageId);
+      createEmptyBitMapIndex(noOfRecords, val);
+  }
+
+  private void createEmptyBitMapIndex(int noOfRecords, boolean val)
+          throws java.io.IOException, InvalidTupleSizeException, SpaceNotAvailableException, HFException, HFBufMgrException, InvalidSlotNumberException, HFDiskMgrException, FieldNumberOutOfBoundException, BMBufMgrException, BMException, PinPageException, UnpinPageException {
+
+    int recCount = noOfRecords;
+
+    RID rid = new RID();
+
+    Page pageinbuffer = new Page();
+
+    HFPage currentDirPage = new HFPage();
+    PageId currentDirPageId = new PageId(_firstDirPageId.pid);
+
+    pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
+
+    DataPageInfo dpinfo = new DataPageInfo();
+    BMPage currentDataPage = newDatapage(dpinfo);
+    PageId nextDirPageId = new PageId();  // OK
+    HFPage nextDirPage = new HFPage();
+
+    Tuple atuple = dpinfo.convertToTuple();
+    byte[] tmpData = atuple.getTupleByteArray();
+    RID firstRID = currentDirPage.insertRecord(tmpData);
+
+    //Set the pointers appropriately.
+    currentDataPage.setPrevPage(new PageId(Page.INVALID_PAGE));
+    currentDataPage.setNextPage(new PageId(Page.INVALID_PAGE));
+
+    Tuple temp = null;
+
+    int position = 0;
+    while (recCount>0) {
+      // Copy to another variable so that the fields of the tuple are initialized.
+
+      if(currentDataPage.available_space()<1){
+        if(currentDirPage.available_space() >= dpinfo.size)
+        {
+          BMPage nextBMPage = newDatapage(dpinfo);
+          nextBMPage.setPrevPage(currentDataPage.getCurPage());
+          nextBMPage.setNextPage(new PageId(Page.INVALID_PAGE));
+          currentDataPage.setNextPage(nextBMPage.getCurPage());
+          position = 0;
+          //TODO: Check for the proper place to unpin page
+          unpinPage(currentDataPage.getCurPage(), true);
+
+          currentDataPage = nextBMPage;
+          atuple = dpinfo.convertToTuple();
+          tmpData = atuple.getTupleByteArray();
+          currentDirPage.insertRecord(tmpData);
+
+        }
+        else
+        {
+          nextDirPageId = currentDirPage.getNextPage();
+          if (nextDirPageId.pid != INVALID_PAGE) { //Start IF03
+            unpinPage(currentDirPageId, false);
+
+            currentDirPageId.pid = nextDirPageId.pid;
+
+            pinPage(currentDirPageId,
+                    currentDirPage, false);
+
+            // now go back to the beginning of the outer while-loop and
+            // search on the current directory page for a suitable datapage
+          } //End of IF03
+          else {  //Start Else03
+            // case (2.2): append a new directory page after currentDirPage
+            //             since it is the last directory page
+            nextDirPageId = newPage(pageinbuffer, 1);
+            // need check error!
+            if (nextDirPageId == null) {
+              throw new HFException(null, "can't new pae");
+            }
+
+            // initialize new directory page
+            nextDirPage.init(nextDirPageId, pageinbuffer);
+            PageId temppid = new PageId(INVALID_PAGE);
+            nextDirPage.setNextPage(temppid);
+            nextDirPage.setPrevPage(currentDirPageId);
+
+            // update current directory page and unpin it
+            // currentDirPage is already locked in the Exclusive mode
+            currentDirPage.setNextPage(nextDirPageId);
+            unpinPage(currentDirPageId, true/*dirty*/);
+
+            currentDirPageId.pid = nextDirPageId.pid;
+            currentDirPage = new HFPage(nextDirPage);
+
+            // remark that MINIBASE_BM->newPage already
+            // pinned the new directory page!
+            // Now back to the beginning of the while-loop, using the
+            // newly created directory page.
+
+          }
+        }
+      }
+      currentDataPage.insertRecord(position,val, false);
+
+      recCount-=1;
+      position+=1;
+      int hdr_recordCont = headerPage.getRecordCount();
+      hdr_recordCont+=1;
+      headerPage.setRecordCount(hdr_recordCont);
+    }
+
+    unpinPage(currentDataPage.getCurPage(), true);
+    unpinPage(currentDirPage.getCurPage(), true);
+
+    //TODO: Check if this is required.
+    unpinPage(headerPage.getPageId(), true);
+
+  }
+
 
   public BitMapFile(String filename, Columnarfile columnfile,
       int columnNo, ValueClass value)
@@ -237,6 +382,66 @@ public class BitMapFile {
     scan.closescan();
   }
 
+  public boolean insertAtPosition(int position) throws HFBufMgrException, IOException, InvalidSlotNumberException, InvalidTupleSizeException {
+    int recordCount = headerPage.getRecordCount();
+
+    if(position>recordCount){
+      return false;
+      //passed position is greater than number of empty bits initialized
+    }else{
+      int curPosition = position;
+
+      PageId currentDirPageId = new PageId(_firstDirPageId.pid);
+      HFPage currentDirPage = new HFPage();
+      PageId nextDirPageId = new PageId(0);
+
+      boolean flag = true;
+
+      RID recid = new RID();
+      DataPageInfo dpinfo = new DataPageInfo();
+      while (currentDirPageId.pid != INVALID_PAGE && flag) {
+        pinPage(currentDirPageId, currentDirPage, false);
+
+        Tuple atuple;
+        for (recid = currentDirPage.firstRecord();
+             recid != null;  // rid==NULL means no more record
+             recid = currentDirPage.nextRecord(recid)) {
+          atuple = currentDirPage.getRecord(recid);
+          dpinfo = new DataPageInfo(atuple);
+
+          //doing this to get current page record count, this is not stored in dpinfo
+
+          BMPage currentDataPage = new BMPage();
+          PageId currentDataPageId = new PageId(dpinfo.getPageId().pid);
+          pinPage(currentDataPageId, currentDataPage, false/*Rdisk*/);
+          int curPageCount = currentDataPage.getRecordCnt();
+          unpinPage(currentDataPageId, false);
+
+          if (curPosition - curPageCount >= 0) {
+            curPosition -= curPageCount;
+          } else if (curPosition == 0) {
+            flag = false;
+            break;
+          } else {
+            flag = false;
+            break;
+          }
+        }
+        if (flag) {
+          nextDirPageId = currentDirPage.getNextPage();
+          unpinPage(currentDirPageId, false /*undirty*/);
+          currentDirPageId.pid = nextDirPageId.pid;
+        }
+    }
+      BMPage currentDataPage = new BMPage();
+      PageId currentDataPageId = new PageId(dpinfo.getPageId().pid);
+      pinPage(currentDataPageId, currentDataPage, false/*Rdisk*/);
+
+      currentDataPage.insertRecord(curPosition, true, true);
+      unpinPage(currentDataPageId, false);
+      return true;
+    }
+  }
   /**
    * Add a new BMPage next to the Current BMPage
    */
