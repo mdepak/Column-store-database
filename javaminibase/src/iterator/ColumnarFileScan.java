@@ -272,6 +272,24 @@ public class ColumnarFileScan extends Iterator {
     }
   }
 
+  public int get_next_pos()
+          throws Exception {
+    RID rid = new RID();
+
+    while (true) {
+      if ((tuple1 = scan.getNext(rid)) == null) {
+        return -1;
+      }
+
+      if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true) {
+        //Projection.Project(tuple1, _in1, Jtuple, perm_mat, nOutFlds);
+        rowpos++;
+        return rowpos;
+      }
+      rowpos++;
+    }
+  }
+
 
 
   /*
