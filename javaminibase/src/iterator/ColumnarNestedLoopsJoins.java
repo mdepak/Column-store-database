@@ -62,12 +62,13 @@ public class ColumnarNestedLoopsJoins {
 				outputOuterAttributesCount++;
 				outputOuterAttributesList.add(outputColumn[1]);
 				perm_mat[i].relation = new RelSpec(0);
-				perm_mat[i].offset = outerCf.columnNumberOffsetMap.get(outerCf.attrNameColNoMapping.get(outputColumn[1]));
+				perm_mat[i].offset = outerCf.attrNameColNoMapping.get(outputColumn[1]);
 			} else {
 				outputInnerAttributesCount++;
 				outputInnerAttributesList.add(outputColumn[1]);
 				perm_mat[i].relation = new RelSpec(1);
-				perm_mat[i].offset = innerCf.columnNumberOffsetMap.get(innerCf.attrNameColNoMapping.get(outputColumn[1]));
+//				perm_mat[i].offset = innerCf.columnNumberOffsetMap.get(innerCf.attrNameColNoMapping.get(outputColumn[1]));
+				perm_mat[i].offset = innerCf.attrNameColNoMapping.get(outputColumn[1]);
 			}
 		}
 
@@ -78,8 +79,8 @@ public class ColumnarNestedLoopsJoins {
 		//value constraints Index Type and BTree index names extraction
 		IndexType[] outerTableIndexType = getIndexTypesForTable(outerAccessType, outerCf);
 		IndexType[] innerTableIndexType = getIndexTypesForTable(innerAccessType, innerCf);
-		String[] outerTableIndexNames = getIndexNamesForTable(outerTableIndexType, outerCf);
-		String[] innerTableIndexNames = getIndexNamesForTable(innerTableIndexType, innerCf);
+		String[] outerTableIndexNames = getIndexNamesForTable(outerTableIndexType, outerCf, outerTableName);
+		String[] innerTableIndexNames = getIndexNamesForTable(innerTableIndexType, innerCf, innerTableName);
 
 		//attribute types for both tables
 		AttrType[] outerAttrTypes = outerCf.getType();
@@ -237,17 +238,17 @@ public class ColumnarNestedLoopsJoins {
 		return valueConstraintsIndexType;
 	}
 
-	public String[] getIndexNamesForTable(IndexType[] indexType, Columnarfile cf) {
+	public String[] getIndexNamesForTable(IndexType[] indexType, Columnarfile cf, String tableName) {
         int numOfAttributes = cf.getNumColumns();
         String[] indexNames = new String[numOfAttributes];
 	    for(int i=0; i<numOfAttributes; i++) {
 	        String type = indexType[i].toString();
 	        if(type.equals("B_Index")) {
-	            indexNames[i] = "BTree" + cf + i;
+	            indexNames[i] = "BTree" + tableName + i;
             }else if(type.equals("BIT_MAP")) {
 	            indexNames[i] = "BIT_MAP";
             }else {
-	            indexNames[i] = cf + "." + i;
+	            indexNames[i] = tableName + "." + i;
             }
         }
         return indexNames;
