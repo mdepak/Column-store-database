@@ -131,6 +131,9 @@ public class TestDriver {
    */
   public boolean runTests()throws
       FieldNumberOutOfBoundException,
+      btree.ConstructPageException,
+      btree.GetFileEntryException,
+      heap.SpaceNotAvailableException,
       HFException,
       HFBufMgrException,
       HFDiskMgrException,
@@ -201,6 +204,9 @@ public class TestDriver {
 
   protected boolean runAllTests() throws
       FieldNumberOutOfBoundException,
+      btree.ConstructPageException,
+      btree.GetFileEntryException,
+      heap.SpaceNotAvailableException,
       HFException,
       HFBufMgrException,
       HFDiskMgrException,

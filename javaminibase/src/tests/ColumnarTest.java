@@ -148,6 +148,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   public boolean setupDatabase()
       throws
       FieldNumberOutOfBoundException,
+      btree.ConstructPageException,
+      btree.GetFileEntryException,
+      heap.SpaceNotAvailableException,
       HFException,
       HFBufMgrException,
       HFDiskMgrException,
@@ -224,56 +227,58 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     return _pass;
   }
 
-  public static void runDeleteOnColumnar(String columnDBName, String columnFileName,
-      List<String> valueConstraint, int numBuf, boolean purge)
-      throws InvalidTupleSizeException, HFBufMgrException, InvalidSlotNumberException, IOException, SpaceNotAvailableException, InvalidTypeException, FieldNumberOutOfBoundException, HFException, HFDiskMgrException,
-      IndexException,
-      PredEvalException,
-      UnknowAttrType,
-      UnknownIndexTypeException,
-      UnknownKeyTypeException {
+// commenting as not required for phase3
+//  public static void runDeleteOnColumnar(String columnDBName, String columnFileName,
+//      List<String> valueConstraint, int numBuf, boolean purge)
+//      throws InvalidTupleSizeException, HFBufMgrException, InvalidSlotNumberException, IOException, SpaceNotAvailableException, InvalidTypeException, FieldNumberOutOfBoundException, HFException, HFDiskMgrException,
+//      IndexException,
+//      PredEvalException,
+//      UnknowAttrType,
+//      UnknownIndexTypeException,
+//      UnknownKeyTypeException {
+//
+//    try {
+//
+//      if (valueConstraint.isEmpty()) {
+//        //Delete entire columnar file ??
+//        Columnarfile columnarfile = new Columnarfile(columnFileName);
+//        columnarfile.deleteColumnarFile();
+//        // Display error
+//      } else {
+//
+//        int colnum = Util.getColumnNumber(valueConstraint.get(0));
+//        String filename = columnFileName + '.' + String.valueOf(colnum);
+//        Columnarfile columnarFile = new Columnarfile(columnFileName);
+//
+//        CondExpr[] expr = Util.getValueContraint(valueConstraint);
+//        int column = tests.Util.getColumnNumber(valueConstraint.get(0));
+//
+//        List<RID> deleteRID = Util.getRIDListHeapFile(valueConstraint,
+//            columnFileName); // get rid list by applying value constraint on designated column
+//        List<Integer> positionList = new ArrayList<Integer>();
+//
+//        for (int i = 0; i < deleteRID.size(); i++) {
+//          if (deleteRID.get(i) != null) {
+//            int position = columnar.Util
+//                .getPositionFromRID(deleteRID.get(i), columnarFile.getColumnFiles()[colnum - 1]);
+//            positionList.add(position);
+//          }
+//        }
+//        for (int i = 0; i < positionList.size(); i++) {
+//          columnarFile.markTupleDeleted(positionList.get(i));
+//        }
+//        if (purge) {
+//          columnarFile.purgeAllDeletedTuples();
+//        }
+//      }
+//    } catch (Exception e) {
+//      System.out.println("Exception in performing delete on columnar database");
+//      e.printStackTrace();
+//    }
+//  }
 
-    try {
-
-      if (valueConstraint.isEmpty()) {
-        //Delete entire columnar file ??
-        Columnarfile columnarfile = new Columnarfile(columnFileName);
-        columnarfile.deleteColumnarFile();
-        // Display error
-      } else {
-
-        int colnum = Util.getColumnNumber(valueConstraint.get(0));
-        String filename = columnFileName + '.' + String.valueOf(colnum);
-        Columnarfile columnarFile = new Columnarfile(columnFileName);
-
-        CondExpr[] expr = Util.getValueContraint(valueConstraint);
-        int column = tests.Util.getColumnNumber(valueConstraint.get(0));
-
-        List<RID> deleteRID = Util.getRIDListHeapFile(valueConstraint,
-            columnFileName); // get rid list by applying value constraint on designated column
-        List<Integer> positionList = new ArrayList<Integer>();
-
-        for (int i = 0; i < deleteRID.size(); i++) {
-          if (deleteRID.get(i) != null) {
-            int position = columnar.Util
-                .getPositionFromRID(deleteRID.get(i), columnarFile.getColumnFiles()[colnum - 1]);
-            positionList.add(position);
-          }
-        }
-        for (int i = 0; i < positionList.size(); i++) {
-          columnarFile.markTupleDeleted(positionList.get(i));
-        }
-        if (purge) {
-          columnarFile.purgeAllDeletedTuples();
-        }
-      }
-    } catch (Exception e) {
-      System.out.println("Exception in performing delete on columnar database");
-      e.printStackTrace();
-    }
-  }
-
-
+//TODO update the method to handle multiple conditional expressions
+/*
   public static void runQueryOnColumnar(String columnDBName, String columnFileName,
       List<String> columnNames, List<String> valueConstraint, int numBuf, String accessType)
       throws InvalidTupleSizeException, HFException, IOException, FieldNumberOutOfBoundException, HFBufMgrException, HFDiskMgrException, IndexException, UnknownIndexTypeException, InvalidSlotNumberException, UnknownKeyTypeException {
@@ -363,11 +368,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           }
         }
         short[] strSizes = Arrays.copyOfRange(strSize, 0, j);
-        /*
-        short[] strSizes = new short[2];
-        strSizes[0] = 100;
-        strSizes[1] = 100;
-        */
+//        short[] strSizes = new short[2];
+//        strSizes[0] = 100;
+//        strSizes[1] = 100;
         ColumnIndexScan colScan;
         CondExpr[] expr = Util.getValueContraint(valueConstraint);
         IndexType indexType = new IndexType(IndexType.B_Index);
@@ -520,7 +523,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       e.printStackTrace();
     }
   }
-
+*/
 
   private static void createIndexOnColumnarFile(String columnarDatabase, String columnarFile,
       String columnName, String indexType) {
@@ -551,6 +554,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   @Override
   protected boolean runAllTests() throws
       FieldNumberOutOfBoundException,
+      btree.ConstructPageException,
+      btree.GetFileEntryException,
+      heap.SpaceNotAvailableException,
       HFException,
       HFBufMgrException,
       HFDiskMgrException,
@@ -590,7 +596,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     System.out.println(
         "\n[3]  Delete Query (delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE)");
     System.out.println(
-        "\n[4]  NestedLoopJoin Query (nlj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST JOINCONST OUTERACCTYPE INNERACCTYPE [OUTERTARGETCOLUMNS] [INNERTARGETCOLUMNS] NUMBUF)");
+        "\n[4]  NestedLoopJoin Query (nlj OUTERTABLENAME INNERTABLENAME LEFTFILTER RIGHTFILTER OUTPUTFILTER INNERACCESSTYPE OUTERACCESSTYPE TARGETFIELDVALUES NUMBUF)");
     System.out.println("\n[4]  Exit!");
     System.out.println("\nNote: for any value not being specified please mention NA");
     System.out.print("Hi, Please mention the operation in the given format:");
@@ -607,7 +613,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     operation = input[0];
 
-      if (operation.contains("delete")) {
+     /* if (operation.contains("delete")) {
 
         //delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE
         columnDBName = input[1];
@@ -647,7 +653,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             e.printStackTrace();
           }
         }
-      } else if (operation.contains("query")) {
+      } else */
+        if (operation.contains("query")) {
         // COLUMN DB NAME
         columnDBName = input[1];
         //COLUMN FILE NAME
@@ -674,9 +681,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
             Util.createDatabaseIfNotExists(columnDBName, numBuf);
 
             try {
-
-              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                  accessType);
+//TODO uncomment after modifying runQueryOnColumnar
+//              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+//                  accessType);
             } catch (Exception ex) {
               ex.printStackTrace();
             }
@@ -696,8 +703,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
             accessType = (input[8].contains("NA")) ? null : input[8];
             try {
-              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                  accessType);
+//TODO uncomment after modifying runQueryOnColumnar
+//              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+//                  accessType);
             } catch (Exception ex) {
               ex.printStackTrace();
             }
@@ -729,21 +737,22 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
         createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
       } else if (operation.contains("nlj")) {
-        columnDBName = input[1];
-        String outerFile = input[2];
-        String innerFile = input[3];
-        String outerConst = input[4];
-        outerConst = outerConst.replaceAll("\\[", "").replaceAll("\\]","");
-        List<String> outerConstArray = new ArrayList<String>(Arrays.asList(outerConst.split(",")));
-        String innerConst = input[5];
-        String joinConst = input[6];
-        String outerAccessType = input[7];
-        String innerAccessType = input[8];
-        String outerTargetColumns = input[9];
-        String innerTargetColumns = input[10];
-        numBuf = Integer.parseInt((input[11].contains("NA")) ? "100" : input[11]);
-//        ColumnarNestedLoopsJoins nljObj = new ColumnarNestedLoopsJoins(null, 0, null, null, 0,
-//            null, numBuf, null, outerFile, innerFile, outerConstArray, innerConst, joinConst, innerAccessType, outerAccessType, outerTargetColumns, innerTargetColumns, null, null);
+        String outerTableName = input[1];
+        String innerTableName = input[2];
+        String outerConstraint = input[3];
+        CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint);
+        String innerConstraint = input[4];
+        CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint);
+        String joinConstraint = input[5];
+          CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint);
+        String outerAccessType = input[6];
+        String innerAccessType = input[7];
+        String targetFieldValues = input[8];
+        numBuf = Integer.parseInt(input[9]);
+
+        ColumnarNestedLoopsJoins nljObj = new ColumnarNestedLoopsJoins(outerTableName, innerTableName,
+            outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType, innerAccessType,
+            targetFieldValues, numBuf);
       }
 
       try {

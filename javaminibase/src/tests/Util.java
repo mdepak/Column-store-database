@@ -13,6 +13,7 @@ import iterator.FldSpec;
 import iterator.RelSpec;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Util {
@@ -42,37 +43,64 @@ public class Util {
     PCounter.initialize();
   }
 
-
-
-  public static CondExpr[] getValueContraint(List<String> valueContraint){
-    if(valueContraint.isEmpty())
-      return null;
-
-    int operator = getOperator(valueContraint.get(1));
-    int column = getColumnNumber(valueContraint.get(0));
-
-    CondExpr[] expr = new CondExpr[2];
-    expr[0] = new CondExpr();
-    expr[0].op = new AttrOperator(operator);
-    expr[0].type1 = new AttrType(AttrType.attrSymbol);
-    expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-    expr[0].next = null;
-
-    String value = valueContraint.get(2);
-    if (value.matches("\\d*\\.\\d*")) {
-      expr[0].type2 = new AttrType(AttrType.attrReal);
-      expr[0].operand2.real = Float.valueOf(value);
+  public static CondExpr[] getCondExprList(String conditions){
+    String[] disjunctions = conditions.split("&");
+    String[] operands = {"!=", "<=", ">=", "<", ">", "="};
+    CondExpr[] expr = new CondExpr[disjunctions.length];
+    for (int j=0; j< disjunctions.length; j++){
+      String [] conditionExpr = disjunctions[j].split("\\|");
+      List<List<String>> valueConstraints = new ArrayList<>();
+      for(int i=0; i<conditionExpr.length; i++) {
+        List<String> valueConstraint = new ArrayList<String>();
+        for(int o=0; o<operands.length; o++) {
+          if(conditionExpr[i].contains(operands[o])) {
+            int index = conditionExpr[i].indexOf(operands[o]);
+            String colCons = conditionExpr[i].substring(0, index);
+            String valCons = conditionExpr[i].substring(index+operands[o].length(), conditionExpr[i].length());
+            valueConstraint.add(colCons);
+            valueConstraint.add(operands[o]);
+            valueConstraint.add(valCons);
+          }
+        }
+        valueConstraints.add(valueConstraint);
+      }
+      expr[j] = Util.getValueContraint(valueConstraints);
     }
-    else if(value.matches("\\d+")){
-      expr[0].type2 = new AttrType(AttrType.attrInteger);
-      expr[0].operand2.integer = Integer.valueOf(value);
-    }
-    else{
-      expr[0].type2 = new AttrType(AttrType.attrString);
-      expr[0].operand2.string = value;
-    }
-    expr[1] = null;
     return expr;
+  }
+
+  public static CondExpr getValueContraint(List<List<String>> valueContraints){
+    CondExpr expr = new CondExpr();
+    CondExpr expr_pointer = expr;
+    Iterator itr = valueContraints.iterator();
+    while(itr.hasNext()) {
+      List<String> valueConstraint = (List<String>) itr.next();
+      if (valueConstraint.isEmpty())
+        return null;
+
+      int operator = getOperator(valueConstraint.get(1));
+      int column = getColumnNumber(valueConstraint.get(0));
+      expr.op = new AttrOperator(operator);
+      expr.type1 = new AttrType(AttrType.attrSymbol);
+      expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+
+      String value = valueConstraint.get(2);
+      if (value.matches("\\d*\\.\\d*")) {
+        expr.type2 = new AttrType(AttrType.attrReal);
+        expr.operand2.real = Float.valueOf(value);
+      } else if (value.matches("\\d+")) {
+        expr.type2 = new AttrType(AttrType.attrInteger);
+        expr.operand2.integer = Integer.valueOf(value);
+      } else {
+        expr.type2 = new AttrType(AttrType.attrString);
+        expr.operand2.string = value;
+      }
+      if(itr.hasNext()){
+        expr.next = new CondExpr();
+      }
+      expr = expr.next;
+    }
+    return expr_pointer;
   }
 
 
@@ -132,43 +160,43 @@ public class Util {
     return column;
   }
 
-
-  public static List<RID> getRIDListHeapFile(List<String> valueConstraint, String columnFileName){
-
-    List<RID> ridList = new ArrayList<>();
-    try {
-
-      int colnum = Util.getColumnNumber(valueConstraint.get(0));
-      String filename = columnFileName + '.' + String.valueOf(colnum);
-      Columnarfile columnarFile = new Columnarfile(columnFileName);
-      AttrType[] types = columnarFile.getType();
-
-      AttrType[] attrs = new AttrType[1];
-      attrs[0] = types[colnum-1];
-
-      FldSpec[] projlist = new FldSpec[1];
-      RelSpec rel = new RelSpec(RelSpec.outer);
-      projlist[0] = new FldSpec(rel, 1);
-
-      short[] strsizes = new short[2];
-      strsizes[0] = 100;
-      strsizes[1] = 100;
-
-      CondExpr[] expr = Util.getValueContraint(valueConstraint);
-
-      ColumnarFileScan columnarFileScan = new ColumnarFileScan(columnFileName, filename, attrs, strsizes, (short) 1, 1, null, projlist, expr, false);
-      RID rid = new RID();
-      while(rid != null){
-        rid = columnarFileScan.get_next_rid();
-        ridList.add(rid);
-      }
-      columnarFileScan.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return ridList;
-
-  }
+// commenting as it is used in delete
+//  public static List<RID> getRIDListHeapFile(List<String> valueConstraint, String columnFileName){
+//
+//    List<RID> ridList = new ArrayList<>();
+//    try {
+//
+//      int colnum = Util.getColumnNumber(valueConstraint.get(0));
+//      String filename = columnFileName + '.' + String.valueOf(colnum);
+//      Columnarfile columnarFile = new Columnarfile(columnFileName);
+//      AttrType[] types = columnarFile.getType();
+//
+//      AttrType[] attrs = new AttrType[1];
+//      attrs[0] = types[colnum-1];
+//
+//      FldSpec[] projlist = new FldSpec[1];
+//      RelSpec rel = new RelSpec(RelSpec.outer);
+//      projlist[0] = new FldSpec(rel, 1);
+//
+//      short[] strsizes = new short[2];
+//      strsizes[0] = 100;
+//      strsizes[1] = 100;
+//
+//      CondExpr[] expr = Util.getValueContraint(valueConstraint);
+//
+//      ColumnarFileScan columnarFileScan = new ColumnarFileScan(columnFileName, filename, attrs, strsizes, (short) 1, 1, null, projlist, expr, false);
+//      RID rid = new RID();
+//      while(rid != null){
+//        rid = columnarFileScan.get_next_rid();
+//        ridList.add(rid);
+//      }
+//      columnarFileScan.close();
+//    } catch (Exception e) {
+//      e.printStackTrace();
+//    }
+//
+//    return ridList;
+//
+//  }
 
 }
