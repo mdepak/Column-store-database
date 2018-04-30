@@ -746,11 +746,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       String outerTableName = input[1];
       String innerTableName = input[2];
       String outerConstraint = input[3];
-      CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint);
+      CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint, outerTableName, innerTableName, 1);
       String innerConstraint = input[4];
-      CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint);
+      CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint, outerTableName, innerTableName, 2);
       String joinConstraint = input[5];
-      CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint);
+      CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint, outerTableName, innerTableName, 3);
       String outerAccessType = input[6];
       String innerAccessType = input[7];
       String targetFieldValues = input[8];
