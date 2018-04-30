@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class ColumnarNestedLoopsJoins {
-    List<Tuple> joinedTuples;
 
     public ColumnarNestedLoopsJoins(
             String outerTableName,
@@ -89,8 +88,7 @@ public class ColumnarNestedLoopsJoins {
                 }
             }
         }
-        joinedTuples = resultTuples;
-        printJoinedTuples(joinedTuples, outerAttrTypes, innerAttrTypes, perm_mat);
+        printJoinedTuples(resultTuples, outerAttrTypes, innerAttrTypes, perm_mat);
     }
 
     public void printJoinedTuples(List<Tuple> joinedTuples, AttrType[] outerAttributes, AttrType[] innerAttributes, FldSpec[] fldSpecs) throws IOException, FieldNumberOutOfBoundException {
@@ -170,7 +168,7 @@ public class ColumnarNestedLoopsJoins {
         java.util.Iterator itr = set.iterator();
         while (itr.hasNext()) {
             Map.Entry entry = (Map.Entry) itr.next();
-            valueConstraintsIndexType[(int) entry.getKey()] = new IndexType(IndexType.B_Index);
+            valueConstraintsIndexType[(int) entry.getKey() - 1] = new IndexType(IndexType.B_Index);
         }
         return valueConstraintsIndexType;
     }
@@ -180,7 +178,7 @@ public class ColumnarNestedLoopsJoins {
         java.util.Iterator itr = set.iterator();
         while (itr.hasNext()) {
             Map.Entry entry = (Map.Entry) itr.next();
-            valueConstraintsIndexType[(int) entry.getKey()] = new IndexType(IndexType.BIT_MAP);
+            valueConstraintsIndexType[(int) entry.getKey() - 1] = new IndexType(IndexType.BIT_MAP);
         }
         return valueConstraintsIndexType;
     }
