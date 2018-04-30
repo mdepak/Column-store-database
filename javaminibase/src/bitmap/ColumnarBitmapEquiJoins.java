@@ -7,6 +7,8 @@ import bufmgr.PageUnpinnedException;
 import bufmgr.ReplacerException;
 import columnar.BitmapIterator;
 import columnar.Columnarfile;
+import columnar.Util;
+import columnar.ValueClass;
 import global.AttrType;
 import global.RID;
 import heap.*;
@@ -48,7 +50,8 @@ public class ColumnarBitmapEquiJoins {
           CondExpr[] joinCondExprs,
           CondExpr[] leftConds,
           CondExpr[] rightConds,
-          FldSpec[] proj_list,
+          String targetFieldValues,
+          //FldSpec[] proj_list,
           int n_out_flds)
           throws InvalidTupleSizeException, HFException, IOException, FieldNumberOutOfBoundException, HFBufMgrException, HFDiskMgrException, GetFileEntryException, ConstructPageException, InvalidSlotNumberException, InvalidTypeException, PinPageException, BMBufMgrException, SpaceNotAvailableException, UnpinPageException, BMException, DeleteFileEntryException, AddFileEntryException {
 
@@ -107,8 +110,38 @@ public class ColumnarBitmapEquiJoins {
     inner = new BitmapScan(innerBitmap);
 
     get_from_outer = true;
-  }
 
+      //target columns extraction
+      String outputTargetFieldValues = targetFieldValues.replaceAll("\\[", "").replaceAll("\\]","");
+      String[] outputCoulmnsInOrder = outputTargetFieldValues.split(",");
+      int numOfAttributesInResultTuple = outputCoulmnsInOrder.length;
+
+      //building FldSpec for joined tuple & target column extraction for both the tables
+      FldSpec[] perm_mat = new FldSpec[numOfAttributesInResultTuple];
+      for(int i=0; i<numOfAttributesInResultTuple; i++) {
+          String[] outputColumn = outputCoulmnsInOrder[i].split("\\.");
+          if(outputColumn[0].equals(leftColumnarFileName)) {
+              perm_mat[i] = new FldSpec(new RelSpec(0), ((int) outputColumn[1].charAt(0)) - 64);
+          } else {
+              perm_mat[i] = new FldSpec(new RelSpec(1), ((int) outputColumn[1].charAt(0)) - 64);
+          }
+      }
+      FldSpec[] outerFldSpec = getFldSpec(true, leftColumnarFile);
+      FldSpec[] innerFldSpec = getFldSpec(false, rightColumnarFile);
+
+  }
+    public FldSpec[] getFldSpec(boolean outer, Columnarfile cf) {
+        int numOfAttributes = cf.getNumColumns();
+        FldSpec[] fldSpec = new FldSpec[numOfAttributes];
+        for(int i=0; i<numOfAttributes; i++) {
+            if(outer) {
+                fldSpec[i] = new FldSpec(new RelSpec(0), i+1);
+            }else {
+                fldSpec[i] = new FldSpec(new RelSpec(1), i+1);
+            }
+        }
+        return fldSpec;
+    }
   public Tuple getNext() throws NestedLoopException, InvalidTupleSizeException, IOException
     {
 
@@ -162,11 +195,11 @@ public class ColumnarBitmapEquiJoins {
 
                 Boolean result = BitmapUtil.evaluateBitmapCondExpr(condExprValues);
 
-                //if (result) {query db x [A] C = 8 100 BITMAP
+                if (result) {
                     System.out.println("Result at "+result+" Outer pos: " + outerPos + "\t inner pos: " + innerPos);
                     innerPos++;
                     return new Tuple();
-                //}
+                }
             }
 
             get_from_outer = true; // Loop back to top and get next outer tuple.
