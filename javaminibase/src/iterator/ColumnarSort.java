@@ -98,7 +98,7 @@ public class ColumnarSort extends Iterator {
           break;
       }
       sort = new Sort(sortAttrTypes, (short) 1, sortStrSizes, fscan, 1, sort_order, sortFieldLen,
-          3, true);
+          Math.max(n_pages-colAttrTypes.length,3), true);
     }
   catch (RuntimeException ex) {
       ex.printStackTrace();

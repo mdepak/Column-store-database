@@ -152,6 +152,7 @@ public class FileScan extends Iterator {
         return -1;
       }
 
+      tuple1.initHeaders();
       if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true) {
         return rowpos;
       }
