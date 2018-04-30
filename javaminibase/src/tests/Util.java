@@ -46,7 +46,7 @@ public class Util {
   public static CondExpr[] getCondExprList(String conditions, String outerTableName, String innerTableName, int conditionType){
     String[] disjunctions = conditions.split("&");
     String[] operands = {"!=", "<=", ">=", "<", ">", "="};
-    CondExpr[] expr = new CondExpr[disjunctions.length];
+    CondExpr[] expr = new CondExpr[disjunctions.length+1];
     for (int j=0; j< disjunctions.length; j++){
       String [] conditionExpr = disjunctions[j].split("\\|");
       List<List<String>> valueConstraints = new ArrayList<>();
@@ -66,6 +66,7 @@ public class Util {
       }
       expr[j] = Util.getValueContraint(valueConstraints, outerTableName, innerTableName, conditionType);
     }
+    expr[disjunctions.length] = null;
     return expr;
   }
 
