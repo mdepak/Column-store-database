@@ -27,7 +27,8 @@ public class ColumnarNestedLoopsJoins {
 		Columnarfile innerCf = new Columnarfile(innerTableName);
 
 		//target columns extraction
-		String outputTargetFieldValues = targetFieldValues.replaceAll("\\[", "").replaceAll("\\]", "");
+		String outputTargetFieldValues = targetFieldValues.replaceAll("\\[", "")
+			.replaceAll("\\]", "");
 		String[] outputCoulmnsInOrder = outputTargetFieldValues.split(",");
 		int numOfAttributesInResultTuple = outputCoulmnsInOrder.length;
 
@@ -64,19 +65,27 @@ public class ColumnarNestedLoopsJoins {
 		FldSpec[] outerFldSpec = getFldSpec(true, outerCf);
 		FldSpec[] innerFldSpec = getFldSpec(false, innerCf);
 
-		ColumnarIndexScan outerColScan = new ColumnarIndexScan(outerTableName, outerTableIndexType, outerFldSpec, outerConstraint);
+		ColumnarIndexScan outerColScan = new ColumnarIndexScan(outerTableName, outerTableIndexType,
+			outerFldSpec, outerConstraint);
 		Tuple outerTuple;
-		ColumnarIndexScan innerColScan = new ColumnarIndexScan(innerTableName, innerTableIndexType, innerFldSpec, innerConstraint);
+		ColumnarIndexScan innerColScan = new ColumnarIndexScan(innerTableName, innerTableIndexType,
+			innerFldSpec, innerConstraint);
 		Tuple innerTuple;
 
 		Tuple joinedTuple = new Tuple();
+		AttrType[] Jtypes = new AttrType[numOfAttributesInResultTuple];
+		try {
+			short[] t_size = TupleUtils.setup_op_tuple(joinedTuple, Jtypes, outerAttrTypes, outerAttrTypes.length, innerAttrTypes, innerAttrTypes.length, outerCf.getStrSizes(), innerCf.getStrSizes(), perm_mat, numOfAttributesInResultTuple);
+		} catch (TupleUtilsException e) {
+			throw new NestedLoopException(e, "TupleUtilsException is caught by NestedLoopsJoins.java");
+		}
+
 		List<Tuple> resultTuples = new ArrayList<Tuple>();
 		while (true) {
 			outerTuple = outerColScan.get_next();
 			if (outerTuple == null) {
 				break;
 			}
-			joinedTuple = null;
 			while (true) {
 				innerTuple = innerColScan.get_next();
 				if (innerTuple == null) {
