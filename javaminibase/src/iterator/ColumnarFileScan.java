@@ -50,8 +50,6 @@ public class ColumnarFileScan extends Iterator {
    * corowposnstructor
    *
    * @param file_name heapfile to be opened
-   * @param in1[] array showing what the attributes of the input fields are.
-   * @param s1_sizes[] shows the length of the string fields.
    * @param len_in1 number of attributes in the input tuple
    * @param n_out_flds number of fields in the out tuple
    * @param proj_list shows what input fields go where in the output tuple
@@ -106,20 +104,6 @@ public class ColumnarFileScan extends Iterator {
     try {
       f = new Heapfile(file_name);
 
-      try {
-        delSortIter = Util.openSortedScanOnDeleteHeap(Util.getDeleteFileName(columnfile));
-
-        Tuple sortTuple = delSortIter.get_next();
-        if (sortTuple != null) {
-          topDelRecord = sortTuple.getIntFld(1);
-          doDelCheck = true;
-        }
-      }
-      catch (Exception ex)
-      {
-        ex.printStackTrace();
-      }
-
     } catch (Exception e) {
       throw new FileScanException(e, "Create new heapfile failed");
     }
@@ -131,8 +115,6 @@ public class ColumnarFileScan extends Iterator {
     }
   }
 
-  boolean doDelCheck = false;
-  private int topDelRecord;
 
   /**
    * @return shows what input fields go where in the output tuple
@@ -164,26 +146,6 @@ public class ColumnarFileScan extends Iterator {
       }
 
       tuple1.setHdr(in1_len, _in1, s_sizes);
-
-
-      while(doDelCheck && topDelRecord<rowpos)
-      {
-        Tuple sortTuple = delSortIter.get_next();
-        if(sortTuple!= null) {
-          topDelRecord = sortTuple.getIntFld(1);
-        }
-        else
-        {
-          doDelCheck = false;
-          break;
-        }
-        }
-
-      if (doDelCheck && topDelRecord == rowpos) {
-        //Record is deleted.
-        rowpos++;
-        continue;
-      }
 
       if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true) {
         //Projection.Project(tuple1, _in1, Jtuple, perm_mat, nOutFlds);
@@ -245,26 +207,6 @@ public class ColumnarFileScan extends Iterator {
       }
 
       tuple1.setHdr(in1_len, _in1, s_sizes);
-
-
-      while(doDelCheck && topDelRecord<rowpos)
-      {
-        Tuple sortTuple = delSortIter.get_next();
-        if(sortTuple!= null) {
-          topDelRecord = sortTuple.getIntFld(1);
-        }
-        else
-        {
-          doDelCheck = false;
-          break;
-        }
-      }
-
-      if (doDelCheck && topDelRecord == rowpos) {
-        //Record is deleted.
-        rowpos++;
-        continue;
-      }
 
       if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true) {
           return oldrid;

@@ -30,6 +30,7 @@ public class FileScan extends Iterator {
   private int nOutFlds;
   private CondExpr[] OutputFilter;
   public FldSpec[] perm_mat;
+  private int rowpos = -1;
 
 
   /**
@@ -141,27 +142,22 @@ public class FileScan extends Iterator {
   }
 
   @Override
-  public int get_next_pos()
-      throws IOException, JoinsException, IndexException, InvalidTupleSizeException, InvalidTypeException, PageNotReadException, TupleUtilsException, PredEvalException, SortException, LowMemException, UnknowAttrType, UnknownKeyTypeException, Exception {
-    return 0;
-  }
+  public int get_next_pos() throws Exception {
 
-
-
-  /*
-  public RID get_next_rid() throws InvalidTupleSizeException, IOException {
     RID rid = new RID();
 
     while (true) {
+      rowpos++;
       if ((tuple1 = scan.getNext(rid)) == null) {
-        return null;
+        return -1;
       }
 
+      if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true) {
+        return rowpos;
+      }
     }
-    return rid;
   }
 
-  */
 
   /**
    * implement the abstract method close() from super class Iterator to finish cleaning up

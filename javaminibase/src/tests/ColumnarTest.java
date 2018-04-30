@@ -625,6 +625,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columnFileName = input[2];
       columns = input[3];
       columns = columns.replaceAll("\\[", "").replaceAll("\\]", "");
+
       String[] colArray = columns.split(",");
       if (colArray.length > 0 && colArray != null) {
         for (String col : colArray) {
@@ -633,6 +634,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         String colCons = input[4];
         if (colCons.contains("NA")) {
           colCons = null;
+          condExprList = Util.getCondExprList(colCons, "", "", 1);
           valueConstraint.add(colCons);
           numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
           ;
@@ -643,28 +645,23 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
           try {
 
-            runColumnarFileScan(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+            runColumnarFileScan(columnDBName, columnFileName, columnNames, condExprList, numBuf,
                     accessType);
           } catch (Exception ex) {
             ex.printStackTrace();
           }
         } else {
-          String opCons = input[5];
-          String valCons = input[6];
+          String valCons = input[4];
 
-          valueConstraint.add(colCons);
-          valueConstraint.add(opCons);
-          valueConstraint.add(valCons);
-
+          condExprList = Util.getCondExprList(valCons, "", "", 1);
           //SET THE NUMBUF AND ACCESSTYPE
-          numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
+          numBuf = Integer.parseInt((input[5].contains("NA")) ? "100" : input[5]);
 
           // SETUP Database
           Util.createDatabaseIfNotExists(columnDBName, numBuf);
 
-          accessType = (input[8].contains("NA")) ? null : input[8];
           try {
-            runColumnarFileScan(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+            runColumnarFileScan(columnDBName, columnFileName, columnNames, condExprList, numBuf,
                     accessType);
           } catch (Exception ex) {
             ex.printStackTrace();
@@ -920,37 +917,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   }
 
   private void runColumnarFileScan(String columnDBName, String columnFileName,
-      List<String> columnNames, List<String> valueConstraint, int numBuf, String accessType) {
-    CondExpr[] expr2 = new CondExpr[3];
-    expr2[0] = new CondExpr();
+      List<String> columnNames, CondExpr[] valueConstraint, int numBuf, String accessType) {
 
-    expr2[0].next = null;
-    expr2[0].op = new AttrOperator(AttrOperator.aopEQ);
-    expr2[0].type1 = new AttrType(AttrType.attrSymbol);
-
-    expr2[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 4);
-    expr2[0].type2 = new AttrType(AttrType.attrSymbol);
-
-    expr2[0].type2 = new AttrType(AttrType.attrInteger);
-    expr2[0].operand2.integer = 8;
-
-    expr2[1] = new CondExpr();
-    expr2[1].op = new AttrOperator(AttrOperator.aopEQ);
-    expr2[1].type1 = new AttrType(AttrType.attrSymbol);
-
-    expr2[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 3);
-    expr2[1].type2 = new AttrType(AttrType.attrInteger);
-    expr2[1].operand2.integer = 8;
-
-    expr2[1].next = new CondExpr();
-    expr2[1].next.op = new AttrOperator(AttrOperator.aopEQ);
-    expr2[1].next.next = null;
-    expr2[1].next.type1 = new AttrType(AttrType.attrSymbol); // rating
-    expr2[1].next.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-    expr2[1].next.type2 = new AttrType(AttrType.attrString);
-    expr2[1].next.operand2.string = "Connecticut";
-
-    expr2[2] = null;
 
     IndexType[] indexTypes = new IndexType[4];
     indexTypes[0] = (new IndexType(IndexType.B_Index));
@@ -966,34 +934,14 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     };
 
     ColumnarIndexScan columnarIndexScan = null;
-    Columnarfile cf = null;
     try {
-      cf = new Columnarfile("data");
-      columnarIndexScan = new ColumnarIndexScan("data", indexTypes, Sprojection, expr2);
+      columnarIndexScan = new ColumnarIndexScan(columnFileName, indexTypes, Sprojection, valueConstraint);
       Tuple tuple;
-      AttrType[] types = cf.getType();
-      int selectCols[] = new int[columnNames.size()];
-      for (int i = 0; i < columnNames.size(); i++) {
-        selectCols[i] = Util.getColumnNumber(columnNames.get(i));
-      }
       while (true) {
         tuple = columnarIndexScan.get_next();
         if (tuple == null) {
           break;
         }
-//        tuple.initHeaders();
-//        for (int i = 0; i < tuple.noOfFlds(); i++) {
-//          if (types[selectCols[i] - 1].attrType == AttrType.attrString) {
-//            System.out.println(tuple.getStrFld(i + 1));
-//          }
-//          if (types[selectCols[i] - 1].attrType == AttrType.attrInteger) {
-//            System.out.println(tuple.getIntFld(i + 1));
-//          }
-//          if (types[selectCols[i] - 1].attrType == AttrType.attrReal) {
-//            System.out.println(tuple.getFloFld(i + 1));
-//          }
-//        }
-        System.out.println("\n");
       }
       columnarIndexScan.close();
     } catch (Exception e) {
