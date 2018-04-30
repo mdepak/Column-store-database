@@ -825,23 +825,32 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         ColumnarNestedLoopsJoins nljObj = new ColumnarNestedLoopsJoins(outerTableName, innerTableName,
             outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType, innerAccessType,
             targetFieldValues, numBuf);
-      } else if (operation.contains("bmj")) {
-        String columnDBname = input[1];
-        String outerFile = input[2];
-        String innerFile = input[3];
-        String outerConstraint = input[4];
-        CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint, outerFile, innerFile, 1);
-        String innerConstraint = input[5];
-        CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint, outerFile, innerFile, 2);
-        String equiConstraint = input[6];
-        CondExpr[] equiConstraintExpr = Util.getCondExprList(equiConstraint, outerFile, innerFile, 3);
-        String targetFieldValues = input[7];
-        numBuf = Integer.parseInt(input[8]);
+      }
+    else if (operation.contains("bmj")) {
 
-//        ColumnarBitmapEquiJoins bmjObj = new ColumnarBitmapEquiJoins(columnDBName, innerTableName,
-//                outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType, innerAccessType,
-//                targetFieldValues, numBuf);
-      }else if (operation.contains("sort")) {
+      columnDBName = input[1];
+      String outerTableName = input[2];
+      String innerTableName = input[3];
+      String outerConstraint = input[4];
+      CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint, outerTableName, innerTableName, 1);
+      String innerConstraint = input[5];
+      CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint, outerTableName, innerTableName, 2);
+      String joinConstraint = input[6];
+      CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint, outerTableName, innerTableName, 3);
+      String targetFieldValues = input[7];
+      numBuf = Integer.parseInt(input[8]);
+      Util.createDatabaseIfNotExists(columnDBName, numBuf);
+
+      ColumnarBitmapEquiJoins bmjObj = new ColumnarBitmapEquiJoins(outerTableName, innerTableName,
+              joinConstraintExpr,outerConstraintExpr, innerConstraintExpr,
+              targetFieldValues,numBuf);
+      Tuple t = bmjObj.getNext();
+      while(t != null){
+        t = bmjObj.getNext();
+      }
+
+    }
+      else if (operation.contains("sort")) {
         String columnDBname = input[1];
         String columnarFile= input[2];
         String sortColumn = input[3];
