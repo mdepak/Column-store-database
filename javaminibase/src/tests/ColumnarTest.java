@@ -1,5 +1,8 @@
 package tests;
 
+import bitmap.ColumnarBitmapEquiJoins;
+import columnar.BitmapIterator;
+
 import columnar.Columnarfile;
 import diskmgr.PCounter;
 import global.AttrOperator;
@@ -10,12 +13,19 @@ import global.SystemDefs;
 import global.TID;
 import global.TupleOrder;
 import heap.Tuple;
+
 import iterator.ColumnarIndexScan;
 import iterator.ColumnarNestedLoopsJoins;
 import iterator.ColumnarSort;
 import iterator.CondExpr;
 import iterator.FldSpec;
 import iterator.RelSpec;
+
+import index.ColumnIndexScan;
+import index.IndexException;
+import index.UnknownIndexTypeException;
+import iterator.*;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -539,19 +549,21 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     int noOfCols = 0;
     String[] input = new String[10];
     boolean purge = false;
+    CondExpr[] condExprList;
 
     PCounter.initialize();
     System.out.println("-------------------------- MENU ------------------");
     System.out.println(
-        "\n\n[0]   Batch Insert (batchinsert DATAFILENAME COLUMNDBNAME COLUMNARFILENAME NUMCOLUMNS)");
+            "\n\n[0]   Batch Insert (batchinsert DATAFILENAME COLUMNDBNAME COLUMNARFILENAME NUMCOLUMNS)");
     System.out.println("\n[1]  Index (index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE)");
     System.out.println(
-        "\n[2]  Query (query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE)");
+            "\n[2]  Sort(sort  COLUMNDB COLUMNARFILE SORTCOLUMN SORTORDER NUMBUF)");
     System.out.println(
-        "\n[3]  Delete Query (delete COLUMNDBNAME COLUMNARFILENAME VALUECONSTRAINT NUMBUF PURGE)");
+            "\n[3]  ColumnarIndexScan (cis DBNAME TABLENAME [TARGETCOLUMNS] [A=5|B=2&C=NYC] 100)");
     System.out.println(
-        "\n[4]  NestedLoopJoin Query (nlj OUTERTABLENAME INNERTABLENAME LEFTFILTER RIGHTFILTER OUTPUTFILTER INNERACCESSTYPE OUTERACCESSTYPE TARGETFIELDVALUES NUMBUF)");
-    System.out.println("\n[4]  Exit!");
+            "\n[4]  NestedLoopJoin Query (nlj OUTERTABLENAME INNERTABLENAME LEFTFILTER RIGHTFILTER OUTPUTFILTER INNERACCESSTYPE OUTERACCESSTYPE TARGETFIELDVALUES NUMBUF)");
+    System.out.println("\n[5]  Bitmap Equi Join (bmj  COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST EQUICONST [TARGETCOLUMNS] NUMBUF)");
+    System.out.println("\n[6]  Exit!");
     System.out.println("\nNote: for any value not being specified please mention NA");
     System.out.print("Hi, Please mention the operation in the given format:");
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -632,7 +644,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           try {
 
             runColumnarFileScan(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                accessType);
+                    accessType);
           } catch (Exception ex) {
             ex.printStackTrace();
           }
@@ -653,7 +665,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           accessType = (input[8].contains("NA")) ? null : input[8];
           try {
             runColumnarFileScan(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                accessType);
+                    accessType);
           } catch (Exception ex) {
             ex.printStackTrace();
           }
@@ -760,12 +772,14 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType,
           innerAccessType,
           targetFieldValues, numBuf);
+
     } else if (operation.contains("sort")) {
 
       columnDBName = input[1];
       columnFileName = input[2];
       int sortColumn = Util.getColumnNumber(input[3]);
-
+      int numBuff = Integer.parseInt(input[5]);
+      Util.createDatabaseIfNotExists(columnDBName, numBuff);
       TupleOrder[] order = new TupleOrder[2];
       order[0] = new TupleOrder(TupleOrder.Ascending);
       order[1] = new TupleOrder(TupleOrder.Descending);
@@ -777,14 +791,72 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         sortOrder = order[1];
       }
 
-      int numBuff = Integer.parseInt(input[5]);
-
-      Util.createDatabaseIfNotExists(columnDBName, numBuff);
-
       performColumnarSort(columnFileName, null, sortColumn, sortOrder, numBuff);
 
-
     }
+      else if (operation.contains("index")) {
+        columnDBName = input[1];
+        columnFileName = input[2];
+        String colName = input[3];
+        indexType = input[4];
+
+        Util.createDatabaseIfNotExists(columnDBName, 100);
+
+        createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
+      } else if (operation.contains("nlj")) {
+        String outerTableName = input[1];
+        String innerTableName = input[2];
+        String outerConstraint = input[3];
+        CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint);
+        String innerConstraint = input[4];
+        CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint);
+        String joinConstraint = input[5];
+          CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint);
+        String outerAccessType = input[6];
+        String innerAccessType = input[7];
+        String targetFieldValues = input[8];
+        numBuf = Integer.parseInt(input[9]);
+
+        ColumnarNestedLoopsJoins nljObj = new ColumnarNestedLoopsJoins(outerTableName, innerTableName,
+            outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType, innerAccessType,
+            targetFieldValues, numBuf);
+      } else if (operation.contains("bmj")) {
+        String columnDBname = input[1];
+        String outerFile = input[2];
+        String innerFile = input[3];
+        String outerConstraint = input[4];
+        CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint);
+        String innerConstraint = input[5];
+        CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint);
+        String equiConstraint = input[6];
+        CondExpr[] equiConstraintExpr = Util.getCondExprList(equiConstraint);
+        String targetFieldValues = input[7];
+        numBuf = Integer.parseInt(input[8]);
+
+//        ColumnarBitmapEquiJoins bmjObj = new ColumnarBitmapEquiJoins(columnDBName, innerTableName,
+//                outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType, innerAccessType,
+//                targetFieldValues, numBuf);
+      }else if (operation.contains("sort")) {
+        String columnDBname = input[1];
+        String columnarFile= input[2];
+        String sortColumn = input[3];
+        String sortOrder = input[4];
+        numBuf = Integer.parseInt(input[5]);
+//        ColumnarBitmapEquiJoins bmjObj = new ColumnarBitmapEquiJoins(columnDBName, innerTableName,
+//                outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType, innerAccessType,
+//                targetFieldValues, numBuf);
+      }
+
+
+    try {
+        SystemDefs.JavabaseBM.flushAllPages();
+      } catch (Exception ex) {
+        System.out.println("ColumnarTest() flush pages...");
+        ex.printStackTrace();
+      }
+
+
+
 
     try {
       SystemDefs.JavabaseBM.flushAllPages();
