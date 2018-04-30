@@ -16,6 +16,7 @@ import heap.InvalidTupleSizeException;
 import heap.Tuple;
 import iterator.NestedLoopException;
 import java.io.IOException;
+import java.util.List;
 
 public class BitmapNestedLoopScan {
 
@@ -29,6 +30,8 @@ public class BitmapNestedLoopScan {
 
   int outerPos, innerPos;
 
+  Boolean outer_tuple = null;
+  Boolean inner_tuple = null;
 
   public BitmapNestedLoopScan(BitmapPair bitmapJoinPair)
       throws InvalidTupleSizeException, IOException, ConstructPageException, GetFileEntryException, HFException, HFBufMgrException, HFDiskMgrException
@@ -45,84 +48,133 @@ public class BitmapNestedLoopScan {
     inner = new BitmapScan(innerBitmap);
   }
 
+//  Boolean getNext(Boolean outerFilterResult, Boolean innerFilterResult) throws InvalidTupleSizeException, IOException, NestedLoopException {
+//    Boolean outer_tuple = null;
+//    Boolean inner_tuple = null;
+//
+//    if (done) {
+//      return null;
+//    }
+//
+//    do {
+//      // If get_from_outer is true, Get a tuple from the outer, delete
+//      // an existing scan on the file, and reopen a new scan on the file.
+//      // If a get_next on the outer returns DONE?, then the nested loops
+//      //join is done too.
+//
+//      if (get_from_outer == true) {
+//        get_from_outer = false;
+//        if (inner != null)     // If this not the first time,
+//        {
+//          // close scan
+//          inner = null;
+//
+//        }
+//
+//        try {
+//          inner = new BitmapScan(innerBitmap);
+//          innerPos = 0;
+//        } catch (Exception e) {
+//          throw new NestedLoopException(e, "Inner nested bit map  scan openScan failed");
+//        }
+//
+//        while((outer_tuple = outer.getNext(new RID())) == false)
+//        {
+//          outerPos++;
+//        }
+//
+//        if ((outer_tuple = outer.getNext(new RID())) == null) {
+//          done = true;
+//          if (inner != null) {
+//
+//            inner = null;
+//          }
+//
+//          return null;
+//        }
+//      }  // ENDS: if (get_from_outer == TRUE)
+//
+//      // The next step is to get a tuple from the inner,
+//      // while the inner is not completely scanned && there
+//      // is no match (with pred),get a tuple from the inner.
+//
+//      RID rid = new RID();
+//      while ((inner_tuple = inner.getNext(rid)) != null) {
+//          innerPos++;
+//          //if(inner_tuple)
+//          {
+//            //Construct the tuple and return the data
+//
+//            return (outerFilterResult && outer_tuple) && (inner_tuple && innerFilterResult);
+//          }
+//      }
+//
+//      // There has been no match. (otherwise, we would have
+//      //returned from t//he while loop. Hence, inner is
+//      //exhausted, => set get_from_outer = TRUE, go to top of loop
+//
+//      get_from_outer = true; // Loop back to top and get next outer tuple.
+//    } while (true);
+//
+//  }
   Boolean getNext(Boolean outerFilterResult, Boolean innerFilterResult) throws InvalidTupleSizeException, IOException, NestedLoopException {
-    Boolean outer_tuple = null;
-    Boolean inner_tuple = null;
 
-    if (done) {
-      return null;
-    }
+      RID o_rid = new RID();
+      if (done) {
+        return null;
+      }
 
-    do {
-      // If get_from_outer is true, Get a tuple from the outer, delete
-      // an existing scan on the file, and reopen a new scan on the file.
-      // If a get_next on the outer returns DONE?, then the nested loops
-      //join is done too.
+      do {
+        // If get_from_outer is true, Get a tuple from the outer, delete
+        // an existing scan on the file, and reopen a new scan on the file.
+        // If a get_next on the outer returns DONE?, then the nested loops
+        //join is done too.
 
-      if (get_from_outer == true) {
-        get_from_outer = false;
-        if (inner != null)     // If this not the first time,
-        {
-          // close scan
-          inner = null;
-
-        }
-
-        try {
-          inner = new BitmapScan(innerBitmap);
-          innerPos = 0;
-        } catch (Exception e) {
-          throw new NestedLoopException(e, "Inner nested bit map  scan openScan failed");
-        }
-
-        while((outer_tuple = outer.getNext(new RID())) == false)
-        {
-          outerPos++;
-        }
-
-        if ((outer_tuple = outer.getNext(new RID())) == null) {
-          done = true;
-          if (inner != null) {
-
+        if (get_from_outer == true) {
+          get_from_outer = false;
+          if (inner != null)     // If this not the first time,
+          {
+            // close scan
             inner = null;
           }
 
-          return null;
-        }
-      }  // ENDS: if (get_from_outer == TRUE)
-
-      // The next step is to get a tuple from the inner,
-      // while the inner is not completely scanned && there
-      // is no match (with pred),get a tuple from the inner.
-
-      RID rid = new RID();
-      while ((inner_tuple = inner.getNext(rid)) != null) {
-          innerPos++;
-          //if(inner_tuple)
-          {
-            //Construct the tuple and return the data
-
-            return (outerFilterResult && outer_tuple) && (inner_tuple && innerFilterResult);
+          try {
+            inner = new BitmapScan(innerBitmap);
+          } catch (Exception e) {
+            throw new NestedLoopException(e, "openScan failed");
           }
-      }
 
-      // There has been no match. (otherwise, we would have
-      //returned from t//he while loop. Hence, inner is
-      //exhausted, => set get_from_outer = TRUE, go to top of loop
+          if ((outer_tuple = outer.getNext(o_rid)) == null) {
+            done = true;
+            if (inner != null) {
 
-      get_from_outer = true; // Loop back to top and get next outer tuple.
-    } while (true);
+              inner = null;
+            }
 
-  }
+            return null;
+          }
+        }  // ENDS: if (get_from_outer == TRUE)
 
+        RID i_rid = new RID();
+        while ((inner_tuple = inner.getNext(i_rid)) != null) {
+//          System.out.println("Outer filter:"+ outerFilterResult +
+//                  "\t inner filter:"+ innerFilterResult +
+//                  "\t outer_tuple:"+ outer_tuple +
+//                  "\t inner_tuple:"+ inner_tuple);
+          return (outerFilterResult && outer_tuple) && (inner_tuple && innerFilterResult);
+        }
 
-  public void close()
+        get_from_outer = true; // Loop back to top and get next outer tuple.
+      } while (true);
+    }
+    public void close ()
       throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
 
-    outer.closescan();
-    inner.closescan();
-    outerBitmap.close();
-    innerBitmap.close();
+      outer.closescan();
+      inner.closescan();
+      outerBitmap.close();
+      innerBitmap.close();
 
-  }
+    }
+
 }
