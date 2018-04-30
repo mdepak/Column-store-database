@@ -156,7 +156,7 @@ public class ColumnarNestedLoopsJoins {
 //		return count;
 //	}
 
-	public IndexType[] getIndexTypesForTable(String accessType, Columnarfile cf) {
+	public static IndexType[] getIndexTypesForTable(String accessType, Columnarfile cf) {
 		int numOfAttributes = cf.getNumColumns();
 		IndexType[] valueConstraintsIndexType = new IndexType[numOfAttributes];
 		for (int i = 0; i < numOfAttributes; i++) {
@@ -172,7 +172,7 @@ public class ColumnarNestedLoopsJoins {
 		return valueConstraintsIndexType;
 	}
 
-	public IndexType[] getBTreeScanAttributes(Columnarfile cf, IndexType[] valueConstraintsIndexType) {
+	public static IndexType[] getBTreeScanAttributes(Columnarfile cf, IndexType[] valueConstraintsIndexType) {
 		Set set = cf.bTreeIndexes.entrySet();
 		java.util.Iterator itr = set.iterator();
 		while (itr.hasNext()) {
@@ -182,7 +182,7 @@ public class ColumnarNestedLoopsJoins {
 		return valueConstraintsIndexType;
 	}
 
-	public IndexType[] getBitMapScanAttributes(Columnarfile cf, IndexType[] valueConstraintsIndexType) {
+	public static IndexType[] getBitMapScanAttributes(Columnarfile cf, IndexType[] valueConstraintsIndexType) {
 		Set set = cf.bitmapIndexes.entrySet();
 		java.util.Iterator itr = set.iterator();
 		while (itr.hasNext()) {

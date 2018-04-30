@@ -12,6 +12,13 @@ import global.IndexType;
 import global.SystemDefs;
 import global.TID;
 import global.TupleOrder;
+import heap.FieldNumberOutOfBoundException;
+import heap.HFBufMgrException;
+import heap.HFDiskMgrException;
+import heap.HFException;
+import heap.Heapfile;
+import heap.InvalidSlotNumberException;
+import heap.InvalidTupleSizeException;
 import heap.Tuple;
 
 import iterator.ColumnarIndexScan;
@@ -32,6 +39,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 //Define the Sample Data schema
@@ -257,7 +265,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 //  }
 
 //TODO update the method to handle multiple conditional expressions
-/*
   public static void runQueryOnColumnar(String columnDBName, String columnFileName,
       List<String> columnNames, List<String> valueConstraint, int numBuf, String accessType)
       throws InvalidTupleSizeException, HFException, IOException, FieldNumberOutOfBoundException, HFBufMgrException, HFDiskMgrException, IndexException, UnknownIndexTypeException, InvalidSlotNumberException, UnknownKeyTypeException {
@@ -296,7 +303,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         }
         short[] strSizes = Arrays.copyOfRange(strSize, 0, j);
 
-        CondExpr[] expr = Util.getValueContraint(valueConstraint);
+        CondExpr[] expr = Util.getCondExprList("C = 10", "", "", 1);
         int selectedCols[] = new int[columnNames.size()];
         for (int i = 0; i < columnNames.size(); i++) {
           selectedCols[i] = Util.getColumnNumber(columnNames.get(i));
@@ -351,7 +358,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 //        strSizes[0] = 100;
 //        strSizes[1] = 100;
         ColumnIndexScan colScan;
-        CondExpr[] expr = Util.getValueContraint(valueConstraint);
+        //CondExpr[] expr = Util.getValueContraint(valueConstraint);
+        CondExpr[] expr = null;
         IndexType indexType = new IndexType(IndexType.B_Index);
 
         int desiredColumnNumbers[] = new int[columnNames.size()];
@@ -419,8 +427,9 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         }
         short[] strSizes = Arrays.copyOfRange(strSize, 0, j);
 
-        CondExpr[] expr = Util.getValueContraint(valueConstraint);
+        //CondExpr[] expr = Util.getValueContraint(valueConstraint);
 
+        CondExpr[] expr = Util.getCondExprList("C=10", "","", 1);
         int selectedCols[] = new int[columnNames.size()];
 
         for (int i = 0; i < columnNames.size(); i++) {
@@ -475,7 +484,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         operand2 = new Operand();
         operand2.integer = 5;
         condExprs[1].operand2 = operand2;
-        
+
         condExprs[1].op = new AttrOperator(AttrOperator.aopEQ);
 
 
@@ -502,7 +511,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       e.printStackTrace();
     }
   }
-*/
 
   private static void createIndexOnColumnarFile(String columnarDatabase, String columnarFile,
       String columnName, String indexType) {
@@ -719,8 +727,8 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           accessType = (input[8].contains("NA")) ? null : input[8];
           try {
 //TODO uncomment after modifying runQueryOnColumnar
-//              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-//                  accessType);
+              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+                  accessType);
           } catch (Exception ex) {
             ex.printStackTrace();
           }
@@ -776,7 +784,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columnFileName = input[2];
       int sortColumn = Util.getColumnNumber(input[3]);
       int numBuff = Integer.parseInt(input[5]);
-      Util.createDatabaseIfNotExists(columnDBName, numBuff);
+      Util.createDatabaseIfNotExists(columnDBName, 1000);
       TupleOrder[] order = new TupleOrder[2];
       order[0] = new TupleOrder(TupleOrder.Ascending);
       order[1] = new TupleOrder(TupleOrder.Descending);
@@ -788,7 +796,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         sortOrder = order[1];
       }
 
-      performColumnarSort(columnFileName, null, sortColumn, sortOrder, numBuff);
+      performColumnarSort(columnFileName, null, sortColumn, sortOrder, 100);
 
     }
       else if (operation.contains("index")) {
@@ -894,16 +902,17 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         sortTuple.initHeaders();
         for (int i = 0; i < sortTuple.noOfFlds(); i++) {
           if (types[i].attrType == AttrType.attrString) {
-            System.out.println(sortTuple.getStrFld(i + 1));
+            System.out.print(sortTuple.getStrFld(i + 1));
           }
           if (types[i].attrType == AttrType.attrInteger) {
-            System.out.println(sortTuple.getIntFld(i + 1));
+            System.out.print(sortTuple.getIntFld(i + 1));
           }
           if (types[i].attrType == AttrType.attrReal) {
-            System.out.println(sortTuple.getFloFld(i + 1));
+            System.out.print(sortTuple.getFloFld(i + 1));
           }
+          System.out.print("\t");
         }
-
+        System.out.println("");
         sortTuple = columnSort.get_next();
       }
     }
@@ -919,12 +928,21 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
   private void runColumnarFileScan(String columnDBName, String columnFileName,
       List<String> columnNames, CondExpr[] valueConstraint, int numBuf, String accessType) {
 
+//
+//    IndexType[] indexTypes = new IndexType[4];
+//    indexTypes[0] = (new IndexType(IndexType.B_Index));
+//    indexTypes[1] = (new IndexType(IndexType.None));
+//    indexTypes[2] = (new IndexType(IndexType.BIT_MAP));
+//    indexTypes[3] = (new IndexType(IndexType.B_Index));
 
-    IndexType[] indexTypes = new IndexType[4];
-    indexTypes[0] = (new IndexType(IndexType.B_Index));
-    indexTypes[1] = (new IndexType(IndexType.None));
-    indexTypes[2] = (new IndexType(IndexType.BIT_MAP));
-    indexTypes[3] = (new IndexType(IndexType.B_Index));
+    Columnarfile cf = null;
+    try {
+       cf = new Columnarfile(columnFileName);
+    }catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    IndexType[] outerTableIndexType = ColumnarNestedLoopsJoins.getIndexTypesForTable("btree", cf);
 
     FldSpec[] Sprojection = {
         new FldSpec(new RelSpec(RelSpec.outer), 1),
@@ -935,18 +953,30 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
     ColumnarIndexScan columnarIndexScan = null;
     try {
-      columnarIndexScan = new ColumnarIndexScan(columnFileName, indexTypes, Sprojection, valueConstraint);
+      columnarIndexScan = new ColumnarIndexScan(columnFileName, outerTableIndexType, Sprojection, valueConstraint);
       Tuple tuple;
       while (true) {
         tuple = columnarIndexScan.get_next();
         if (tuple == null) {
           break;
         }
+        AttrType[] attrType = cf.getType();
+        for(int i=0; i< Sprojection.length; i++){
+          int indexNumber = Sprojection[i].offset;
+          if(attrType[indexNumber-1].attrType == AttrType.attrString) {
+            System.out.print(tuple.getStrFld(i+1));
+          }else if(attrType[indexNumber-1].attrType == AttrType.attrInteger) {
+            System.out.print(tuple.getIntFld(i+1));
+          }else if(attrType[indexNumber-1].attrType == AttrType.attrReal) {
+            System.out.print(tuple.getFloFld(i+1));
+          }
+          System.out.print("\t");
+        }
+        System.out.println("");
       }
       columnarIndexScan.close();
     } catch (Exception e) {
       e.printStackTrace();
-      columnarIndexScan.close();
     }
 
   }
