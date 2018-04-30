@@ -77,7 +77,7 @@ public class ColumnarIndexScan extends Iterator {
                                 position = columnIndexScan.get_next_pos();
                                 if(position != -1){
                                     tuple.setHdr((short) 1, type, strsizes);
-                                    tuple.setIntFld(1, position+1);
+                                    tuple.setIntFld(1, position);
                                     heapfile.insertRecord(tuple.getTupleByteArray());
                                 }
                             }while((position != -1));
@@ -169,7 +169,7 @@ public class ColumnarIndexScan extends Iterator {
                     for(int i=0; i< _outFlds.length; i++){
                         int indexNumber = _outFlds[i].offset;
                         Heapfile heapfile = columnarfile.getColumnFiles()[indexNumber-1];
-                        Tuple tupleTemp = columnar.Util.getTupleFromPosition(andPos.iterator().next() - 1, heapfile);
+                        Tuple tupleTemp = columnar.Util.getTupleFromPosition(andPos.iterator().next(), heapfile);
                         tupleTemp.initHeaders();
                         if(attrType[indexNumber-1].attrType == AttrType.attrString) {
                             rowTuple.setStrFld(i+1, tupleTemp.getStrFld(1));
