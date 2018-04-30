@@ -1,44 +1,27 @@
 package tests;
 
-import columnar.BitmapIterator;
 import columnar.Columnarfile;
 import diskmgr.PCounter;
 import global.AttrOperator;
 import global.AttrType;
 import global.GlobalConst;
 import global.IndexType;
-import global.RID;
 import global.SystemDefs;
 import global.TID;
-import heap.FieldNumberOutOfBoundException;
-import heap.HFBufMgrException;
-import heap.HFDiskMgrException;
-import heap.HFException;
-import heap.InvalidSlotNumberException;
-import heap.InvalidTupleSizeException;
-import heap.InvalidTypeException;
-import heap.SpaceNotAvailableException;
+import global.TupleOrder;
 import heap.Tuple;
-import index.ColumnIndexScan;
-import index.IndexException;
-import index.UnknownIndexTypeException;
-import iterator.ColumnarFileScan;
 import iterator.ColumnarIndexScan;
 import iterator.ColumnarNestedLoopsJoins;
+import iterator.ColumnarSort;
 import iterator.CondExpr;
 import iterator.FldSpec;
-import iterator.Operand;
-import iterator.PredEvalException;
 import iterator.RelSpec;
-import iterator.UnknowAttrType;
-import iterator.UnknownKeyTypeException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 //Define the Sample Data schema
@@ -625,172 +608,244 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
           }
         }
       } else */
-      if (operation.contains("cis")) {
-        columnDBName = input[1];
-        columnFileName = input[2];
-        columns = input[3];
-        columns = columns.replaceAll("\\[", "").replaceAll("\\]", "");
-        String[] colArray = columns.split(",");
-        if (colArray.length > 0 && colArray != null) {
-          for (String col : colArray) {
-            columnNames.add(col);
+    if (operation.contains("cis")) {
+      columnDBName = input[1];
+      columnFileName = input[2];
+      columns = input[3];
+      columns = columns.replaceAll("\\[", "").replaceAll("\\]", "");
+      String[] colArray = columns.split(",");
+      if (colArray.length > 0 && colArray != null) {
+        for (String col : colArray) {
+          columnNames.add(col);
+        }
+        String colCons = input[4];
+        if (colCons.contains("NA")) {
+          colCons = null;
+          valueConstraint.add(colCons);
+          numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
+          ;
+          accessType = (input[6].contains("NA")) ? null : input[6];
+
+          // SETUP Database
+          Util.createDatabaseIfNotExists(columnDBName, numBuf);
+
+          try {
+
+            runColumnarFileScan(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+                accessType);
+          } catch (Exception ex) {
+            ex.printStackTrace();
           }
-          String colCons = input[4];
-          if (colCons.contains("NA")) {
-            colCons = null;
-            valueConstraint.add(colCons);
-            numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
-            ;
-            accessType = (input[6].contains("NA")) ? null : input[6];
+        } else {
+          String opCons = input[5];
+          String valCons = input[6];
 
-            // SETUP Database
-            Util.createDatabaseIfNotExists(columnDBName, numBuf);
+          valueConstraint.add(colCons);
+          valueConstraint.add(opCons);
+          valueConstraint.add(valCons);
 
-            try {
+          //SET THE NUMBUF AND ACCESSTYPE
+          numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
 
-              runColumnarFileScan(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                  accessType);
-            } catch (Exception ex) {
-              ex.printStackTrace();
-            }
-          } else {
-            String opCons = input[5];
-            String valCons = input[6];
+          // SETUP Database
+          Util.createDatabaseIfNotExists(columnDBName, numBuf);
 
-            valueConstraint.add(colCons);
-            valueConstraint.add(opCons);
-            valueConstraint.add(valCons);
-
-            //SET THE NUMBUF AND ACCESSTYPE
-            numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
-
-            // SETUP Database
-            Util.createDatabaseIfNotExists(columnDBName, numBuf);
-
-            accessType = (input[8].contains("NA")) ? null : input[8];
-            try {
-              runColumnarFileScan(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
-                  accessType);
-            } catch (Exception ex) {
-              ex.printStackTrace();
-            }
+          accessType = (input[8].contains("NA")) ? null : input[8];
+          try {
+            runColumnarFileScan(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
+                accessType);
+          } catch (Exception ex) {
+            ex.printStackTrace();
           }
         }
-
       }
-      else if (operation.contains("query")) {
-        // COLUMN DB NAME
-        columnDBName = input[1];
-        //COLUMN FILE NAME
-        columnFileName = input[2];
-        //LIST OF COLUMNS
-        columns = input[3];
-        columns = columns.replaceAll("\\[", "").replaceAll("\\]", "");
-        String[] colArray = columns.split(",");
-        if (colArray.length > 0 && colArray != null) {
-          for (String col : colArray) {
-            columnNames.add(col);
-          }
-          //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
-          String colCons = input[4];
-          //valueConstraint.add(colCons);
-          if (colCons.contains("NA")) {
-            colCons = null;
-            valueConstraint.add(colCons);
-            numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
-            ;
-            accessType = (input[6].contains("NA")) ? null : input[6];
 
-            // SETUP Database
-            Util.createDatabaseIfNotExists(columnDBName, numBuf);
+    } else if (operation.contains("query")) {
+      // COLUMN DB NAME
+      columnDBName = input[1];
+      //COLUMN FILE NAME
+      columnFileName = input[2];
+      //LIST OF COLUMNS
+      columns = input[3];
+      columns = columns.replaceAll("\\[", "").replaceAll("\\]", "");
+      String[] colArray = columns.split(",");
+      if (colArray.length > 0 && colArray != null) {
+        for (String col : colArray) {
+          columnNames.add(col);
+        }
+        //VALUECONSTRAINT SPLIT INTO COLUMNAME, OPERATOR AND VALUE AND APPEND IT TO A LIST
+        String colCons = input[4];
+        //valueConstraint.add(colCons);
+        if (colCons.contains("NA")) {
+          colCons = null;
+          valueConstraint.add(colCons);
+          numBuf = Integer.parseInt((input[5].contains("NA")) ? "0" : input[5]);
+          ;
+          accessType = (input[6].contains("NA")) ? null : input[6];
 
-            try {
+          // SETUP Database
+          Util.createDatabaseIfNotExists(columnDBName, numBuf);
+
+          try {
 //TODO uncomment after modifying runQueryOnColumnar
 //              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
 //                  accessType);
-            } catch (Exception ex) {
-              ex.printStackTrace();
-            }
-          } else {
-            String opCons = input[5];
-            String valCons = input[6];
+          } catch (Exception ex) {
+            ex.printStackTrace();
+          }
+        } else {
+          String opCons = input[5];
+          String valCons = input[6];
 
-            valueConstraint.add(colCons);
-            valueConstraint.add(opCons);
-            valueConstraint.add(valCons);
+          valueConstraint.add(colCons);
+          valueConstraint.add(opCons);
+          valueConstraint.add(valCons);
 
-            //SET THE NUMBUF AND ACCESSTYPE
-            numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
+          //SET THE NUMBUF AND ACCESSTYPE
+          numBuf = Integer.parseInt((input[7].contains("NA")) ? "100" : input[7]);
 
-            // SETUP Database
-            Util.createDatabaseIfNotExists(columnDBName, numBuf);
+          // SETUP Database
+          Util.createDatabaseIfNotExists(columnDBName, numBuf);
 
-            accessType = (input[8].contains("NA")) ? null : input[8];
-            try {
+          accessType = (input[8].contains("NA")) ? null : input[8];
+          try {
 //TODO uncomment after modifying runQueryOnColumnar
 //              runQueryOnColumnar(columnDBName, columnFileName, columnNames, valueConstraint, numBuf,
 //                  accessType);
-            } catch (Exception ex) {
-              ex.printStackTrace();
-            }
+          } catch (Exception ex) {
+            ex.printStackTrace();
           }
         }
-
-      } else if (operation.contains("batchinsert")) {
-        datafileName = input[1];
-        columnDBName = input[2];
-        columnFileName = input[3];
-        noOfCols = Integer.parseInt(input[4]);
-
-        // SETUP Database
-        Util.createDatabaseIfNotExists(columnDBName, 100);
-
-        try {
-          batchInsertQuery(datafileName, columnDBName, columnFileName, noOfCols);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-
-      } else if (operation.contains("index")) {
-        columnDBName = input[1];
-        columnFileName = input[2];
-        String colName = input[3];
-        indexType = input[4];
-
-        Util.createDatabaseIfNotExists(columnDBName, 100);
-
-        createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
-      } else if (operation.contains("nlj")) {
-        String outerTableName = input[1];
-        String innerTableName = input[2];
-        String outerConstraint = input[3];
-        CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint);
-        String innerConstraint = input[4];
-        CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint);
-        String joinConstraint = input[5];
-          CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint);
-        String outerAccessType = input[6];
-        String innerAccessType = input[7];
-        String targetFieldValues = input[8];
-        numBuf = Integer.parseInt(input[9]);
-
-        ColumnarNestedLoopsJoins nljObj = new ColumnarNestedLoopsJoins(outerTableName, innerTableName,
-            outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType, innerAccessType,
-            targetFieldValues, numBuf);
       }
+
+    } else if (operation.contains("batchinsert")) {
+      datafileName = input[1];
+      columnDBName = input[2];
+      columnFileName = input[3];
+      noOfCols = Integer.parseInt(input[4]);
+
+      // SETUP Database
+      Util.createDatabaseIfNotExists(columnDBName, 100);
 
       try {
-        SystemDefs.JavabaseBM.flushAllPages();
-      } catch (Exception ex) {
-        System.out.println("ColumnarTest() flush pages...");
-        ex.printStackTrace();
+        batchInsertQuery(datafileName, columnDBName, columnFileName, noOfCols);
+      } catch (Exception e) {
+        e.printStackTrace();
       }
 
-      System.out.println(
-          "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
+    } else if (operation.contains("index")) {
+      columnDBName = input[1];
+      columnFileName = input[2];
+      String colName = input[3];
+      indexType = input[4];
 
-      return input[0].equalsIgnoreCase("exit");
+      Util.createDatabaseIfNotExists(columnDBName, 100);
+
+      createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
+    } else if (operation.contains("nlj")) {
+      String outerTableName = input[1];
+      String innerTableName = input[2];
+      String outerConstraint = input[3];
+      CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint);
+      String innerConstraint = input[4];
+      CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint);
+      String joinConstraint = input[5];
+      CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint);
+      String outerAccessType = input[6];
+      String innerAccessType = input[7];
+      String targetFieldValues = input[8];
+      numBuf = Integer.parseInt(input[9]);
+
+      ColumnarNestedLoopsJoins nljObj = new ColumnarNestedLoopsJoins(outerTableName, innerTableName,
+          outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType,
+          innerAccessType,
+          targetFieldValues, numBuf);
+    } else if (operation.contains("sort")) {
+
+      columnDBName = input[1];
+      columnFileName = input[2];
+      int sortColumn = Util.getColumnNumber(input[3]);
+
+      TupleOrder[] order = new TupleOrder[2];
+      order[0] = new TupleOrder(TupleOrder.Ascending);
+      order[1] = new TupleOrder(TupleOrder.Descending);
+
+      TupleOrder sortOrder = null;
+      if (input[4].equalsIgnoreCase("ASC")) {
+        sortOrder = order[0];
+      } else {
+        sortOrder = order[1];
+      }
+
+      int numBuff = Integer.parseInt(input[5]);
+
+      Util.createDatabaseIfNotExists(columnDBName, numBuff);
+
+      performColumnarSort(columnFileName, null, sortColumn, sortOrder, numBuff);
+
+
     }
+
+    try {
+      SystemDefs.JavabaseBM.flushAllPages();
+    } catch (Exception ex) {
+      System.out.println("ColumnarTest() flush pages...");
+      ex.printStackTrace();
+    }
+
+    System.out.println(
+        "DiskMgr Read Count = " + PCounter.rcounter + "\t Write Count = " + PCounter.wcounter);
+
+    return input[0].equalsIgnoreCase("exit");
+  }
+
+
+  private void performColumnarSort(
+      String columnarFileName,
+      int[] selectedCols,
+      int sort_fld,
+      TupleOrder sort_order,
+      int n_pages)
+      throws Exception {
+
+
+    try {
+
+      Columnarfile columnarfile = new Columnarfile(columnarFileName);
+
+      ColumnarSort columnSort = new ColumnarSort(columnarfile, null, sort_fld, sort_order, n_pages);
+
+      AttrType[] types = columnarfile.getType();
+
+      Tuple sortTuple = columnSort.get_next();
+
+      while (sortTuple != null) {
+
+        //Print the tuple
+        sortTuple.initHeaders();
+        for (int i = 0; i < sortTuple.noOfFlds(); i++) {
+          if (types[i].attrType == AttrType.attrString) {
+            System.out.println(sortTuple.getStrFld(i + 1));
+          }
+          if (types[i].attrType == AttrType.attrInteger) {
+            System.out.println(sortTuple.getIntFld(i + 1));
+          }
+          if (types[i].attrType == AttrType.attrReal) {
+            System.out.println(sortTuple.getFloFld(i + 1));
+          }
+        }
+
+        sortTuple = columnSort.get_next();
+      }
+    }
+    catch (Exception ex)
+    {
+      System.out.println("Exception in the column sort");
+      ex.printStackTrace();
+
+      throw ex;
+    }
+  }
 
   private void runColumnarFileScan(String columnDBName, String columnFileName,
       List<String> columnNames, List<String> valueConstraint, int numBuf, String accessType) {
@@ -805,7 +860,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     expr2[0].type2 = new AttrType(AttrType.attrSymbol);
 
     expr2[0].type2 = new AttrType(AttrType.attrInteger);
-    expr2[0].operand2.integer =  8;
+    expr2[0].operand2.integer = 8;
 
     expr2[1] = new CondExpr();
     expr2[1].op = new AttrOperator(AttrOperator.aopEQ);
@@ -826,11 +881,10 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     expr2[2] = null;
 
     IndexType[] indexTypes = new IndexType[4];
-    indexTypes[0]  = (new IndexType(IndexType.B_Index));
+    indexTypes[0] = (new IndexType(IndexType.B_Index));
     indexTypes[1] = (new IndexType(IndexType.None));
     indexTypes[2] = (new IndexType(IndexType.BIT_MAP));
     indexTypes[3] = (new IndexType(IndexType.B_Index));
-
 
     FldSpec[] Sprojection = {
         new FldSpec(new RelSpec(RelSpec.outer), 1),
@@ -839,12 +893,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         new FldSpec(new RelSpec(RelSpec.outer), 4)
     };
 
-
     ColumnarIndexScan columnarIndexScan = null;
     Columnarfile cf = null;
     try {
-       cf = new Columnarfile("data");
-       columnarIndexScan = new ColumnarIndexScan("data", indexTypes, Sprojection, expr2);
+      cf = new Columnarfile("data");
+      columnarIndexScan = new ColumnarIndexScan("data", indexTypes, Sprojection, expr2);
       Tuple tuple;
       AttrType[] types = cf.getType();
       int selectCols[] = new int[columnNames.size()];
@@ -877,7 +930,6 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
     }
 
   }
-
 
 
   protected void batchInsertQuery(String dataFileName, String columnDBName, String columnarFileName,
