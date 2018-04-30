@@ -244,11 +244,11 @@ public class ColumnarBitmapEquiJoins {
     Heapfile[] files = file.getColumnFiles();
 
     for (int i = 0; i < fldSpecs.length; i++) {
-      int colIndex = fldSpecs[i].offset;
+      int colIndex = fldSpecs[i].offset-1;
 
       AttrType attrType = attrTypes[colIndex];
-      Tuple tuple = Util.getTupleFromPosition(position, files[colIndex]);
-
+      Tuple tuple = Util.getTupleFromPosition(position-1, files[colIndex]);
+      tuple.initHeaders();
       switch (attrType.attrType) {
         case AttrType.attrInteger:
           System.out.print(tuple.getIntFld(1) + "\t");

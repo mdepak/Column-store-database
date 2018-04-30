@@ -67,7 +67,14 @@ public class BitmapUtil {
     ValueClass operandValue = Util.valueClassFactory(expression.type2);
     operandValue.setValue(expression.operand2.getOperandValue(expression.type2));
 
-    int columnNum = expression.operand1.symbol.offset;
+    int columnNum;
+    if(expression.operand1.symbol ==null){
+
+      columnNum = Integer.parseInt(expression.operand1.string);
+    }
+    else{
+      columnNum = expression.operand1.symbol.offset;
+    }
     List<ColumnarHeaderRecord> headerRecordList = columnarFile.getBitMapIndicesInfo(columnNum);
 
     BiFunction<ValueClass, ValueClass, Boolean> evalFunc = getEvaluationFunction(expression.op);
