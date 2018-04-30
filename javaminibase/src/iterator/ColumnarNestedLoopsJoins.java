@@ -81,6 +81,7 @@ public class ColumnarNestedLoopsJoins {
 				if(innerTuple == null) {
 					break;
 				}
+				joinedTuple = null;
 				if(PredEval.Eval(joinConstraint, outerTuple, innerTuple, outerAttrTypes, innerAttrTypes)) {
 					Projection.Join(outerTuple, outerAttrTypes, innerTuple, innerAttrTypes, joinedTuple, perm_mat, numOfAttributesInResultTuple);
 					resultTuples.add(joinedTuple);
@@ -144,7 +145,7 @@ public class ColumnarNestedLoopsJoins {
 		java.util.Iterator itr = set.iterator();
 		while(itr.hasNext()) {
 			Map.Entry entry = (Map.Entry)itr.next();
-			valueConstraintsIndexType[(int)entry.getKey()] = new IndexType(IndexType.B_Index);
+			valueConstraintsIndexType[(int)entry.getKey()-1] = new IndexType(IndexType.B_Index);
 		}
 		return valueConstraintsIndexType;
 	}
@@ -154,7 +155,7 @@ public class ColumnarNestedLoopsJoins {
 		java.util.Iterator itr = set.iterator();
 		while(itr.hasNext()) {
 			Map.Entry entry = (Map.Entry)itr.next();
-			valueConstraintsIndexType[(int)entry.getKey()] = new IndexType(IndexType.BIT_MAP);
+			valueConstraintsIndexType[(int)entry.getKey()-1] = new IndexType(IndexType.BIT_MAP);
 		}
 		return valueConstraintsIndexType;
 	}
