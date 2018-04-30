@@ -66,16 +66,16 @@ public class ColumnarBitmapEquiJoins {
   Boolean inner_tuple = null;
 
   public ColumnarBitmapEquiJoins(
-      java.lang.String leftColumnarFileName,
+          String leftColumnarFileName,
       //int leftJoinField,
-      java.lang.String rightColumnarFileName,
+          String rightColumnarFileName,
       //int rightJoinField,
       CondExpr[] joinCondExprs,
       CondExpr[] leftConds,
       CondExpr[] rightConds,
       String targetFieldValues,
       //FldSpec[] proj_list,
-      int n_out_flds)
+      int numBuf)
       throws InvalidTupleSizeException, HFException, IOException, FieldNumberOutOfBoundException, HFBufMgrException, HFDiskMgrException, GetFileEntryException, ConstructPageException, InvalidSlotNumberException, InvalidTypeException, PinPageException, BMBufMgrException, SpaceNotAvailableException, UnpinPageException, BMException, DeleteFileEntryException, AddFileEntryException {
 
     leftColumnarFile = new Columnarfile(leftColumnarFileName);
@@ -137,17 +137,28 @@ public class ColumnarBitmapEquiJoins {
 
     //building FldSpec for joined tuple & target column extraction for both the tables
     FldSpec[] perm_mat = new FldSpec[numOfAttributesInResultTuple];
+    int leftProjCount = 0;
+    int rightProjCount = 0;
     for (int i = 0; i < numOfAttributesInResultTuple; i++) {
       String[] outputColumn = outputCoulmnsInOrder[i].split("\\.");
       if (outputColumn[0].equals(leftColumnarFileName)) {
-        perm_mat[i] = new FldSpec(new RelSpec(0), ((int) outputColumn[1].charAt(0)) - 64);
+        leftProjCount+=1;
       } else {
-        perm_mat[i] = new FldSpec(new RelSpec(1), ((int) outputColumn[1].charAt(0)) - 64);
+        rightProjCount+=1;
       }
     }
-    outerFldSpec = getFldSpec(true, leftColumnarFile);
-    innerFldSpec = getFldSpec(false, rightColumnarFile);
-
+    outerFldSpec = new FldSpec[leftProjCount];
+    innerFldSpec = new FldSpec[rightProjCount];
+    int leftIterator = 0;
+    int rightIterator = 0;
+    for (int i = 0; i < numOfAttributesInResultTuple; i++) {
+      String[] outputColumn = outputCoulmnsInOrder[i].split("\\.");
+      if (outputColumn[0].equals(leftColumnarFileName)) {
+        outerFldSpec[leftIterator++] = new FldSpec(new RelSpec(0), ((int) outputColumn[1].charAt(0)) - 64);
+      } else {
+        innerFldSpec[rightIterator++] = new FldSpec(new RelSpec(1), ((int) outputColumn[1].charAt(0)) - 64);
+      }
+    }
 
   }
 
@@ -196,15 +207,16 @@ public class ColumnarBitmapEquiJoins {
         if ((outer_tuple = outer.getNext(o_rid)) == null) {
 
           done = true;
-          if (inner != null) {
-
-            inner = null;
-          }
+//          if (inner != null) {
+//            innerPos = 0;
+//            inner = null;
+//          }
 
           return null;
-        } else {
-          outerPos++;
         }
+        //else {
+         // outerPos++;
+        //}
       }  // ENDS: if (get_from_outer == TRUE)
 
       RID i_rid = new RID();
@@ -214,11 +226,10 @@ public class ColumnarBitmapEquiJoins {
                 inner_tuple);
 
         Boolean result = BitmapUtil.evaluateBitmapCondExpr(condExprValues);
+//        System.out.println(
+//                "Result = " + result + " Outer pos: " + outerPos + "\t inner pos: " + innerPos);
 
         if (result) {
-          System.out.println(
-              "Result at " + result + " Outer pos: " + outerPos + "\t inner pos: " + innerPos);
-          innerPos++;
 
           try {
             printTupleAtPosition(outerPos, outerFldSpec, leftColumnarFile);
@@ -228,12 +239,12 @@ public class ColumnarBitmapEquiJoins {
             System.out.println("Exception in printing equi join tuple");
             e.printStackTrace();
           }
-
-          return new Tuple();
         }
+        innerPos++;
       }
 
       get_from_outer = true; // Loop back to top and get next outer tuple.
+      outerPos++;
     } while (true);
   }
 
@@ -247,7 +258,7 @@ public class ColumnarBitmapEquiJoins {
       int colIndex = fldSpecs[i].offset-1;
 
       AttrType attrType = attrTypes[colIndex];
-      Tuple tuple = Util.getTupleFromPosition(position-1, files[colIndex]);
+      Tuple tuple = Util.getTupleFromPosition(position, files[colIndex]);
       tuple.initHeaders();
       switch (attrType.attrType) {
         case AttrType.attrInteger:

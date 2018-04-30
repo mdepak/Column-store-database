@@ -284,10 +284,10 @@ public class BitmapUtil {
 
   private static List<BitmapPair> getBitmapPairsForCondExpr(CondExpr condExpr,
       Columnarfile leftColumnarFile, Columnarfile rightColumnarFile) {
-    int leftColNo = Integer.parseInt(condExpr.operand1.string);
+    int leftColNo = condExpr.operand1.symbol.offset;
     List<ColumnarHeaderRecord> leftHeaderList = leftColumnarFile.getBitMapIndicesInfo(leftColNo);
 
-    int rightColNo = Integer.parseInt(condExpr.operand2.string);
+    int rightColNo = condExpr.operand2.symbol.offset;
     List<ColumnarHeaderRecord> rightHeaderList = rightColumnarFile.getBitMapIndicesInfo(rightColNo);
 
     return findBitMapPairs(leftHeaderList, rightHeaderList);
@@ -314,7 +314,7 @@ public class BitmapUtil {
     //TODO: Construct similar structure to index
     List<BitmapJoinFilePairs> joinFilePairsList = new ArrayList();
 
-    for (int i = 0; i < condExprs.length; i++) {
+    for (int i = 0; i < condExprs.length-1; i++) {
       CondExpr expression = condExprs[i];
       BitmapJoinFilePairs joinFilePair = new BitmapJoinFilePairs();
 
