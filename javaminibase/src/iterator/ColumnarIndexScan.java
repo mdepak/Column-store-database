@@ -90,7 +90,7 @@ public class ColumnarIndexScan extends Iterator {
               FileScan fscan = new FileScan(heapfile._fileName, type, strsizes, (short) 1, 1,
                   _outFlds, null);
               Sort sort = new Sort(type, (short) 1, strsizes, fscan, 1,
-                  new TupleOrder(TupleOrder.Ascending), 4, 100, true);
+                  new TupleOrder(TupleOrder.Ascending), 4, 5, true);
               iterators[cnt] = sort;
               cnt++;
               break;

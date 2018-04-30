@@ -902,16 +902,17 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         sortTuple.initHeaders();
         for (int i = 0; i < sortTuple.noOfFlds(); i++) {
           if (types[i].attrType == AttrType.attrString) {
-            System.out.println(sortTuple.getStrFld(i + 1));
+            System.out.print(sortTuple.getStrFld(i + 1));
           }
           if (types[i].attrType == AttrType.attrInteger) {
-            System.out.println(sortTuple.getIntFld(i + 1));
+            System.out.print(sortTuple.getIntFld(i + 1));
           }
           if (types[i].attrType == AttrType.attrReal) {
-            System.out.println(sortTuple.getFloFld(i + 1));
+            System.out.print(sortTuple.getFloFld(i + 1));
           }
+          System.out.print("\t");
         }
-
+        System.out.println("");
         sortTuple = columnSort.get_next();
       }
     }
