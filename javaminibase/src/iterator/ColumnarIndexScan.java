@@ -83,7 +83,7 @@ public class ColumnarIndexScan extends Iterator {
                             }while((position != -1));
 
                             FileScan fscan = new FileScan(heapfile._fileName, type, strsizes, (short) 1, 1, _outFlds, null);
-                            Sort sort = new Sort(type, (short) 1, strsizes, fscan, 1, new TupleOrder(TupleOrder.Ascending), 4, 3, true);
+                            Sort sort = new Sort(type, (short) 1, strsizes, fscan, 1, new TupleOrder(TupleOrder.Ascending), 4, 100, true);
                             iterators[cnt] = sort;
                             cnt++;
                             break;
@@ -94,7 +94,8 @@ public class ColumnarIndexScan extends Iterator {
                             break;
                         case IndexType.None:
                             selectedCols[0] = 1;
-                            ColumnarFileScan columnarFileScan = new ColumnarFileScan(relName, heapName, attrType, strsizes, (short) 1, 1, selectedCols, _outFlds, newExprArr, false);
+                            newExprArr[0].operand1.symbol.offset = 1;
+                            FileScan columnarFileScan = new FileScan(heapName, attrType, strsizes, (short) 1, 1, _outFlds, newExprArr);
                             iterators[cnt] = columnarFileScan;
                             cnt++;
                             break;
