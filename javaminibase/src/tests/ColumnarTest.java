@@ -807,11 +807,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         String outerTableName = input[1];
         String innerTableName = input[2];
         String outerConstraint = input[3];
-        CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint);
+        CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint, outerTableName, innerTableName, 1);
         String innerConstraint = input[4];
-        CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint);
+        CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint, outerTableName, innerTableName, 2);
         String joinConstraint = input[5];
-          CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint);
+          CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint, outerTableName, innerTableName, 3);
         String outerAccessType = input[6];
         String innerAccessType = input[7];
         String targetFieldValues = input[8];
@@ -825,11 +825,11 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         String outerFile = input[2];
         String innerFile = input[3];
         String outerConstraint = input[4];
-        CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint);
+        CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint, outerFile, innerFile, 1);
         String innerConstraint = input[5];
-        CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint);
+        CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint, outerFile, innerFile, 2);
         String equiConstraint = input[6];
-        CondExpr[] equiConstraintExpr = Util.getCondExprList(equiConstraint);
+        CondExpr[] equiConstraintExpr = Util.getCondExprList(equiConstraint, outerFile, innerFile, 3);
         String targetFieldValues = input[7];
         numBuf = Integer.parseInt(input[8]);
 
