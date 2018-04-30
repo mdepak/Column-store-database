@@ -434,7 +434,8 @@ public class BufMgr implements GlobalConst {
 
     if(unpinned >0)
     {
-      System.out.println("Number of unpinned pages - "+ unpinned);
+      //TODO: Remove and fix it.
+      //System.out.println("Number of unpinned pages - "+ unpinned);
     }
 
 
