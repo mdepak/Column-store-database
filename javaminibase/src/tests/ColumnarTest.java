@@ -784,7 +784,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
       columnFileName = input[2];
       int sortColumn = Util.getColumnNumber(input[3]);
       int numBuff = Integer.parseInt(input[5]);
-      Util.createDatabaseIfNotExists(columnDBName, 1000);
+      Util.createDatabaseIfNotExists(columnDBName, numBuff);
       TupleOrder[] order = new TupleOrder[2];
       order[0] = new TupleOrder(TupleOrder.Ascending);
       order[1] = new TupleOrder(TupleOrder.Descending);
@@ -796,7 +796,7 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         sortOrder = order[1];
       }
 
-      performColumnarSort(columnFileName, null, sortColumn, sortOrder, 100);
+      performColumnarSort(columnFileName, null, sortColumn, sortOrder, numBuff);
 
     }
       else if (operation.contains("index")) {

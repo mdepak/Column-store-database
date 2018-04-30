@@ -70,6 +70,7 @@ public class ColumnarSort extends Iterator {
 
           if (idx == sort_fld - 1) {
             sortStrSizes[0] = strSizes[strPtr];
+            sortStrSizes[0] = 100;
           }
 
           if (AttrType.attrString == colAttrTypes[idx].attrType) {
@@ -98,7 +99,7 @@ public class ColumnarSort extends Iterator {
           break;
       }
       sort = new Sort(sortAttrTypes, (short) 1, sortStrSizes, fscan, 1, sort_order, sortFieldLen,
-          Math.max(n_pages-colAttrTypes.length,3), true);
+          Math.max(n_pages-colAttrTypes.length-8,3), true);
     }
   catch (RuntimeException ex) {
       ex.printStackTrace();
