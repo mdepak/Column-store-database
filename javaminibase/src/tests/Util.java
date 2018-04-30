@@ -43,10 +43,10 @@ public class Util {
     PCounter.initialize();
   }
 
-  public static CondExpr[] getCondExprList(String conditions){
+  public static CondExpr[] getCondExprList(String conditions, String outerTableName, String innerTableName, int conditionType){
     String[] disjunctions = conditions.split("&");
     String[] operands = {"!=", "<=", ">=", "<", ">", "="};
-    CondExpr[] expr = new CondExpr[disjunctions.length];
+    CondExpr[] expr = new CondExpr[disjunctions.length+1];
     for (int j=0; j< disjunctions.length; j++){
       String [] conditionExpr = disjunctions[j].split("\\|");
       List<List<String>> valueConstraints = new ArrayList<>();
@@ -64,12 +64,13 @@ public class Util {
         }
         valueConstraints.add(valueConstraint);
       }
-      expr[j] = Util.getValueContraint(valueConstraints);
+      expr[j] = Util.getValueContraint(valueConstraints, outerTableName, innerTableName, conditionType);
     }
+    expr[disjunctions.length] = null;
     return expr;
   }
 
-  public static CondExpr getValueContraint(List<List<String>> valueContraints){
+  public static CondExpr getValueContraint(List<List<String>> valueContraints, String outerTableName, String innerTableName, int conditionType){
     CondExpr expr = new CondExpr();
     CondExpr expr_pointer = expr;
     Iterator itr = valueContraints.iterator();
@@ -79,22 +80,44 @@ public class Util {
         return null;
 
       int operator = getOperator(valueConstraint.get(1));
-      int column = getColumnNumber(valueConstraint.get(0));
       expr.op = new AttrOperator(operator);
       expr.type1 = new AttrType(AttrType.attrSymbol);
-      expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
 
-      String value = valueConstraint.get(2);
-      if (value.matches("\\d*\\.\\d*")) {
-        expr.type2 = new AttrType(AttrType.attrReal);
-        expr.operand2.real = Float.valueOf(value);
-      } else if (value.matches("\\d+")) {
-        expr.type2 = new AttrType(AttrType.attrInteger);
-        expr.operand2.integer = Integer.valueOf(value);
+      if(conditionType == 3) {
+        String[] leftOperand = valueConstraint.get(0).split("\\.");
+        if(leftOperand[0].equals(outerTableName)) {
+          expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), getColumnNumber(leftOperand[1]));
+        }else if(leftOperand[0].equals(innerTableName)) {
+          expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), getColumnNumber(leftOperand[1]));
+        }
+
+        expr.type2 = new AttrType(AttrType.attrSymbol);
+        String[] rightOperand = valueConstraint.get(2).split("\\.");
+        if(rightOperand[0].equals(outerTableName)) {
+          expr.operand2.symbol = new FldSpec(new RelSpec(RelSpec.outer), getColumnNumber(rightOperand[1]));
+        }else if(rightOperand[0].equals(innerTableName)) {
+          expr.operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), getColumnNumber(rightOperand[1]));
+        }
       } else {
-        expr.type2 = new AttrType(AttrType.attrString);
-        expr.operand2.string = value;
+        if(conditionType == 1) {
+          expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), getColumnNumber(valueConstraint.get(0)));
+        } else if(conditionType == 2) {
+          expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), getColumnNumber(valueConstraint.get(0)));
+        }
+        String value = valueConstraint.get(2);
+        if (value.matches("\\d*\\.\\d*")) {
+          expr.type2 = new AttrType(AttrType.attrReal);
+          expr.operand2.real = Float.valueOf(value);
+        } else if (value.matches("\\d+")) {
+          expr.type2 = new AttrType(AttrType.attrInteger);
+          expr.operand2.integer = Integer.valueOf(value);
+        } else {
+          expr.type2 = new AttrType(AttrType.attrString);
+          expr.operand2.string = value;
+        }
       }
+
+
       if(itr.hasNext()){
         expr.next = new CondExpr();
       }
