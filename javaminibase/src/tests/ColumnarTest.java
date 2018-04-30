@@ -856,19 +856,19 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
         if (tuple == null) {
           break;
         }
-        tuple.initHeaders();
-        for (int i = 0; i < tuple.noOfFlds(); i++) {
-          if (types[selectCols[i] - 1].attrType == AttrType.attrString) {
-            System.out.println(tuple.getStrFld(i + 1));
-          }
-          if (types[selectCols[i] - 1].attrType == AttrType.attrInteger) {
-            System.out.println(tuple.getIntFld(i + 1));
-          }
-          if (types[selectCols[i] - 1].attrType == AttrType.attrReal) {
-            System.out.println(tuple.getFloFld(i + 1));
-          }
-        }
-        System.out.println("");
+//        tuple.initHeaders();
+//        for (int i = 0; i < tuple.noOfFlds(); i++) {
+//          if (types[selectCols[i] - 1].attrType == AttrType.attrString) {
+//            System.out.println(tuple.getStrFld(i + 1));
+//          }
+//          if (types[selectCols[i] - 1].attrType == AttrType.attrInteger) {
+//            System.out.println(tuple.getIntFld(i + 1));
+//          }
+//          if (types[selectCols[i] - 1].attrType == AttrType.attrReal) {
+//            System.out.println(tuple.getFloFld(i + 1));
+//          }
+//        }
+        System.out.println("\n");
       }
       columnarIndexScan.close();
     } catch (Exception e) {

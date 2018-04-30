@@ -56,7 +56,7 @@ public abstract class Iterator implements Flags {
       UnknownKeyTypeException,
       Exception;
 
-  public abstract int get_next_pos()
+  public abstract int  get_next_pos()
       throws IOException,
       JoinsException,
       IndexException,

@@ -1,24 +1,19 @@
 package iterator;
 
-import bitmap.BitMapFile;
-import btree.*;
-import bufmgr.PageNotReadException;
 import columnar.BitmapIterator;
 import columnar.Columnarfile;
 import global.AttrType;
 import global.IndexType;
-import global.RID;
 import global.TupleOrder;
-import heap.*;
+import heap.Heapfile;
+import heap.InvalidTypeException;
+import heap.Tuple;
 import index.ColumnIndexScan;
-import index.IndexException;
-import index.UnknownIndexTypeException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import tests.Util;
-
-import java.io.IOException;
+import javafx.util.Pair;
 
 public class ColumnarIndexScan extends Iterator {
 
@@ -26,20 +21,33 @@ public class ColumnarIndexScan extends Iterator {
     private CondExpr[] _selects;
     private FldSpec[] _outFlds;
     private Iterator[] iterators;
-    private List<Heapfile> heapFiles;
+    private List<String> heapFiles;
+    private AttrType[] colTypes;
+    private short[] strSizes;
+    boolean first = true;
+    int andCount = 0;
+    List<Integer> orCount;
+    List<List<Pair<Integer, Iterator>>> posCache;
     public ColumnarIndexScan(String relName, IndexType[] index, FldSpec[] outFlds, CondExpr[] selects) throws Exception {
 
         _selects = selects;
         _outFlds = outFlds;
         try {
 
+            int cnt = 0;
             heapFiles = new ArrayList<>();
             columnarfile = new Columnarfile(relName);
+            colTypes = columnarfile.getType();
+            strSizes = columnarfile.getStrSizes();
             iterators = new Iterator[10];
-            int cnt = 0;
+            orCount = new ArrayList<>();
+            andCount = _selects.length - 1;
             for (int i = 0; i < selects.length; i++) {
                 CondExpr condExpr = selects[i];
-                while (condExpr != null) {
+                int orCC = 0;
+                while (condExpr != null)
+                {
+                    orCC++;
                     int colNum = condExpr.operand1.symbol.offset;
                     CondExpr[] newExprArr = new CondExpr[2];
                     CondExpr newExpr = new CondExpr(condExpr);
@@ -63,7 +71,7 @@ public class ColumnarIndexScan extends Iterator {
                             ColumnIndexScan columnIndexScan = new ColumnIndexScan(new IndexType(IndexType.B_Index), relName, heapName, indName, attrType, strsizes, 1, null, newExprArr, false);
                             int position = 0;
                             Heapfile heapfile = new Heapfile(null);
-                            heapFiles.add(heapfile);
+                            heapFiles.add(heapfile._fileName);
                             do {
                                 Tuple tuple = new Tuple();
                                 position = columnIndexScan.get_next_pos();
@@ -71,7 +79,6 @@ public class ColumnarIndexScan extends Iterator {
                                     tuple.setHdr((short) 1, type, strsizes);
                                     tuple.setIntFld(1, position+1);
                                     heapfile.insertRecord(tuple.getTupleByteArray());
-                                    System.out.println(position+1);
                                 }
                             }while((position != -1));
 
@@ -94,8 +101,8 @@ public class ColumnarIndexScan extends Iterator {
                     }
                     condExpr = condExpr.next;
                 }
+                orCount.add(orCC);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -106,37 +113,77 @@ public class ColumnarIndexScan extends Iterator {
 
         try {
             while(true) {
-                int cnt = 0;
-                HashSet<Integer> positions = new HashSet<>();
-                for (int i = 0; i < _selects.length - 1; i++) {
-                    CondExpr condExpr = _selects[i];
-                    Integer min_pos = Integer.MAX_VALUE;
-                    while (condExpr != null) {
-                        int pos = iterators[cnt].get_next_pos();
-                        cnt++;
-                        min_pos = Math.min(min_pos, pos);
-                        condExpr = condExpr.next;
+
+                if(first){
+                    int counter = 0;
+                    posCache = new ArrayList<>();
+                    for(int i=0; i<andCount; i++){
+                        List<Pair<Integer, Iterator>> rowCache = new ArrayList<>();
+                        for(int j=0; j<orCount.get(i); j++){
+                            int tempPos = iterators[counter].get_next_pos();
+                            if (tempPos == -1)
+                                rowCache.add(new Pair<>(Integer.MAX_VALUE, iterators[counter]));
+                            else
+                                rowCache.add(new Pair<>(tempPos, iterators[counter]));
+                            counter++;
+                        }
+                        posCache.add(rowCache);
                     }
-                    if(min_pos == -1) return null;
-                    positions.add(min_pos);
+                    first = false;
                 }
-                if(positions.size() == 1){
+
+                HashSet<Integer> andPos = new HashSet<>();
+                int globalMin = Integer.MAX_VALUE;
+                for(int i=0; i<andCount; i++) {
+                    List<Pair<Integer, Iterator>> rowCache = posCache.get(i);
+                    int min_pos = Integer.MAX_VALUE;
+                    for(int j=0; j<orCount.get(i); j++){
+                        int pos = rowCache.get(j).getKey();
+                        if(pos != -1 && pos < min_pos) {
+                            min_pos = pos;
+                        }
+                    }
+                    if(min_pos == Integer.MAX_VALUE) return null;
+                    globalMin = Integer.min(globalMin, min_pos);
+                    andPos.add(min_pos);
+                }
+                for(int i=0; i<andCount; i++){
+                    List<Pair<Integer, Iterator>> tempCache = posCache.get(i);
+                    for(int j=0; j<orCount.get(i); j++){
+                        if(tempCache.get(j).getKey() == globalMin ){
+                            int newpos = tempCache.get(j).getValue().get_next_pos();
+                            Iterator itr = tempCache.get(j).getValue();
+                            tempCache.set(j, new Pair<>(newpos, itr));
+                        }
+                    }
+                }
+                if(andPos.size() == 1){
 
                     Tuple rowTuple = new Tuple();
+                    try {
+                        rowTuple.setHdr((short) _outFlds.length, colTypes, strSizes);
+                    } catch (InvalidTypeException e) {
+                        e.printStackTrace();
+                    }
                     AttrType[] attrType = columnarfile.getType();
                     for(int i=0; i< _outFlds.length; i++){
                         int indexNumber = _outFlds[i].offset;
                         Heapfile heapfile = columnarfile.getColumnFiles()[indexNumber-1];
-                        Tuple tupleTemp = columnar.Util.getTupleFromPosition(positions.iterator().next(), heapfile);
+                        Tuple tupleTemp = columnar.Util.getTupleFromPosition(andPos.iterator().next() - 1, heapfile);
                         tupleTemp.initHeaders();
                         if(attrType[indexNumber-1].attrType == AttrType.attrString) {
                             rowTuple.setStrFld(i+1, tupleTemp.getStrFld(1));
+                            System.out.print(rowTuple.getStrFld(i+1));
                         }else if(attrType[indexNumber-1].attrType == AttrType.attrInteger) {
                             rowTuple.setIntFld(i+1, tupleTemp.getIntFld(1));
+                            System.out.print(rowTuple.getIntFld(i+1));
                         }else if(attrType[indexNumber-1].attrType == AttrType.attrReal) {
                             rowTuple.setFloFld(i+1, tupleTemp.getFloFld(1));
+                            System.out.print(rowTuple.getFloFld(i+1));
                         }
+                        System.out.print("\t");
                     }
+                    System.out.println("");
                     return rowTuple;
                 }
             }
@@ -156,10 +203,11 @@ public class ColumnarIndexScan extends Iterator {
     public void close() {
 
         try {
-            for (Iterator iterator : iterators) iterator.close();
+            for (int i=0; i< andCount; i++) iterators[i].close();
 
-            for (Heapfile heapFile : heapFiles) {
-                heapFile.deleteFile();
+            for (String name : heapFiles) {
+                Heapfile heapfile = new Heapfile(name);
+                heapfile.deleteFile();
             }
         } catch (Exception e) {
             e.printStackTrace();
