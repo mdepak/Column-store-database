@@ -102,9 +102,14 @@ public class ColumnarIndexScan extends Iterator {
               break;
             case IndexType.None:
               selectedCols[0] = 1;
-              newExprArr[0].operand1.symbol.offset = 1;
-              FileScan columnarFileScan = new FileScan(heapName, attrType, strsizes, (short) 1, 1,
-                  _outFlds, newExprArr);
+              //newExprArr[0].operand1.symbol = new FldSpec();
+              if ( newExprArr[0].operand1 != null && newExprArr[0].operand1.symbol!= null)
+              {
+                newExprArr[0].operand1.symbol = new FldSpec(newExprArr[0].operand1.symbol.relation, newExprArr[0].operand1.symbol.offset);
+
+                newExprArr[0].operand1.symbol.offset =1;
+              }
+              FileScan columnarFileScan = new FileScan(heapName, attrType, strsizes, (short) 1, 1, _outFlds, newExprArr);
               iterators.add(columnarFileScan);
               cnt++;
               break;

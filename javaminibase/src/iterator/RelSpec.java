@@ -2,7 +2,17 @@ package iterator;
 
 public class RelSpec {
 
+
+
+  public RelSpec(RelSpec that)
+  {
+    this.key = that.key;
+  }
+
   public int key;
+
+  public RelSpec() {
+  }
 
   /**
    * constructor

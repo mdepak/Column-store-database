@@ -59,9 +59,10 @@ public class ColumnarNestedLoopsJoins {
 
     ColumnarIndexScan outerColScan = new ColumnarIndexScan(outerTableName, outerTableIndexType,
         outerFldSpec, outerConstraint);
+
+
     Tuple outerTuple;
-    ColumnarIndexScan innerColScan = new ColumnarIndexScan(innerTableName, innerTableIndexType,
-        innerFldSpec, innerConstraint);
+
     Tuple innerTuple;
 
     Tuple joinedTuple = new Tuple();
@@ -82,8 +83,13 @@ public class ColumnarNestedLoopsJoins {
       outerTuple = outerColScan.get_next();
       outerPos++;
       if (outerTuple == null) {
+        outerColScan.close();
         break;
       }
+
+      ColumnarIndexScan innerColScan = new ColumnarIndexScan(innerTableName, innerTableIndexType,
+          innerFldSpec, innerConstraint);
+
       while (true) {
         innerTuple = innerColScan.get_next();
         if (innerTuple == null) {
@@ -100,18 +106,7 @@ public class ColumnarNestedLoopsJoins {
         }
         innerPos++;
       }
-
-      try {
-        innerColScan = new ColumnarIndexScan(innerTableName, innerTableIndexType,
-            innerFldSpec, innerConstraint);
-        innerPos = 0;
-      } catch (Exception ex) {
-        throw ex;
-      }
     }
-
-    outerColScan.close();
-
     printJoinedTuples(resultTuples, outerAttrTypes, innerAttrTypes, perm_mat);
   }
 
