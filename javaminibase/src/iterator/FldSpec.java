@@ -2,8 +2,22 @@ package iterator;
 
 public class FldSpec {
 
-  public RelSpec relation;
+  public RelSpec relation = null;
   public int offset;
+
+  public FldSpec() {
+  }
+
+
+
+  public FldSpec(FldSpec that)
+  {
+    if (that != null){
+      this.relation = new RelSpec(that.relation);
+      this.offset = that.offset;
+    }
+  }
+
 
   /**
    * contrctor

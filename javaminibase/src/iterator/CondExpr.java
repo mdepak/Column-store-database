@@ -40,6 +40,7 @@ public class CondExpr {
 
     columnNo = 0;
 
+
     operand1 = new Operand();
     operand2 = new Operand();
 
@@ -55,8 +56,8 @@ public class CondExpr {
     op = condExpr.op;
     type1 = condExpr.type1;
     type2 = condExpr.type2;
-    operand1 = condExpr.operand1;
-    operand2 = condExpr.operand2;
+    operand1 = new Operand(condExpr.operand1);
+    operand2 = new Operand(condExpr.operand2);
     next = null;
 
   }

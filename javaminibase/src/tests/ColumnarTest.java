@@ -760,18 +760,23 @@ class ColumnarDriver extends TestDriver implements GlobalConst {
 
       createIndexOnColumnarFile(columnDBName, columnFileName, colName, indexType);
     } else if (operation.contains("nlj")) {
-      String outerTableName = input[1];
-      String innerTableName = input[2];
-      String outerConstraint = input[3];
+
+      String dbname = input[1];
+      String outerTableName = input[2];
+      String innerTableName = input[3];
+      String outerConstraint = input[4];
       CondExpr[] outerConstraintExpr = Util.getCondExprList(outerConstraint, outerTableName, innerTableName, 1);
-      String innerConstraint = input[4];
-      CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint, outerTableName, innerTableName, 2);
-      String joinConstraint = input[5];
+      String innerConstraint = input[5];
+      CondExpr[] innerConstraintExpr = Util.getCondExprList(innerConstraint, outerTableName, innerTableName, 1);
+      String joinConstraint = input[6];
       CondExpr[] joinConstraintExpr = Util.getCondExprList(joinConstraint, outerTableName, innerTableName, 3);
-      String outerAccessType = input[6];
-      String innerAccessType = input[7];
-      String targetFieldValues = input[8];
-      numBuf = Integer.parseInt(input[9]);
+      String outerAccessType = input[7];
+      String innerAccessType = input[8];
+      String targetFieldValues = input[9];
+      numBuf = Integer.parseInt(input[10]);
+
+
+      Util.createDatabaseIfNotExists(dbname, numBuf);
 
       ColumnarNestedLoopsJoins nljObj = new ColumnarNestedLoopsJoins(outerTableName, innerTableName,
           outerConstraintExpr, innerConstraintExpr, joinConstraintExpr, outerAccessType,
