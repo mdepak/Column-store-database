@@ -63,7 +63,7 @@ public class ColumnarNestedLoopsJoins {
 
 		//output column numbers for both tables
 		FldSpec[] outerFldSpec = getFldSpec(true, outerCf);
-		FldSpec[] innerFldSpec = getFldSpec(false, innerCf);
+		FldSpec[] innerFldSpec = getFldSpec(true, innerCf);
 
 		ColumnarIndexScan outerColScan = new ColumnarIndexScan(outerTableName, outerTableIndexType,
 			outerFldSpec, outerConstraint);
@@ -89,14 +89,27 @@ public class ColumnarNestedLoopsJoins {
 			while (true) {
 				innerTuple = innerColScan.get_next();
 				if (innerTuple == null) {
+					innerColScan.close();
 					break;
-				}
+					}
 				if (PredEval.Eval(joinConstraint, outerTuple, innerTuple, outerAttrTypes, innerAttrTypes)) {
 					Projection.Join(outerTuple, outerAttrTypes, innerTuple, innerAttrTypes, joinedTuple, perm_mat, numOfAttributesInResultTuple);
 					resultTuples.add(joinedTuple);
 				}
 			}
+
+			try {
+				innerColScan = new ColumnarIndexScan(innerTableName, innerTableIndexType,
+						innerFldSpec, innerConstraint);
+			}
+			catch (Exception ex)
+			{
+				throw  ex;
+			}
 		}
+
+		outerColScan.close();
+
 		printJoinedTuples(resultTuples, outerAttrTypes, innerAttrTypes, perm_mat);
 	}
 

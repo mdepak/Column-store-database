@@ -20,7 +20,7 @@ public class ColumnarIndexScan extends Iterator {
   private Columnarfile columnarfile;
   private CondExpr[] _selects;
   private FldSpec[] _outFlds;
-  private Iterator[] iterators;
+  private List<Iterator> iterators;
   private List<String> heapFiles;
   private AttrType[] colTypes;
   private int[] project;
@@ -39,11 +39,11 @@ public class ColumnarIndexScan extends Iterator {
     try {
 
       int cnt = 0;
+      iterators = new ArrayList<>();
       heapFiles = new ArrayList<>();
       columnarfile = new Columnarfile(relName);
       colTypes = columnarfile.getType();
       strSizes = columnarfile.getStrSizes();
-      iterators = new Iterator[10];
       orCount = new ArrayList<>();
       andCount = _selects.length - 1;
       for (int i = 0; i < selects.length; i++) {
@@ -91,12 +91,13 @@ public class ColumnarIndexScan extends Iterator {
                   _outFlds, null);
               Sort sort = new Sort(type, (short) 1, strsizes, fscan, 1,
                   new TupleOrder(TupleOrder.Ascending), 4, 5, true);
-              iterators[cnt] = sort;
+              iterators.add(sort);
               cnt++;
               break;
             case IndexType.BIT_MAP:
               selectedCols[0] = 1;
-              iterators[cnt] = new BitmapIterator(relName, selectedCols, newExprArr);
+              BitmapIterator bitmapIterator = new BitmapIterator(relName, selectedCols, newExprArr);
+              iterators.add(bitmapIterator);
               cnt++;
               break;
             case IndexType.None:
@@ -104,7 +105,7 @@ public class ColumnarIndexScan extends Iterator {
               newExprArr[0].operand1.symbol.offset = 1;
               FileScan columnarFileScan = new FileScan(heapName, attrType, strsizes, (short) 1, 1,
                   _outFlds, newExprArr);
-              iterators[cnt] = columnarFileScan;
+              iterators.add(columnarFileScan);
               cnt++;
               break;
           }
@@ -129,11 +130,11 @@ public class ColumnarIndexScan extends Iterator {
           for (int i = 0; i < andCount; i++) {
             List<Pair<Integer, Iterator>> rowCache = new ArrayList<>();
             for (int j = 0; j < orCount.get(i); j++) {
-              int tempPos = iterators[counter].get_next_pos();
+              int tempPos = iterators.get(counter).get_next_pos();
               if (tempPos == -1) {
-                rowCache.add(new Pair<>(Integer.MAX_VALUE, iterators[counter]));
+                rowCache.add(new Pair<>(Integer.MAX_VALUE, iterators.get(counter)));
               } else {
-                rowCache.add(new Pair<>(tempPos, iterators[counter]));
+                rowCache.add(new Pair<>(tempPos, iterators.get(counter)));
               }
               counter++;
             }
@@ -196,14 +197,15 @@ public class ColumnarIndexScan extends Iterator {
   public void close() {
 
     try {
-      for (int i = 0; i < andCount; i++) {
-        iterators[i].close();
+      for (Iterator iterator : iterators) {
+        iterator.close();
       }
 
       for (String name : heapFiles) {
         Heapfile heapfile = new Heapfile(name);
         heapfile.deleteFile();
       }
+      iterators.clear();
     } catch (Exception e) {
       e.printStackTrace();
     }

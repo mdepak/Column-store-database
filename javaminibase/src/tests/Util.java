@@ -99,11 +99,10 @@ public class Util {
           expr.operand2.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), getColumnNumber(rightOperand[1]));
         }
       } else {
-        String[] leftOperand = valueConstraint.get(0).split("\\.");
         if(conditionType == 1) {
-          expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), getColumnNumber(leftOperand[1]));
+          expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), getColumnNumber(valueConstraint.get(0)));
         } else if(conditionType == 2) {
-          expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), getColumnNumber(leftOperand[1]));
+          expr.operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), getColumnNumber(valueConstraint.get(0)));
         }
         String value = valueConstraint.get(2);
         if (value.matches("\\d*\\.\\d*")) {
